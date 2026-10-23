@@ -25,7 +25,7 @@ extension/   Chrome MV3 extension (load unpacked). Content scripts run on sleepe
 model/       build_ext.py (rankings → extension/data.js + reports/top120.*), lock_value.py, model.py + build_page.py (mock report)
 data/        players.psv, ids.psv, gamelogs.psv (2025-26 per-player game spread), schedule2026.psv, mock_board.psv
 tests/       Node tests (jsdom) + Playwright renders; fixtures/ = real Nov 17–23, 2025 week
-tools/       lockcalc.js (CLI), fetch_sleeper.py (refresh data/)
+tools/       lockcalc.js (CLI), fetch_sleeper.py (refresh data/), refresh.sh + sleeper_pull.js + week_page.js + season_report.js + trending.js + build_season_page.py (the live page)
 reports/     top120.md/csv, the mock report page, screens/
 ```
 
@@ -39,6 +39,16 @@ reports/     top120.md/csv, the mock report page, screens/
 - `python3 tests/perf_live.py [extension_dir]` — real-Chromium jank check during a fast draft (frames over 50 ms, compute/paint ms). Keep frozen time near zero.
 - `npm run package` — dist/slot10-war-room-v<version>.zip. Bump `version` in package.json and extension/manifest.json together.
 - `python3 tools/fetch_sleeper.py [--add 260] [--schedule]` — refresh projections, ADP, injuries, teams.
+
+## The live War Room page (refreshes itself)
+
+- Live at https://traybanks.github.io/war-room/ (GitHub Pages, public repo TrayBanks/war-room). The claude.ai artifact "Slot 10 War Room" is a snapshot that links to it.
+- `.github/workflows/refresh.yml` runs at 6 AM, 12 PM, 5 PM and 11:30 PM Central (both CDT and CST crons are scheduled; a gate job keeps the one that matches Central time today), on manual dispatch, and on pushes that touch the page code. It runs `tools/refresh.sh site` and deploys `site/` to Pages.
+- `tools/refresh.sh`: `sleeper_pull.js` (Sleeper → data/live/{league,extras,trending,week}_<ET date>.json) → `week_page.js` (This week card + live-week projection) → `season_report.js` twice (normal, and `WR_SD=30 WR_TAG=_wide`) → `trending.js` → `build_season_page.py <date> --site site`. `WR_DATE=YYYY-MM-DD tools/refresh.sh` reruns offline on saved files.
+- Finished weeks use real scores (`league.results`), the current week uses week_page's projection for Tray's matchup, later weeks are simulated.
+- Locks: Sleeper's API has no lock field. `data/locks.json` holds locks Tray told us about (`{"<week>": [player ids]}`); week_page.js also infers a lock once the player plays again; the page's "Mark locked" button stores marks on his phone (localStorage).
+- The page template is `model/season_page/template_v2.html` (data injected at `/*__DATA__*/null`). Section tabs open a full-screen focus view; deep dives are folded by default (Tray wants ADHD-friendly, answer-first cards).
+- Watch a run from Tray's PC: `gh run list -R TrayBanks/war-room`; trigger one: `gh workflow run refresh.yml -R TrayBanks/war-room`.
 
 ## The models in one paragraph each
 

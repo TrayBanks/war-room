@@ -62,6 +62,9 @@ button { font: inherit; color: inherit; }
 .tool { flex: none; border: 0; cursor: pointer; background: var(--band-2); color: var(--band-fg); font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; }
 .tool:hover { background: #1B3570; }
 .tool[hidden] { display: none; }
+a.tool { text-decoration: none; display: inline-flex; align-items: center; }
+#t-live { background: var(--red); }
+@media (max-width: 720px) { #t-live:not([hidden]) { display: inline-flex; font-size: 12px; padding: 5px 10px; } }
 .nav::-webkit-scrollbar { display: none; }
 .nav a { flex: none; color: var(--band-fg); text-decoration: none; font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .03em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 1px #2A4378; }
 .nav a:hover { background: var(--band-2); }
@@ -222,6 +225,7 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
       <nav class="nav" aria-label="Sections">
         <a href="#all" aria-current="true">All</a><a href="#week">This week</a><a href="#trend">Waivers</a><a href="#season">Season</a><a href="#power">Power</a><a href="#lineup">Lineup</a><a href="#trades">Trades</a><a href="#draft">Draft</a><a href="#playoffs">Playoffs</a><a href="#next">Next</a>
       </nav>
+      <a class="tool" id="t-live" href="https://traybanks.github.io/war-room/" target="_blank" rel="noopener" hidden>Live page (updates 4×/day)</a>
       <button class="tool" id="t-open" type="button">Open all deep dives</button>
       <button class="tool fs" id="t-fs" type="button" hidden>Full screen</button>
     </div>
@@ -531,5 +535,6 @@ tabs.forEach((a) => a.addEventListener("click", (e) => {
 addEventListener("keydown", (e) => { if (e.key === "Escape" && board.dataset.focus) focusSection(""); });
 addEventListener("resize", pinBand);
 
+if (D.liveLink) $("#t-live").hidden = false;
 renderBand(); pinBand(); renderWeek(); renderTrend(); renderSeason(); renderLineup(); renderTrades(); renderDraft(); renderRest();
 </script>

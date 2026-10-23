@@ -117,9 +117,10 @@ D = {"record": rec, "trending": trend, "eyebrow": f"Slot 10 War Room · NBA Leag
      "myDraft": R["myDraft"], "slots": R["slots"], "bench": R["bench"], "coverage": R["coverage"], "adds": R["adds"],
      "buy": R["buy"], "playoffGames": R["myPlayoffGames"], "notes": notes}
 tpl = open(os.path.join(BASE, "model", "season_page", "template_v2.html")).read()
-body = tpl.replace("/*__DATA__*/null", json.dumps(D, ensure_ascii=False).replace("</", "<\\/"))
+fill = lambda data: tpl.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
+body = fill(D)
 out = os.path.join(BASE, "reports", "slot10_war_room.html")
-open(out, "w").write(body)
+open(out, "w").write(fill({**D, "liveLink": True}))    # the claude.ai copy is a snapshot: point it at the live page
 print("wrote", out, len(body), "bytes;", f"week {cur}; you: {me['wins']} wins, {me['playoff']:.0%} PO, {me['title']:.0%} title (wide {mew['title']:.0%}), rank {wins_rank}; playoff-week rank {po_rank}; this week {WK['odds']:.0%}")
 
 if site:

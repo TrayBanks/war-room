@@ -1,19 +1,17 @@
 name: Refresh War Room
-# Four refreshes a day at 6 AM, 12 PM, 5 PM and 11:30 PM Central. GitHub cron runs in UTC with no daylight saving,
-# so both the CDT and CST times are scheduled and the gate step keeps only the ones that match Central time today.
+# Refreshes at 6 AM, 12 PM, 5 PM and 11:30 PM Central. GitHub delays and sometimes drops scheduled runs, so a light
+# gate job runs every 30 minutes and refreshes only when the live page is older than the latest of those times.
+# A missed slot is picked up within half an hour. Daylight saving is handled by computing the slots in Central time.
 on:
   schedule:
-    - cron: "4 11,17,22 * * *"   # 6 AM, 12 PM, 5 PM CDT
-    - cron: "34 4 * * *"         # 11:30 PM CDT
-    - cron: "4 12,18,23 * * *"   # 6 AM, 12 PM, 5 PM CST
-    - cron: "34 5 * * *"         # 11:30 PM CST
+    - cron: "7,37 * * * *"
   workflow_dispatch: {}
   push:
     branches: [main]
     paths: ["tools/**", "model/season_page/**", "extension/data.js", "extension/engine.js", "extension/lock.js", "data/locks.json", ".github/workflows/refresh.yml"]
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -27,19 +25,20 @@ jobs:
     outputs:
       go: ${{ steps.gate.outputs.go }}
     steps:
-      - name: Keep only the run that matches Central time
+      - name: Refresh only if the live page is older than the latest slot
         id: gate
         run: |
-          off=$(TZ=America/Chicago date +%z)
-          s="${{ github.event.schedule }}"
           go=true
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            case "$off|$s" in
-              "-0500|4 11,17,22 * * *"|"-0500|34 4 * * *"|"-0600|4 12,18,23 * * *"|"-0600|34 5 * * *") go=true ;;
-              *) go=false ;;
-            esac
+            now=$(date +%s); d=$(TZ=America/Chicago date +%F); slot=0
+            for t in 06:00 12:00 17:00 23:30; do
+              s=$(TZ=America/Chicago date -d "$d $t" +%s); [ "$s" -le "$now" ] && slot=$s
+            done
+            [ "$slot" -eq 0 ] && slot=$(TZ=America/Chicago date -d "$(TZ=America/Chicago date -d yesterday +%F) 23:30" +%s)
+            last=$(curl -fsS "https://traybanks.github.io/war-room/status.json?t=$now" | python3 -c 'import json,sys; print(json.load(sys.stdin)["updated"])' || echo 1970-01-01T00:00:00Z)
+            [ "$(date -d "$last" +%s)" -lt "$slot" ] || go=false
+            echo "latest slot $(TZ=America/Chicago date -d @$slot '+%a %H:%M %Z'), page updated $last, refresh: $go"
           fi
-          echo "Central offset $off, schedule '$s', run: $go"
           echo "go=$go" >> "$GITHUB_OUTPUT"
 
   refresh:
@@ -63,3 +62,13 @@ jobs:
       - name: Deploy
         id: deploy
         uses: actions/deploy-pages@v4
+      - name: Monday snapshot (also keeps the schedule alive; GitHub pauses it after 60 days without commits)
+        if: github.event_name == 'schedule'
+        run: |
+          d=$(TZ=America/Chicago date +%F)
+          if [ "$(TZ=America/Chicago date +%u)" = 1 ] && [ ! -f "data/history/$d.json" ]; then
+            mkdir -p data/history && cp site/status.json "data/history/$d.json"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/history && git commit -m "Weekly snapshot $d" && git push
+          fi

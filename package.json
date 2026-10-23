@@ -1,0 +1,18 @@
+{
+  "name": "slot10-war-room",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Sleeper NBA draft overlay and Lock-In coach for NBA League Revamped (slot 10).",
+  "scripts": {
+    "test": "node tests/test_engine.js && node tests/test_fit.js && node tests/test_lock.js && node tests/test_bridge.js && node tests/test_ui.js && node tests/test_season.js",
+    "build": "python3 model/build_ext.py",
+    "report": "python3 model/model.py && python3 model/build_page.py",
+    "render": "python3 tests/render_ext.py 29 drafting clock && python3 tests/render_ext.py 40 drafting wait && python3 tests/render_season.py",
+    "lock": "node tools/lockcalc.js",
+    "package": "rm -rf dist && mkdir -p dist/war-room-extension && cp -r extension/* dist/war-room-extension/ && cp reports/top120.md reports/top120.csv dist/ && cd dist && zip -qr slot10-war-room-v$npm_package_version.zip war-room-extension top120.md top120.csv",
+    "replay": "node tools/replay_draft.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}

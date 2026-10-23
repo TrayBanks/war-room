@@ -1,0 +1,65 @@
+name: Refresh War Room
+# Four refreshes a day at 6 AM, 12 PM, 5 PM and 11:30 PM Central. GitHub cron runs in UTC with no daylight saving,
+# so both the CDT and CST times are scheduled and the gate step keeps only the ones that match Central time today.
+on:
+  schedule:
+    - cron: "4 11,17,22 * * *"   # 6 AM, 12 PM, 5 PM CDT
+    - cron: "34 4 * * *"         # 11:30 PM CDT
+    - cron: "4 12,18,23 * * *"   # 6 AM, 12 PM, 5 PM CST
+    - cron: "34 5 * * *"         # 11:30 PM CST
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths: ["tools/**", "model/season_page/**", "extension/data.js", "extension/engine.js", "extension/lock.js", "data/locks.json", ".github/workflows/refresh.yml"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.gate.outputs.go }}
+    steps:
+      - name: Keep only the run that matches Central time
+        id: gate
+        run: |
+          off=$(TZ=America/Chicago date +%z)
+          s="${{ github.event.schedule }}"
+          go=true
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            case "$off|$s" in
+              "-0500|4 11,17,22 * * *"|"-0500|34 4 * * *"|"-0600|4 12,18,23 * * *"|"-0600|34 5 * * *") go=true ;;
+              *) go=false ;;
+            esac
+          fi
+          echo "Central offset $off, schedule '$s', run: $go"
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+
+  refresh:
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Pull Sleeper, run the models, build the page
+        run: tools/refresh.sh site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy
+        id: deploy
+        uses: actions/deploy-pages@v4

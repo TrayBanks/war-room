@@ -1,0 +1,121 @@
+rank,tier,name,pos,team,fppg,spread_pct,avail,lock_value,old_rank,move,adp,adp_rank,gap,playoff_games_wk19_21,note
+1,1,Nikola Jokić,C,DEN,40.94,27,0.82,41.21,1,0,2.50,2,1,9,
+2,2,Victor Wembanyama,C,SAS,35.34,31,0.81,36.36,2,0,1.30,1,-1,8,
+3,2,Luka Dončić,PG,LAL,34.91,31,0.81,34.56,3,0,3.20,3,0,9,
+4,3,Jalen Johnson,PF/SF,ATL,31.21,32,0.87,33.56,4,0,14.40,14,10,10,Top-5 points-league value
+5,3,Giannis Antetokounmpo,PF,MIA,33.41,33,0.72,32.20,9,4,7.30,7,2,9,Traded to MIA. 36 games last year
+6,4,Shai Gilgeous-Alexander,PG,OKC,30.11,26,0.84,30.96,5,-1,4.10,4,-2,9,
+7,4,Cade Cunningham,PG,DET,29.68,33,0.81,30.83,8,1,5.20,5,-2,9,
+8,4,Alperen Şengün,C/PF,HOU,27.92,35,0.87,30.58,6,-2,10.10,10,2,9,
+9,4,Jayson Tatum,PF/SF,BOS,29.71,33,0.80,30.47,10,1,11.10,11,2,9,16 games last year after Achilles
+10,5,Karl-Anthony Towns,C/PF,NYK,27.23,30,0.89,29.45,7,-3,9.50,9,-1,9,
+11,5,Scottie Barnes,PF/SF,TOR,25.85,33,0.92,29.27,11,0,13.30,13,2,8,
+12,5,Donovan Clingan,C,POR,25.98,35,0.90,29.08,12,0,92.70,92,80,9,Top-12 value; ADP lags badly
+13,6,Cooper Flagg,PG/SF/SG,DAL,27.30,37,0.85,28.43,13,0,16.20,16,3,9,
+14,6,LaMelo Ball,PG,MIN,26.44,31,0.87,28.38,15,1,32.70,32,18,9,Traded to MIN
+15,6,Paolo Banchero,PF,ORL,26.43,31,0.87,28.32,16,1,28.70,28,13,8,
+16,6,Domantas Sabonis,C/PF,SAC,29.62,33,0.72,28.12,24,8,27.50,27,11,10,19 games last year
+17,6,Bam Adebayo,C/PF,MIA,25.76,33,0.87,28.05,18,1,35.70,35,18,9,
+18,6,Tyrese Maxey,PG,PHI,26.27,30,0.85,27.73,19,1,8.50,8,-10,9,
+19,6,Donovan Mitchell,PG/SG,CLE,26.17,29,0.85,27.59,20,1,12.00,12,-7,9,
+20,6,Jamal Murray,PG,DEN,25.55,30,0.89,27.50,17,-3,30.70,30,10,9,
+21,6,Evan Mobley,C/PF,CLE,26.17,33,0.82,27.42,22,1,19.00,19,-2,9,
+22,6,Amen Thompson,PG/SF/SG,HOU,25.09,26,0.91,27.24,14,-8,20.00,20,-2,9,
+23,6,Jalen Duren,C,DET,25.20,34,0.85,27.12,21,-2,48.20,48,25,9,
+24,6,Kawhi Leonard,SF/SG,TOR,25.22,32,0.82,27.03,29,5,43.30,43,19,8,
+25,6,Chet Holmgren,C/PF,OKC,25.26,33,0.85,27.03,23,-2,29.40,29,4,9,
+26,6,Josh Giddey,PG,CHI,27.08,37,0.74,26.98,35,9,38.00,38,12,9,Rebounds + assists machine
+27,6,Anthony Edwards,PG/SG,MIN,25.98,33,0.79,26.46,30,3,6.00,6,-21,9,
+28,7,Tyrese Haliburton,PG/SG,IND,24.97,35,0.82,26.40,31,3,17.70,17,-11,8,Missed 2025-26 (Achilles)
+29,7,Kevin Durant,PF/SF,HOU,23.41,30,0.91,26.16,25,-4,26.50,26,-3,9,
+30,7,Walker Kessler,C,LAL,26.94,37,0.75,26.02,34,4,58.50,58,28,9,5 games last year; now LAL
+31,7,Anthony Davis,C/PF,WAS,29.63,34,0.62,26.00,54,23,15.30,15,-16,9,20 games last year
+32,7,Matas Buzelis,PF/SF,CHI,22.97,37,0.90,25.92,28,-4,94.00,94,62,9,
+33,7,Jalen Brunson,PG,NYK,23.92,30,0.88,25.82,26,-7,22.80,22,-11,9,
+34,7,Derik Queen,C/PF,NOP,21.38,44,0.93,25.52,38,4,112.20,112,78,10,"21 FPPG, durable"
+35,7,James Harden,PG,CLE,23.19,32,0.85,25.46,39,4,36.40,36,1,9,
+36,7,Onyeka Okongwu,C,ATL,23.17,33,0.88,25.27,32,-4,72.30,72,36,10,"Stocks + boards, durable"
+37,7,Devin Booker,PG/SG,PHX,24.62,31,0.81,25.17,37,0,18.70,18,-19,9,
+38,7,Jaylen Brown,PF/SF/SG,PHI,23.54,30,0.86,25.04,33,-5,31.70,31,-7,9,
+39,7,Stephen Curry,PG,GSW,24.38,35,0.75,25.02,55,16,24.80,24,-15,9,
+40,7,Deni Avdija,PF/SF/SG,POR,23.89,32,0.83,24.87,40,0,37.30,37,-3,9,
+41,7,Julius Randle,C/PF,BKN,22.63,28,0.91,24.68,27,-14,61.80,61,20,9,
+42,7,Stephon Castle,PG/SG,SAS,22.86,36,0.84,24.60,44,2,64.10,64,22,8,
+43,7,Derrick White,PG/SG,BOS,22.24,32,0.90,24.58,36,-7,49.30,49,6,9,
+44,7,Trae Young,PG,WAS,24.59,36,0.75,24.58,53,9,21.70,21,-23,9,15 games last year
+45,7,Kel'el Ware,C/PF,MIL,21.41,47,0.85,24.53,57,12,76.20,76,31,8,Shares center with Myles Turner in MIL
+46,8,Cameron Boozer,C/PF,MEM,22.25,38,0.85,24.32,46,0,25.10,25,-21,9,Rookie: projection only
+47,8,Rudy Gobert,C,MIN,21.64,34,0.89,24.07,42,-5,84.00,84,37,9,"Boards + blocks, 76 games last year"
+48,8,Kon Knueppel,SF/SG,CHA,21.25,33,0.93,24.06,41,-7,70.60,70,22,9,
+49,8,Trey Murphy,SF/SG,NOP,23.16,29,0.83,23.84,45,-4,39.20,39,-10,10,
+50,8,Brandon Miller,PF/SF/SG,CHA,22.94,32,0.82,23.74,50,0,45.30,45,-5,9,
+51,8,Damian Lillard,PG,POR,24.05,35,0.68,23.60,81,30,147.10,147,96,9,Missed 2025-26 (Achilles). Full go at camp
+52,8,Miles Bridges,PF/SF,PHX,20.80,38,0.90,23.56,51,-1,71.80,71,19,9,
+53,8,Ryan Rollins,PG,MIL,21.45,32,0.88,23.45,48,-5,133.60,133,80,8,21 FPPG at a late ADP
+54,8,Pascal Siakam,C/PF,IND,23.11,29,0.80,23.34,52,-2,46.60,46,-8,8,
+55,8,Desmond Bane,PG/SG,ORL,20.66,32,0.93,23.33,43,-12,44.70,44,-11,8,
+56,8,Zion Williamson,PF/SF,NOP,22.82,32,0.80,23.29,56,0,50.50,50,-6,10,
+57,8,Caleb Wilson,PF/SF,CHI,21.25,38,0.85,23.22,59,2,91.50,91,34,9,Rookie: projection only
+58,8,Austin Reaves,PG/SG,LAL,24.56,37,0.72,23.18,60,2,33.30,33,-25,9,
+59,8,Dyson Daniels,SF/SG,ATL,21.05,33,0.89,23.18,49,-10,60.70,60,1,10,
+60,8,Payton Pritchard,PG,BOS,20.67,33,0.91,23.18,47,-13,83.00,83,23,9,
+61,8,Kyrie Irving,PG/SG,DAL,23.85,35,0.72,23.16,68,7,110.70,110,49,9,Missed 2025-26 (ACL). No limits; back-to-backs managed
+62,8,Day'Ron Sharpe,C,BKN,21.47,46,0.80,23.15,69,7,224.40,222,160,9,21 FPPG at waiver ADP
+63,8,LeBron James,PF/PG/SF,PHI,23.02,31,0.72,23.01,79,16,54.30,54,-9,9,"Age 41, signed with PHI"
+64,8,Ivica Zubac,C,IND,23.97,32,0.70,22.71,72,8,41.80,41,-23,8,
+65,8,Nic Claxton,C/PF,CHI,20.61,40,0.85,22.64,64,-1,103.40,103,38,9,
+66,8,Naz Reid,C/PF,CHA,20.24,35,0.90,22.62,58,-8,75.50,75,9,9,
+67,8,Lauri Markkanen,PF/SF,UTA,24.75,32,0.66,22.43,80,13,51.60,51,-16,9,
+68,8,Michael Porter,PF/SF,BKN,23.25,34,0.73,22.39,71,3,63.20,63,-5,9,
+69,9,Jalen Williams,PF/SF/SG,OKC,23.02,28,0.75,22.23,67,-2,23.80,23,-46,9,
+70,9,De'Aaron Fox,PG,SAS,20.55,32,0.87,22.15,61,-9,52.00,52,-18,8,
+71,9,Zach Edey,C,MEM,24.54,40,0.62,22.00,109,38,101.00,101,30,9,Ankle history. Cleared; minutes managed early
+72,9,Brandin Podziemski,PG/SG,GSW,19.05,37,0.93,21.90,63,-9,127.20,127,55,9,
+73,9,Cedric Coward,SF/SG,MEM,20.86,38,0.80,21.86,78,5,134.80,134,61,9,
+74,9,Ausar Thompson,SF/SG,DET,19.91,35,0.87,21.82,65,-9,73.70,73,-1,9,
+75,9,Tyler Herro,PG/SG,MIL,23.25,30,0.70,21.69,85,10,57.40,57,-18,8,
+76,9,Nickeil Alexander-Walker,PG/SG,ATL,19.57,31,0.91,21.62,62,-14,95.30,95,19,10,
+77,9,Dejounte Murray,PG/SG,NOP,23.27,30,0.70,21.60,84,7,113.30,113,36,10,14 games last year
+78,9,Josh Hart,SF/SG,NYK,20.26,36,0.83,21.54,77,-1,65.30,65,-13,9,
+79,9,Dylan Harper,PG/SG,SAS,19.81,37,0.85,21.52,76,-3,69.50,69,-10,8,
+80,9,Immanuel Quickley,PG/SG,TOR,20.27,30,0.85,21.46,66,-14,82.60,82,2,8,
+81,9,Franz Wagner,PF/SF,ORL,22.73,34,0.70,21.36,90,9,34.00,34,-47,8,
+82,9,Jarrett Allen,C,CLE,20.82,39,0.76,21.29,92,10,66.80,66,-16,9,
+83,9,Keyonte George,PG/SG,UTA,21.37,36,0.74,21.28,89,6,79.60,79,-4,9,
+84,9,Jaime Jaquez,PF/SF/SG,MIL,19.00,36,0.89,21.21,74,-10,128.00,128,44,8,
+85,9,Jaren Jackson,C/PF,UTA,22.13,35,0.70,21.11,97,12,40.40,40,-45,9,
+86,9,Jaden McDaniels,PF/SF,MIN,18.68,41,0.87,21.06,83,-3,77.50,77,-9,9,
+87,9,CJ McCollum,PG/SG,ATL,18.79,33,0.89,21.05,75,-12,105.70,105,18,10,
+88,9,OG Anunoby,PF/SF,NYK,19.21,41,0.83,21.03,88,0,59.10,59,-29,9,
+89,9,Rui Hachimura,PF/SF,LAC,19.06,41,0.84,20.98,87,-2,173.10,174,85,9,
+90,9,VJ Edgecombe,PG/SG,PHI,19.00,33,0.89,20.95,73,-17,78.30,78,-12,9,
+91,9,Darius Garland,PG,LAC,22.38,34,0.68,20.88,105,14,55.00,55,-36,9,
+92,9,Darryn Peterson,PG/SG,UTA,18.97,38,0.85,20.77,86,-6,42.10,42,-50,9,Rookie: projection only
+93,9,Coby White,PG/SG,CHA,21.36,37,0.72,20.73,104,11,81.00,81,-12,9,
+94,9,Kyle Filipowski,C/PF,UTA,17.35,47,0.90,20.62,98,4,194.30,194,100,9,
+95,9,Jabari Smith,C/PF,HOU,18.93,29,0.90,20.61,70,-25,117.60,117,22,9,
+96,9,Jeremiah Fears,PG,NOP,17.07,46,0.93,20.59,91,-5,162.40,163,67,10,
+97,9,Alex Sarr,C/PF,WAS,21.29,37,0.70,20.49,110,13,62.60,62,-35,9,
+98,9,Joel Embiid,C,PHI,25.48,29,0.55,20.34,121,23,56.20,56,-42,9,38 games last year
+99,10,John Collins,C/PF,DET,18.45,39,0.85,20.20,96,-3,114.00,114,15,9,
+100,10,Mikal Bridges,PF/SF/SG,NYK,17.52,36,0.93,20.16,82,-18,74.10,74,-26,9,
+101,10,AJ Dybantsa,PF/SF,WAS,18.34,38,0.85,20.08,99,-2,53.60,53,-48,9,Rookie: projection only
+102,10,Neemias Queta,C,BOS,17.67,38,0.89,20.00,93,-9,143.40,143,41,9,
+103,10,Myles Turner,C,MIL,17.78,41,0.86,19.91,108,5,80.50,80,-23,8,Shares center with Ware; trade candidate
+104,10,Isaiah Hartenstein,C,OKC,20.56,37,0.70,19.73,115,11,87.20,87,-17,9,
+105,10,Davion Mitchell,PG,MIA,17.97,37,0.85,19.65,106,1,231.60,228,123,9,
+106,10,Saddiq Bey,PF/SF,NOP,17.76,37,0.87,19.60,103,-3,177.40,178,72,10,
+107,10,Andrew Wiggins,PF/SF/SG,MIA,18.56,31,0.84,19.57,100,-7,108.10,108,1,9,
+108,10,Darius Acuff,PG/SG,SAC,17.99,38,0.85,19.50,107,-1,170.10,171,63,10,Rookie: projection only
+109,10,Sandro Mamukelashvili,C/PF,LAL,17.06,44,0.92,19.48,94,-15,200.70,200,91,9,
+110,10,Jalen Suggs,PG,ORL,19.19,36,0.76,19.33,112,2,98.70,98,-12,8,
+111,10,Collin Gillespie,PG/SG,PHX,16.91,36,0.92,19.26,101,-10,233.70,230,119,9,
+112,10,Toumani Camara,PF/SF/SG,POR,16.81,34,0.93,19.23,95,-17,115.30,115,3,9,
+113,10,Cason Wallace,PG/SF/SG,OKC,16.06,45,0.90,18.92,113,0,164.30,165,52,9,
+114,10,Quentin Grimes,SF/SG,LAL,16.88,45,0.89,18.91,111,-3,155.20,155,41,9,
+115,10,Ayo Dosunmu,PG/SG,MIN,16.91,43,0.85,18.88,117,2,131.80,131,16,9,
+116,10,Bobby Portis,C/PF,MIA,17.26,40,0.83,18.86,114,-2,160.80,160,44,9,
+117,10,Wendell Carter,C,ORL,17.01,32,0.91,18.85,102,-15,182.50,183,66,8,
+118,10,Ace Bailey,PF/SF,UTA,16.11,46,0.87,18.55,124,6,130.60,130,12,9,
+119,10,Collin Murray-Boyles,C/PF,TOR,16.94,52,0.76,18.48,138,19,139.30,139,20,8,
+120,10,Anthony Black,PG/SF/SG,ORL,17.23,41,0.81,18.45,122,2,163.40,164,44,8,

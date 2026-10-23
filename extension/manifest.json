@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Slot 10 War Room",
+  "short_name": "War Room",
+  "version": "1.2.0",
+  "description": "Sleeper NBA overlay: Lock-In rankings scored for your lineup, live room sharpness, will-he-last odds and one-click draft/queue; lock-or-hold calls on your league page.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.sleeper.app/*",
+    "https://api.sleeper.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://sleeper.com/*"
+      ],
+      "js": [
+        "data.js",
+        "engine.js",
+        "lock.js",
+        "bridge.js",
+        "styles.js",
+        "content.js",
+        "season.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "War Room (click to show/hide)",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

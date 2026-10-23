@@ -1,0 +1,441 @@
+<title>Slot 10 War Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/*__CSS__*/
+
+/* ---- season additions ---- */
+.vs { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 12px; align-items: center; }
+.vs .side { display: grid; gap: 2px; min-width: 0; }
+.vs .side.r { text-align: right; }
+.vs .who { font-family: var(--display); font-weight: 800; font-size: 24px; text-transform: uppercase; line-height: 1; }
+.vs .pts { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 7vw, 60px); line-height: 1; }
+.vs .side.me .pts { color: var(--you); }
+.vs .mid { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; }
+.odds-line { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 4px 10px; align-items: baseline; font-size: 14px; color: var(--ink-2); }
+.odds-line .lab { font-size: 16px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.odds-line .why { grid-column: 1 / -1; }
+.odds-big { font-family: var(--display); font-weight: 800; font-size: 34px; color: var(--bad); line-height: 1; }
+.lockrow { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 4px 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.lockrow:last-child { border-bottom: 0; }
+.lockrow .nm { font-weight: 700; }
+.lockrow .why { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
+.lockrow .sc { font-family: var(--mono); font-size: 13px; text-align: right; }
+.chip.locked { color: var(--good); } .chip.hold { color: var(--ink-2); }
+.next { display: grid; gap: 8px; }
+.next .when { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--you); }
+.strip-wrap { overflow-x: auto; }
+.strip { display: grid; grid-template-columns: repeat(18, minmax(34px, 1fr)); gap: 4px; min-width: 640px; align-items: end; }
+.wk { display: grid; gap: 4px; justify-items: center; }
+.wk .col { width: 100%; height: 96px; background: var(--sunk); border-radius: 4px; position: relative; overflow: hidden; }
+.wk .col i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--you); border-radius: 4px 4px 0 0; }
+.wk .col i.low { background: var(--clay); }
+.wk .p { font-family: var(--mono); font-size: 11px; color: var(--ink-2); }
+.wk .w { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.wk .o { font-size: 10.5px; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pw2 { display: grid; grid-template-columns: 26px minmax(0, 150px) minmax(0,1fr) 56px 56px; gap: 6px 10px; align-items: center; font-size: 13.5px; }
+.pw2 .h { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.pw2 .h.n, .pw2 .n { text-align: right; font-variant-numeric: tabular-nums; }
+.pw2 .rk { font-family: var(--display); font-weight: 800; font-size: 20px; color: var(--muted); }
+.pw2 .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pw2 .nm small { display: block; font-size: 11.5px; color: var(--muted); }
+.pw2 .me { color: var(--you); font-weight: 700; }
+.pw2 .tr { position: relative; height: 18px; background: var(--sunk); border-radius: 3px; }
+.pw2 .tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--neutral); }
+.pw2 .tr i.me { background: var(--you); }
+.pw2 .tr span { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 11px; color: var(--ink); }
+@media (max-width: 560px) { .pw2 { grid-template-columns: 22px minmax(0, 1fr) 70px 46px 46px; } }
+.mgr2 { display: grid; grid-template-columns: minmax(0, 140px) minmax(0,1fr) 40px; gap: 4px 10px; align-items: center; font-size: 13.5px; }
+.mgr2 .bar2 { height: 10px; background: var(--sunk); border-radius: 5px; position: relative; }
+.mgr2 .bar2 i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--blue); }
+.mgr2 .bar2 i.me { background: var(--you); }
+.mgr2 .sc2 { font-family: var(--mono); font-size: 12px; text-align: right; }
+.mgr2 .info { grid-column: 2 / -1; font-size: 12px; color: var(--muted); margin-top: -2px; }
+.mgr2 .me { color: var(--you); font-weight: 700; }
+.diffbar { position: relative; height: 14px; min-width: 80px; }
+.diffbar::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--line); }
+.diffbar i { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.g4c { color: var(--good); } .g1c { color: var(--bad); }
+.gm { display: inline-grid; place-items: center; width: 28px; height: 24px; border-radius: 4px; font-family: var(--mono); font-size: 12px; }
+.tag2 { font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; white-space: nowrap; }
+.tag2.warn { color: var(--warn); border-color: currentColor; }
+.tag2.bad { color: var(--bad); border-color: currentColor; }
+table.trend td.why { color: var(--ink-2); font-size: 12.5px; }
+.move { display: grid; gap: 6px; padding: 14px; border-radius: var(--r); background: var(--sunk); border-left: 4px solid var(--you); }
+.move .swap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; font-size: 18px; }
+.move .swap .out { color: var(--ink-2); }
+.move .swap .arr { color: var(--muted); }
+.move .alts { font-size: 13px; color: var(--ink-2); }
+.tgroups { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+@media (max-width: 760px) { .tgroups { grid-template-columns: minmax(0,1fr); } }
+.tg { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.trow { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.trow:last-child { border-bottom: 0; }
+.trow b { font-size: 14.5px; }
+.trow .w { grid-column: 1; font-size: 12.5px; color: var(--muted); }
+.trow .chip { grid-row: 1 / span 2; grid-column: 2; }
+details.allt summary { cursor: pointer; font-weight: 700; color: var(--blue); font-size: 14px; }
+.chip.yours { color: var(--you); } .chip.muted { color: var(--muted); }
+.chip.yours { color: var(--you); } .chip.muted { color: var(--muted); }
+.kv { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+.kv b { color: var(--ink); font-variant-numeric: tabular-nums; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow" id="eyebrow"></div>
+    <div class="court-line" aria-hidden="true"></div>
+    <h1>Slot 10 War Room</h1>
+    <p class="thesis" id="thesis"></p>
+  </header>
+
+  <section aria-label="Season outlook">
+    <div class="row">
+      <span class="label">Week-to-week swings</span>
+      <div class="toggle" role="group" aria-label="Weekly swing">
+        <button id="sw-n" aria-pressed="true">Normal (±22 pts)</button>
+        <button id="sw-w" aria-pressed="false">Wilder (±30 pts)</button>
+      </div>
+    </div>
+    <div class="board" id="board"></div>
+    <p class="sub" id="board-note"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="wk-h" style="gap:16px">
+    <div class="race-head">
+      <div style="display:grid;gap:4px;flex:1;min-width:220px">
+        <h2 id="wk-h">This week</h2>
+        <p class="sub" id="wk-sub"></p>
+      </div>
+    </div>
+    <div class="vs" id="vs"></div>
+    <div class="odds-line" id="wk-odds"></div>
+    <div class="two">
+      <div><h3 style="margin-bottom:6px">Your starters</h3><div id="locks"></div></div>
+      <div class="next"><h3>Swap plan</h3><div id="swaps" class="next"></div></div>
+    </div>
+  </section>
+
+  <section aria-label="Trending on Sleeper">
+    <div class="panel" style="display:grid;gap:16px">
+      <div class="row" style="align-items:baseline;gap:10px"><h3 id="trend-h">Trending on Sleeper</h3><span class="label" id="trend-meta"></span></div>
+      <div class="move" id="trend-move"></div>
+      <div class="tgroups" id="trend-groups"></div>
+      <details class="allt">
+        <summary>See all trending players</summary>
+        <div style="display:grid;gap:10px;margin-top:10px">
+          <p class="sub" id="trend-sub"></p>
+          <div class="label">Most added</div>
+          <div class="tbl"><table id="trend-add" class="trend"></table></div>
+          <div class="label">Most dropped</div>
+          <div class="tbl"><table id="trend-drop" class="trend"></table></div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section aria-labelledby="sched-h">
+    <h2 id="sched-h">Your schedule</h2>
+    <p class="sub">Chance you win each week, from 6,000 simulated seasons. Week 1 uses this week's live score. Below each bar: week number and opponent.</p>
+    <div class="panel strip-wrap"><div class="strip" id="strip"></div></div>
+  </section>
+
+  <section class="panel" aria-labelledby="race-h">
+    <div class="race-head">
+      <div style="display:grid;gap:4px;flex:1;min-width:220px">
+        <h2 id="race-h">The season race</h2>
+        <p class="sub">Expected wins after each week on the league's real schedule. Your team is in maple.</p>
+      </div>
+      <div class="week num" id="weeknum">18 <small>/ 18 WEEKS</small></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="play">Replay season</button>
+      <input type="range" id="wk" min="1" max="18" value="18" aria-label="Week">
+    </div>
+    <div class="race" id="race"></div>
+    <div class="race-axis"><span></span><div class="ticks" id="ticks"></div></div>
+  </section>
+
+  <section aria-labelledby="pw-h">
+    <h2 id="pw-h">Power rankings</h2>
+    <p class="sub">Bar = expected points per week from each team's best Lock-In lineup (9 starters placed by position, plus a little bench). Draft = average share of the best available value at each pick.</p>
+    <div class="panel"><div class="pw2" id="power"></div></div>
+  </section>
+
+  <section aria-labelledby="picks-h">
+    <h2 id="picks-h">Your draft, graded</h2>
+    <p class="sub">Grade = the player's Lock-In value as a share of the best value still on the board at that pick.</p>
+    <div class="legend" id="grade-legend"></div>
+    <div class="picks" id="picks"></div>
+  </section>
+
+  <section aria-labelledby="room-h">
+    <h2 id="room-h">How the room drafted</h2>
+    <p class="sub" id="room-sub"></p>
+    <div class="panel"><div class="mgr2" id="room"></div></div>
+  </section>
+
+  <section aria-labelledby="ln-h">
+    <h2 id="ln-h">Your lineup vs the league</h2>
+    <p class="sub">Each starting slot against the average starter in that slot across the league. Lock-In value = the score you can expect to lock there in a typical week.</p>
+    <div class="panel tbl"><table id="slots"></table></div>
+    <div class="panel" style="display:grid;gap:8px"><h3>Bench</h3><p class="sub">"Adds" = what each bench player adds to your lineup per week: he fills in when a starter sits or has fewer games.</p><div class="tbl"><table id="bench"></table></div><div class="kv" id="cover"></div></div>
+  </section>
+
+  <section aria-labelledby="wv-h">
+    <h2 id="wv-h">Waiver radar</h2>
+    <p class="sub" id="wv-sub"></p>
+    <div class="panel tbl"><table id="adds"></table></div>
+  </section>
+
+  <section aria-labelledby="tr-h">
+    <h2 id="tr-h">Trade targets</h2>
+    <p class="sub">Players the market (Sleeper ADP) rates far below their Lock-In value, ranked by what they would add to your lineup. Managers who drafted off ADP are the likeliest to sell them at market price.</p>
+    <div class="panel tbl"><table id="buy"></table></div>
+  </section>
+
+  <section aria-labelledby="po-h">
+    <h2 id="po-h">Playoff weeks</h2>
+    <p class="sub" id="po-sub"></p>
+    <div class="panel tbl"><table id="po"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="nx-h">
+    <h2 id="nx-h">Next steps</h2>
+    <p class="sub" id="nx-sub"></p>
+    <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section aria-labelledby="as-h">
+    <h2 id="as-h">Assumptions to argue with</h2>
+    <div class="assume" id="assume"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const D = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const pct = (x) => (x >= 0.995 ? ">99%" : x < 0.005 ? "<1%" : Math.round(x * 100) + "%");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let SW = "n";
+
+/* tooltip */
+const tip = $("#tip");
+document.addEventListener("pointermove", (e) => {
+  const t = e.target.closest("[data-tip]");
+  if (!t) { tip.classList.remove("on"); return; }
+  tip.textContent = t.dataset.tip; tip.classList.add("on");
+  const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8);
+  tip.style.left = x + "px"; tip.style.top = (e.clientY + 16) + "px";
+});
+document.addEventListener("pointerleave", () => tip.classList.remove("on"));
+
+const teamsOf = () => (SW === "n" ? D.teams : D.teamsWide);
+const meOf = () => teamsOf().find((t) => t.me);
+
+/* header + board */
+function renderText() {
+  $("#eyebrow").textContent = D.eyebrow;
+  $("#thesis").innerHTML = D.notes.thesis;
+  $("#assume").innerHTML = D.notes.assumptions.map(([t, b]) => `<div class="as"><b>${t}</b><span class="sub">${b}</span></div>`).join("");
+  $("#steps").innerHTML = D.notes.steps.map((s) => `<li><span>${s}</span></li>`).join("");
+  $("#nx-sub").innerHTML = D.notes.nextSub;
+  $("#room-sub").innerHTML = D.notes.room;
+  $("#wv-sub").innerHTML = D.notes.waivers;
+  $("#po-sub").innerHTML = D.notes.playoffs;
+  $("#foot").innerHTML = D.notes.footer;
+}
+function renderBoard() {
+  const T = teamsOf(), me = meOf();
+  const rank = T.slice().sort((a, b) => b.wins - a.wins).indexOf(me) + 1;
+  const avg = T.reduce((a, t) => a + t.mean, 0) / T.length;
+  const tiles = [
+    ["Projected record", `${me.wins.toFixed(1)}–${(18 - me.wins).toFixed(1)}`, `Rank ${rank} of 10 by expected wins`],
+    ["Playoff odds", pct(me.playoff), "Top 6 of 10 make it"],
+    ["Title odds", pct(me.title), "An average team would be 10%"],
+    ["Points per week", Math.round(me.mean).toString(), `League average ${Math.round(avg)}`],
+  ];
+  $("#board").innerHTML = tiles.map(([l, v, n]) => `<div class="tile"><span class="label">${l}</span><span class="big num" data-final="${v}">${v}</span><span class="note">${n}</span></div>`).join("");
+  $("#board-note").textContent = SW === "n"
+    ? "Normal: each team's weekly total varies by about 22 points around its average, before injuries and hot streaks."
+    : "Wilder: each team's weekly total varies by about 30 points. More upsets, so the favorite's edge shrinks.";
+}
+function countUp() {
+  if (reduce) return;
+  document.querySelectorAll(".board .big").forEach((el) => {
+    const fin = el.dataset.final; const nums = fin.match(/[\d.]+/g); if (!nums) return;
+    const t0 = performance.now(), dur = 900;
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      let i = 0;
+      el.textContent = fin.replace(/[\d.]+/g, (m) => { const v = parseFloat(nums[i++]) * e; return m.includes(".") ? v.toFixed(1) : Math.round(v); });
+      if (k < 1) requestAnimationFrame(step); else el.textContent = fin;
+    };
+    requestAnimationFrame(step);
+  });
+}
+function setSwing(s) {
+  SW = s; $("#sw-n").setAttribute("aria-pressed", s === "n"); $("#sw-w").setAttribute("aria-pressed", s === "w");
+  renderBoard(); renderPower(); countUp();
+}
+$("#sw-n").addEventListener("click", () => setSwing("n"));
+$("#sw-w").addEventListener("click", () => setSwing("w"));
+
+/* this week */
+function renderWeek() {
+  const w = D.week1;
+  $("#wk-sub").innerHTML = w.sub;
+  $("#vs").innerHTML = `<div class="side me"><span class="label">You</span><span class="pts num">${w.me}</span><span class="sub">Projected ${w.projMe}</span></div>
+    <div class="mid">Week ${w.week}<br>${w.daysLeft}</div>
+    <div class="side r"><span class="label">${esc(w.opp)}</span><span class="pts num">${w.oppPts}</span><span class="sub">Projected ${w.projOpp}</span></div>`;
+  const [lab, ...rest] = w.oddsNote.split(". ");
+  $("#wk-odds").innerHTML = `<span class="odds-big num">${pct(w.odds)}</span><span class="lab">${lab.replace(/\.$/, "")}</span><span class="why">${rest.join(". ")}</span>`;
+  $("#locks").innerHTML = w.rows.map((r) => `<div class="lockrow"><span class="nm">${esc(r.n)}</span><span class="sc num">${r.score.toFixed(1)}</span><span class="chip ${r.status === "Locked" ? "locked" : "hold"}">${r.status}</span><span class="why">${r.why}</span></div>`).join("");
+  $("#swaps").innerHTML = w.swaps.map((s) => `<div class="as"><span class="when">${s.when}</span><b>${s.what}</b><span class="sub">${s.why}</span></div>`).join("");
+}
+
+/* schedule strip */
+function renderStrip() {
+  $("#strip").innerHTML = D.myWeeks.map((x) => `<div class="wk" data-tip="Week ${x.w} vs ${x.opp}: ${pct(x.odds)} to win">
+    <span class="p num">${Math.round(x.odds * 100)}</span>
+    <div class="col"><i class="${x.odds < 0.5 ? "low" : ""}" style="height:${Math.max(2, x.odds * 100)}%"></i></div>
+    <span class="w">${x.w}</span><span class="o">${esc(x.opp)}</span></div>`).join("");
+}
+
+/* race */
+const cum = D.cum;
+const order0 = D.teams.map((t, i) => i);
+const raceMax = 18;
+function buildRace() {
+  $("#race").innerHTML = D.teams.map((t, i) => `<div class="lane ${t.me ? "me" : ""}" id="lane-${i}"><span class="nm">${esc(t.me ? "You" : t.name)}</span><div class="track"><div class="bar" data-tip=""><span class="v"></span></div></div></div>`).join("");
+  $("#ticks").innerHTML = [0, 3, 6, 9, 12, 15, 18].map((v) => `<span style="left:${v / raceMax * 100}%">${v}</span>`).join("");
+}
+function drawWeek(w) {
+  const row = cum[w - 1];
+  const ord = order0.map((i) => [i, row[i]]).sort((a, b) => b[1] - a[1]);
+  ord.forEach(([i, v], rank) => {
+    const lane = $("#lane-" + i);
+    lane.style.transform = `translateY(${rank * 34}px)`;
+    const bar = $(".bar", lane);
+    bar.style.width = `calc(${v / raceMax * 100}% - 40px * ${v / raceMax})`;
+    $(".v", bar).textContent = v.toFixed(1);
+    bar.dataset.tip = `${D.teams[i].me ? "You" : D.teams[i].name}: ${v.toFixed(1)} expected wins after week ${w} (rank ${rank + 1})`;
+  });
+  $("#weeknum").innerHTML = `${w} <small>/ 18 WEEKS</small>`;
+  $("#wk").value = w;
+}
+let timer = null;
+function play() {
+  clearInterval(timer);
+  let w = 1; drawWeek(w);
+  $("#play").textContent = "Pause";
+  timer = setInterval(() => { w++; drawWeek(w); if (w >= 18) stop(); }, reduce ? 0 : 520);
+}
+function stop() { clearInterval(timer); timer = null; $("#play").textContent = "Replay season"; }
+$("#play").addEventListener("click", () => (timer ? stop() : play()));
+$("#wk").addEventListener("input", (e) => { stop(); drawWeek(+e.target.value); });
+let raced = false;
+new IntersectionObserver((es) => { es.forEach((e) => { if (e.isIntersecting && !raced && !reduce) { raced = true; play(); } }); }, { threshold: 0.45 }).observe($("#race"));
+
+/* power */
+function renderPower() {
+  const T = teamsOf().slice().sort((a, b) => b.mean - a.mean);
+  const lo = Math.min(...T.map((t) => t.mean)) - 15, hi = Math.max(...T.map((t) => t.mean));
+  const style = Object.fromEntries(D.room.map((r) => [r.name, r.label]));
+  $("#power").innerHTML = `<span class="h"></span><span class="h">Team</span><span class="h">Points per week</span><span class="h n">Playoffs</span><span class="h n">Title</span>` +
+    T.map((t, i) => `<span class="rk num">${i + 1}</span>
+      <span class="nm ${t.me ? "me" : ""}" data-tip="Top players: ${esc(t.stars.join(", "))}">${esc(t.me ? "You" : t.name)}<small>draft ${Math.round((t.draft || 0) * 100)}% · ${esc(style[t.name] || "")}</small></span>
+      <span class="tr" data-tip="${esc(t.name)}: ${t.mean.toFixed(0)} per week in the regular season, ${t.pmean.toFixed(0)} in playoff weeks"><i class="${t.me ? "me" : ""}" style="width:${((t.mean - lo) / (hi - lo)) * 100}%"></i><span>${t.mean.toFixed(0)}</span></span>
+      <span class="n">${pct(t.playoff)}</span><span class="n">${pct(t.title)}</span>`).join("");
+}
+
+/* picks */
+const GR = [[0.95, "g4", "Strong"], [0.85, "g3", "Solid"], [0.75, "g2", "Questionable"], [0, "g1", "Reach"]];
+const grade = (p) => GR.find((g) => p >= g[0]);
+function renderPicks() {
+  $("#grade-legend").innerHTML = GR.map((g) => `<span><span class="chip ${g[1]}">${g[2]}</span> ${g[0] ? "≥ " + Math.round(g[0] * 100) + "% of best" : "under 75%"}</span>`).join("");
+  $("#picks").innerHTML = D.myDraft.map((p, i) => {
+    const [, cls, lab] = grade(p.pct);
+    const alts = p.alts.map((a) => `<b>${esc(a.n)}</b> ${a.s}`).join(" · ");
+    return `<article class="pick" style="--i:${i}">
+      <div class="pick-top"><span class="slot num">${p.round}.${p.round % 2 ? 10 : 1}</span>
+        <div style="min-width:0"><div class="pname">${esc(p.name)}</div><div class="pmeta">${esc(p.pos)} · ${esc(p.team)} · pick ${p.pick} · ADP ${Math.round(p.adp)}</div></div>
+        <span class="chip ${cls}">${lab}</span></div>
+      <div class="meter" data-tip="${Math.round(p.pct * 100)}% of the best available Lock-In value at pick ${p.pick}"><i style="width:${Math.min(100, p.pct * 100)}%"></i></div>
+      <div class="stats"><span>Lock-In value at the draft <b>${p.lv}</b></span>${p.kept ? "" : `<span class="tag2 warn">Dropped</span>`}${p.inj ? `<span class="tag2 bad">${esc(p.inj)} now</span>` : ""}</div>
+      <div class="alt">${p.pct >= 0.995 ? "Best value on the board here." : "Could've had: " + alts}</div>
+    </article>`;
+  }).join("");
+}
+
+/* room */
+function renderRoom() {
+  $("#room").innerHTML = D.room.map((r) => `<span class="${r.me ? "me" : ""}">${esc(r.me ? "You" : r.name)}</span>
+    <span class="bar2" data-tip="Sharpness ${Math.round(r.s * 100)} ± ${Math.round(r.sd * 100)}"><i class="${r.me ? "me" : ""}" style="width:${Math.max(2, r.s * 100)}%"></i></span>
+    <span class="sc2 num">${Math.round(r.s * 100)}</span>
+    <span class="info">${esc(r.label)} · ${r.captured != null ? Math.round(r.captured * 100) + "% of best value per pick" : ""} · ${r.reaches} reach${r.reaches === 1 ? "" : "es"} · ${r.steals} steal${r.steals === 1 ? "" : "s"}</span>`).join("");
+}
+
+/* lineup */
+function renderLineup() {
+  const mx = Math.max(...D.slots.map((s) => Math.abs(s.diff)));
+  $("#slots").innerHTML = `<tr><th>Slot</th><th>Player</th><th class="n">Lock-In</th><th class="n">League</th><th>vs league</th></tr>` +
+    D.slots.map((s) => { const w = (Math.abs(s.diff) / mx) * 50;
+      return `<tr><td>${s.slot}</td><td>${esc(s.name)} <span class="pmeta">${esc(s.pos)}</span></td><td class="n">${s.lv.toFixed(1)}</td><td class="n">${s.league.toFixed(1)}</td>
+      <td><div class="diffbar" data-tip="${s.diff >= 0 ? "+" : ""}${s.diff.toFixed(1)} vs the average ${s.slot}"><i style="left:${s.diff >= 0 ? 50 : 50 - w}%;width:${w}%;background:${s.diff >= 0 ? "var(--blue)" : "var(--clay)"}"></i></div></td></tr>`; }).join("");
+  $("#bench").innerHTML = `<tr><th>Player</th><th>Pos</th><th class="n">Lock-In</th><th class="n">Adds</th><th></th></tr>` +
+    D.bench.map((b) => `<tr><td>${esc(b.name)}</td><td>${esc(b.pos)}</td><td class="n">${b.lv.toFixed(1)}</td><td class="n">${b.adds.toFixed(1)}</td><td>${b.ir ? '<span class="tag2 bad">IR</span>' : b.inj ? `<span class="tag2 warn">${esc(b.inj)}</span>` : ""}</td></tr>`).join("");
+  const c = D.coverage;
+  $("#cover").innerHTML = `<span>Can play guard <b>${c.G}</b></span><span>forward <b>${c.F}</b></span><span>center <b>${c.C}</b></span><span>center-only <b>${c.Conly}</b></span>`;
+}
+
+/* waivers + trades */
+const poCells = (g) => g.map((n) => `<span class="gm" style="background:var(${["--seq-0", "--seq-1", "--seq-2", "--seq-3", "--seq-4", "--seq-5"][Math.min(5, n)]});color:${n >= 3 ? "var(--bg)" : "var(--ink)"}">${n}</span>`).join(" ");
+function renderMarket() {
+  $("#adds").innerHTML = `<tr><th>Add</th><th>Pos</th><th class="n">Lock-In</th><th>Drop</th><th class="n">+/wk</th><th>Playoff games</th></tr>` +
+    D.adds.map((a) => `<tr><td>${esc(a.name)} <span class="pmeta">${esc(a.team)}</span>${a.inj ? ` <span class="tag2 warn">${esc(a.inj)}</span>` : ""}</td><td>${esc(a.pos)}</td><td class="n">${a.lv.toFixed(1)}</td><td>${esc(a.drop)}</td><td class="n">+${a.gain.toFixed(1)}</td><td>${poCells(a.po)}</td></tr>`).join("");
+  $("#buy").innerHTML = `<tr><th>Player</th><th>Owner</th><th class="n">Lock-In rank</th><th class="n">ADP rank</th><th class="n">Adds to you</th></tr>` +
+    D.buy.map((b) => `<tr><td>${esc(b.name)} <span class="pmeta">${esc(b.pos)}</span></td><td>${esc(b.owner)} <span class="pmeta">${esc(b.ownerSharp)}</span></td><td class="n">#${b.lockRank}</td><td class="n">#${b.adpRank}</td><td class="n">+${b.fitAdd.toFixed(1)}</td></tr>`).join("");
+  $("#po").innerHTML = `<tr><th>Player</th><th>Team</th><th>Wk 19</th><th>Wk 20</th><th>Wk 21</th><th class="n">Total</th></tr>` +
+    D.playoffGames.map((p) => `<tr><td>${esc(p.name)}</td><td>${esc(p.team)}</td>${p.games.map((n) => `<td>${poCells([n])}</td>`).join("")}<td class="n">${p.games.reduce((a, b) => a + b, 0)}</td></tr>`).join("");
+}
+
+/* trending */
+const VCH = { "Add": "g4", "Buy-low add": "g4", "Speculative add": "g2", "Watch": "g3", "Pass": "muted", "Owned": "muted", "Yours: keep": "yours", "Yours: drop candidate": "g1" };
+const VLAB = { "Speculative add": "Maybe", "Yours: keep": "Keep", "Yours: drop candidate": "Drop", "Buy-low add": "Buy low" };
+function renderTrending() {
+  const T = D.trending; if (!T) { $("#trend-h").parentElement.parentElement.hidden = true; return; }
+  $("#trend-meta").textContent = T.meta;
+  $("#trend-sub").textContent = T.sub;
+  const m = T.move;
+  $("#trend-move").innerHTML = m ? `<span class="label">Your move</span>
+    <div class="swap"><span class="out">Drop <b>${esc(m.drop)}</b></span><span class="arr" aria-hidden="true">›</span><span>Add <b>${esc(m.add)}</b></span><span class="chip g4">+${m.gain.toFixed(1)}/wk</span></div>
+    <div class="sub">${esc(m.drop.split(" ").pop())}: ${esc(m.dropWhy)}. ${esc(m.addLast)}: ${esc(m.addWhy)}.</div>
+    <div class="alts">Gain is small, so bid low on FAAB.</div>` : "";
+  const k = (n) => (Math.abs(n) >= 1000 ? Math.round(Math.abs(n) / 1000) + "k" : Math.abs(n));
+  const item = (r, chip) => `<div class="trow"><b>${esc(r.name)}</b><span class="chip ${VCH[r.verdict] || "muted"}">${chip}</span><span class="w">${esc(r.why)}</span></div>`;
+  const group = (title, list, chipOf) => (list.length ? `<div class="tg"><span class="label">${title}</span>${list.map((r) => item(r, chipOf(r))).join("")}</div>` : "");
+  const others = T.free.filter((r) => !m || r.name !== m.add).slice(0, 3);
+  const drops = T.yours.filter((r) => r.verdict === "Yours: drop candidate"), keeps = T.yours.filter((r) => r.verdict === "Yours: keep");
+  const yoursHtml = drops.length || keeps.length ? `<div class="tg"><span class="label">On your team</span>${drops.map((r) => item(r, "Drop")).join("")}${keeps.length ? `<div class="trow"><b>Keep</b><span class="chip yours">Keep</span><span class="w">${keeps.map((r) => esc(r.name.split(" ").pop())).join(", ")}: trending up</span></div>` : ""}</div>` : "";
+  $("#trend-groups").innerHTML =
+    group("Other free options", others, (r) => `+${r.gain.toFixed(1)}/wk`) +
+    group("Watch one more game", T.watch, () => "Watch") + yoursHtml;
+  const row = (r) => `<tr><td>${esc(r.name)} <span class="pmeta">${esc(r.team)}</span></td><td class="n">${k(r.net)}</td><td class="why">${esc(r.why)}</td>
+    <td><span class="chip ${VCH[r.verdict] || "muted"}">${esc(VLAB[r.verdict] || r.verdict)}</span></td></tr>`;
+  const head = (lab) => `<tr><th>Player</th><th class="n">${lab}</th><th>Why</th><th>For you</th></tr>`;
+  $("#trend-add").innerHTML = head("Net adds") + T.add.map(row).join("");
+  $("#trend-drop").innerHTML = head("Net drops") + T.drop.map(row).join("");
+}
+
+renderText(); renderBoard(); renderTrending(); renderWeek(); renderStrip(); buildRace(); drawWeek(18); renderPower(); renderPicks(); renderRoom(); renderLineup(); renderMarket();
+requestAnimationFrame(countUp);
+</script>

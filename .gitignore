@@ -1,0 +1,7 @@
+node_modules/
+dist/
+reports/screens/ext_*.png
+__pycache__/
+*.pyc
+.DS_Store
+site/

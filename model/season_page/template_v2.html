@@ -1,0 +1,535 @@
+<title>Slot 10 War Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: broadcast-style scoreboard band pinned on top; below it a full-width 12-column board of cards.
+   Each card leads with one answer line and a few facts; the detail sits in a "Deep dive" fold. */
+:root {
+  --bg: #EDF1F8; --surface: #FFFFFF; --surface-2: #F4F7FC; --line: #D3DCEB;
+  --ink: #0A1A3D; --ink-2: #33456B; --muted: #66779A;
+  --band: #0A1A3D; --band-2: #12285A; --band-fg: #FFFFFF; --band-muted: #A9B9DA;
+  --red: #C8102E; --blue: #1D428A; --gold: #A8760A; --gold-fill: #F2B33D;
+  --good: #12804A; --warn: #C25E00; --other: #9DB0D3; --track: #E2E8F3;
+  --display: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #050E24; --surface: #0C1A3B; --surface-2: #10224B; --line: #1E3566;
+  --ink: #F3F6FC; --ink-2: #C3CFE6; --muted: #8798BD;
+  --band: #030A1C; --band-2: #0E2150; --band-fg: #FFFFFF; --band-muted: #93A6CF;
+  --red: #EE2E47; --blue: #4C86E8; --gold: #F2B33D; --gold-fill: #F2B33D;
+  --good: #36C27C; --warn: #FF9A3D; --other: #36508A; --track: #15295A;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #050E24; --surface: #0C1A3B; --surface-2: #10224B; --line: #1E3566;
+  --ink: #F3F6FC; --ink-2: #C3CFE6; --muted: #8798BD;
+  --band: #030A1C; --band-2: #0E2150; --band-fg: #FFFFFF; --band-muted: #93A6CF;
+  --red: #EE2E47; --blue: #4C86E8; --gold: #F2B33D; --gold-fill: #F2B33D;
+  --good: #36C27C; --warn: #FF9A3D; --other: #36508A; --track: #15295A;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 150px); }
+body { background: var(--bg); color: var(--ink); font: 400 15.5px/1.45 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--band); }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.05; text-wrap: balance; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--gold-fill); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---- scoreboard band ---- */
+.band { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--band); color: var(--band-fg); border-bottom: 4px solid var(--red); }
+.band .in { max-width: 2400px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.band .top { display: flex; align-items: center; gap: 16px 28px; flex-wrap: wrap; }
+.team { display: grid; gap: 2px; min-width: 0; }
+.team h1 { font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; text-transform: uppercase; letter-spacing: .01em; }
+.team .sub { font-size: 13px; color: var(--band-muted); }
+.stats { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.stat { background: var(--band-2); border-radius: 10px; padding: 6px 12px 7px; display: grid; min-width: 92px; }
+.stat .k { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--band-muted); font-weight: 600; }
+.stat .v { font-family: var(--display); font-weight: 800; font-size: 30px; line-height: 1; }
+.stat.alert .v { color: #FF6B7E; }
+.stat.you .v { color: var(--gold-fill); }
+.stat .v { white-space: nowrap; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+.stat .v small { white-space: nowrap; font-family: var(--body); font-size: 13px; font-weight: 600; color: var(--band-muted); letter-spacing: 0; }
+.stat .v small b { color: var(--band-fg); font-weight: 700; }
+.navrow { display: flex; gap: 6px; align-items: center; }
+.nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.tool { flex: none; border: 0; cursor: pointer; background: var(--band-2); color: var(--band-fg); font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; }
+.tool:hover { background: #1B3570; }
+.tool[hidden] { display: none; }
+.nav::-webkit-scrollbar { display: none; }
+.nav a { flex: none; color: var(--band-fg); text-decoration: none; font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .03em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 1px #2A4378; }
+.nav a:hover { background: var(--band-2); }
+.nav a[aria-current="true"] { background: var(--red); box-shadow: none; }
+@media (max-width: 720px) {
+  .band .in { padding-block: 10px 8px; gap: 8px; }
+  .team h1 { font-size: 24px; } .team .sub { display: none; }
+  .stats { margin-left: 0; display: grid; grid-template-columns: .95fr 1.3fr .85fr 1fr; width: 100%; gap: 5px; }
+  .stat { min-width: 0; padding: 5px 7px; } .stat .k { font-size: 9.5px; letter-spacing: .03em; white-space: nowrap; } .stat .v { font-size: 20px; }
+  .stat .v small { font-size: 11.5px; flex-basis: 100%; }
+  .tool { display: none; }
+}
+
+/* ---- board ---- */
+.board { max-width: 2400px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 48px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.col { display: contents; }
+.c { grid-column: span 12; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; display: grid; gap: 12px; min-width: 0; container-type: inline-size; }
+#week { order: 1; } #trend { order: 2; } #season { order: 3; } #power { order: 4; } #lineup { order: 5; } #trades { order: 6; } #draft { order: 7; } #playoffs { order: 8; } #next { order: 9; } #assume { order: 10; } footer { order: 11; }
+@media (min-width: 1100px) and (max-width: 1279px) { .s7 { grid-column: span 7; } .s5 { grid-column: span 5; } .s6 { grid-column: span 6; } .s4 { grid-column: span 4; } .s8 { grid-column: span 8; } }
+@media (min-width: 1280px) {
+  .board { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr); padding-block: 20px 40px; }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .c { padding: 18px 20px; }
+}
+.ch { display: flex; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; }
+.ch h2 { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); }
+.ch .meta { font-size: 13px; color: var(--muted); }
+.answer { font-family: var(--display); font-weight: 700; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.1; }
+.answer em { font-style: normal; color: var(--red); }
+.answer b { color: var(--gold); font-weight: 800; }
+.facts { display: flex; gap: 8px; flex-wrap: wrap; }
+.fact { background: var(--surface-2); border-radius: 8px; padding: 6px 10px; font-size: 14px; color: var(--ink-2); }
+.fact b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.list { display: grid; gap: 0; }
+.li { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.li:last-child { border-bottom: 0; }
+.li .n { font-weight: 600; }
+.li .w { grid-column: 1; font-size: 13px; color: var(--muted); }
+.li .pill { grid-row: 1 / span 2; grid-column: 2; }
+.pill { font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: .03em; text-transform: uppercase; padding: 2px 10px; border-radius: 999px; white-space: nowrap; box-shadow: inset 0 0 0 1.5px currentColor; }
+.pill.good { color: var(--good); } .pill.bad { color: var(--red); } .pill.warn { color: var(--warn); } .pill.you { color: var(--gold); } .pill.mute { color: var(--muted); } .pill.blue { color: var(--blue); }
+.pill.solid { background: var(--red); color: #fff; box-shadow: none; }
+.lab { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+details.deep { border-top: 1px solid var(--line); padding-top: 10px; }
+details.deep > summary { cursor: pointer; list-style: none; font-weight: 600; color: var(--blue); font-size: 14.5px; display: inline-flex; gap: 8px; align-items: center; }
+details.deep > summary::-webkit-details-marker { display: none; }
+details.deep > summary::before { content: "+"; font-family: var(--display); font-weight: 800; font-size: 18px; width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 6px; background: var(--surface-2); }
+details.deep[open] > summary::before { content: "–"; }
+details.deep > .dd { display: grid; gap: 14px; margin-top: 12px; }
+.note { font-size: 13.5px; color: var(--ink-2); max-width: 75ch; }
+
+/* this week */
+.vs { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: end; gap: 10px; background: var(--surface-2); border-radius: 10px; padding: 12px 14px; }
+.vs .t { display: grid; gap: 0; }
+.vs .t.r { text-align: right; }
+.vs .nm { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.vs .pts { font-family: var(--display); font-weight: 800; font-size: clamp(44px, 4.5vw, 64px); line-height: .95; }
+.vs .t.me .pts { color: var(--gold); }
+.vs .pj { font-size: 13px; color: var(--muted); }
+.vs .mid { font-family: var(--display); font-weight: 700; color: var(--muted); font-size: 18px; text-align: center; padding-bottom: 8px; }
+.moves { display: grid; gap: 8px; }
+.mv { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 2px 12px; align-items: baseline; }
+.mv .when { grid-row: span 2; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--red); font-size: 15px; }
+.mv .what { font-weight: 600; }
+.mv .why { grid-column: 2; font-size: 13px; color: var(--muted); }
+@container (max-width: 520px) { .mv { grid-template-columns: minmax(0,1fr); } .mv .when { grid-row: auto; } .mv .why { grid-column: 1; } }
+.lk { display: grid; grid-template-columns: minmax(0,1fr) 58px auto; gap: 0 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.lk:last-child { border-bottom: 0; }
+.lk .sc { font-family: var(--display); font-weight: 700; font-size: 20px; text-align: right; }
+.lk .w { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+
+/* trending */
+.swap { display: grid; gap: 4px; background: var(--surface-2); border-radius: 10px; padding: 12px 14px; }
+.swap .line { font-family: var(--display); font-weight: 700; font-size: 24px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.swap .line .out { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 2px; }
+.swap .why { font-size: 13.5px; color: var(--ink-2); }
+.cols3 { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; }
+@container (min-width: 760px) { .cols3 { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+
+/* season */
+.strip { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 3px; align-items: end; height: 92px; }
+.strip .b { position: relative; height: 100%; display: grid; align-items: end; }
+.strip .b i { display: block; border-radius: 3px 3px 0 0; background: var(--blue); }
+.strip .b i.lo { background: var(--red); }
+.strip .b.now i { box-shadow: 0 0 0 2px var(--gold-fill); }
+.strip .b i.won { background: var(--good); border-radius: 3px; }
+.strip .b i.lost { background: var(--red); opacity: .45; border-radius: 3px; }
+.mk { border: 0; background: none; color: var(--blue); font-size: 12.5px; font-weight: 600; padding: 2px 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.mk:hover { color: var(--ink); }
+.strip-x { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 3px; font-size: 11px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.pw { display: grid; grid-template-columns: 22px minmax(0, 140px) minmax(0,1fr) 52px 52px; gap: 6px 10px; align-items: center; font-size: 14px; }
+.pw .h { font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.pw .r { text-align: right; font-variant-numeric: tabular-nums; }
+.pw .rk { font-family: var(--display); font-weight: 800; font-size: 18px; color: var(--muted); }
+.pw .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pw .me { color: var(--gold); font-weight: 700; }
+.tr { position: relative; height: 16px; background: var(--track); border-radius: 4px; }
+.tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--other); }
+.tr i.me { background: var(--gold-fill); }
+.tr span { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 11.5px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.toggle { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
+.toggle button { border: 0; background: transparent; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
+.toggle button[aria-pressed="true"] { background: var(--band); color: #fff; }
+
+/* tables */
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.sm { font-size: 12.5px; color: var(--muted); }
+.diff { position: relative; height: 12px; min-width: 90px; }
+.diff::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--line); }
+.diff i { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.gm { display: inline-grid; place-items: center; width: 26px; height: 22px; border-radius: 4px; font-size: 12.5px; font-weight: 600; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.pk { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; }
+.pk .t { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.pk .nm { font-weight: 700; }
+.pk .rd { font-family: var(--display); font-weight: 800; color: var(--muted); }
+.meter { height: 5px; background: var(--track); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--blue); }
+.sharp { display: grid; grid-template-columns: minmax(0, 130px) minmax(0,1fr) 36px; gap: 6px 10px; align-items: center; font-size: 14px; }
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.race { display: grid; gap: 4px; }
+.race .ln { display: grid; grid-template-columns: minmax(0, 130px) minmax(0,1fr); gap: 10px; align-items: center; font-size: 13.5px; }
+footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
+
+/* focus view: a nav tab fills the screen with one section, summary left, deep dive open on the right */
+.board[data-focus] { grid-template-columns: minmax(0, 1fr); }
+.board[data-focus] .col { display: contents; }
+.board[data-focus] .c:not(.focus), .board[data-focus] footer { display: none; }
+.c.focus { grid-column: 1 / -1; min-height: calc(100dvh - var(--bandh, 150px) - 44px); align-content: start; }
+.c.focus #power-top, .c.focus #buy-top { display: none; }
+@media (min-width: 1100px) {
+  .c.focus { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: 36px; row-gap: 0; padding: 26px 30px; }
+  .c.focus > * { grid-column: 1; margin-bottom: 16px; }
+  .c.focus > details.deep { grid-column: 2; grid-row: 1 / span 12; margin: 0; border-top: 0; border-left: 1px solid var(--line); padding: 0 0 0 30px; }
+  .c.focus > details.deep > .dd { margin-top: 14px; }
+  .c.focus .answer { font-size: clamp(30px, 2.5vw, 44px); }
+  .c.focus .cols3 { grid-template-columns: minmax(0, 1fr); }
+}
+#tip { position: fixed; z-index: 40; pointer-events: none; background: var(--band); color: #fff; font-size: 12.5px; padding: 6px 9px; border-radius: 6px; max-width: 260px; opacity: 0; transition: opacity .12s; }
+#tip.on { opacity: 1; }
+@media (min-width: 2100px) { body { font-size: 16.5px; } .answer { font-size: 34px; } }
+:fullscreen body, body:fullscreen { overflow-y: auto; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } html { scroll-behavior: auto; } }
+</style>
+
+<header class="band">
+  <div class="in">
+    <div class="top">
+      <div class="team"><h1 id="tname">It's Always Dame Time</h1><span class="sub" id="tsub"></span></div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="navrow">
+      <nav class="nav" aria-label="Sections">
+        <a href="#all" aria-current="true">All</a><a href="#week">This week</a><a href="#trend">Waivers</a><a href="#season">Season</a><a href="#power">Power</a><a href="#lineup">Lineup</a><a href="#trades">Trades</a><a href="#draft">Draft</a><a href="#playoffs">Playoffs</a><a href="#next">Next</a>
+      </nav>
+      <button class="tool" id="t-open" type="button">Open all deep dives</button>
+      <button class="tool fs" id="t-fs" type="button" hidden>Full screen</button>
+    </div>
+  </div>
+</header>
+
+<main class="board">
+ <div class="col">
+  <section class="c s7" id="week" aria-labelledby="week-h">
+    <div class="ch"><h2 id="week-h">This week</h2><span class="meta" id="week-meta"></span></div>
+    <p class="answer" id="week-answer"></p>
+    <div class="vs" id="vs"></div>
+    <div class="lab">Your next moves</div>
+    <div class="moves" id="moves"></div>
+    <details class="deep"><summary>Deep dive: every starter's lock call</summary><div class="dd"><div id="locks"></div><p class="note" id="week-note"></p></div></details>
+  </section>
+  <section class="c s7" id="season" aria-labelledby="season-h">
+    <div class="ch"><h2 id="season-h">Season outlook</h2><span class="meta">6,000 simulated seasons on your real schedule</span></div>
+    <p class="answer" id="season-answer"></p>
+    <div class="facts" id="season-facts"></div>
+    <div class="lab">Chance you win each week</div>
+    <div><div class="strip" id="strip"></div><div class="strip-x" id="strip-x"></div></div>
+    <details class="deep"><summary>Deep dive: the race, and what if weeks swing more</summary><div class="dd">
+      <div class="toggle" role="group" aria-label="Weekly swing"><button id="sw-n" aria-pressed="true">Normal swings (±22)</button><button id="sw-w" aria-pressed="false">Wilder swings (±30)</button></div>
+      <p class="note" id="swing-note"></p>
+      <div class="lab">Expected wins after 18 weeks</div>
+      <div class="race" id="race"></div>
+    </div></details>
+  </section>
+  <section class="c s8" id="draft" aria-labelledby="draft-h">
+    <div class="ch"><h2 id="draft-h">Your draft</h2></div>
+    <p class="answer" id="draft-answer"></p>
+    <div class="facts" id="draft-facts"></div>
+    <details class="deep"><summary>Deep dive: all 14 picks, graded</summary><div class="dd"><div class="cards" id="picks"></div><p class="note">Grade = his Lock-In value as a share of the best value still on the board at that pick. Strong ≥ 95%, Solid ≥ 85%, Questionable ≥ 75%, Reach below.</p></div></details>
+  </section>
+ </div>
+ <div class="col">
+  <section class="c s5" id="trend" aria-labelledby="trend-h">
+    <div class="ch"><h2 id="trend-h">Waivers · trending on Sleeper</h2><span class="meta" id="trend-meta"></span></div>
+    <p class="answer" id="trend-answer"></p>
+    <div class="swap" id="swap"></div>
+    <div class="cols3" id="tgroups"></div>
+    <details class="deep"><summary>Deep dive: all trending players and the waiver math</summary><div class="dd">
+      <p class="note" id="trend-note"></p>
+      <div class="lab">Most added</div><div class="tbl"><table id="t-add"></table></div>
+      <div class="lab">Most dropped</div><div class="tbl"><table id="t-drop"></table></div>
+      <div class="lab">Best waiver swaps for your roster</div><div class="tbl"><table id="adds"></table></div>
+      <p class="note" id="wv-note"></p>
+    </div></details>
+  </section>
+  <section class="c s6" id="lineup" aria-labelledby="lineup-h">
+    <div class="ch"><h2 id="lineup-h">Your lineup vs the league</h2></div>
+    <p class="answer" id="lineup-answer"></p>
+    <div class="tbl"><table id="slots"></table></div>
+    <details class="deep"><summary>Deep dive: bench and position coverage</summary><div class="dd"><div class="tbl"><table id="bench"></table></div><div class="facts" id="cover"></div><p class="note">"Adds" is what each bench player adds per week: he fills in when a starter sits or has fewer games.</p></div></details>
+  </section>
+ </div>
+ <div class="col">
+  <section class="c s5" id="power" aria-labelledby="power-h">
+    <div class="ch"><h2 id="power-h">Power rankings</h2><span class="meta">points per week, best lineup</span></div>
+    <p class="answer" id="power-answer"></p>
+    <div class="pw" id="power-top"></div>
+    <details class="deep"><summary>Deep dive: all 10 teams</summary><div class="dd"><div class="pw" id="power-all"></div><p class="note">Draft = average share of the best value left at each pick. Style = how that manager drafted (learned from the real draft).</p></div></details>
+  </section>
+  <section class="c s6" id="trades" aria-labelledby="trades-h">
+    <div class="ch"><h2 id="trades-h">Trade targets</h2><span class="meta">market price below Lock-In value</span></div>
+    <p class="answer" id="trades-answer"></p>
+    <div class="list" id="buy-top"></div>
+    <details class="deep"><summary>Deep dive: full target list and how managers drafted</summary><div class="dd"><div class="tbl"><table id="buy"></table></div><p class="note" id="room-note"></p><div class="sharp" id="room"></div></div></details>
+  </section>
+  <section class="c s4" id="playoffs" aria-labelledby="po-h">
+    <div class="ch"><h2 id="po-h">Playoff weeks 19–21</h2></div>
+    <p class="answer" id="po-answer"></p>
+    <details class="deep"><summary>Deep dive: games per week for every player</summary><div class="dd"><div class="tbl"><table id="po"></table></div></div></details>
+  </section>
+  <section class="c s6" id="next" aria-labelledby="next-h">
+    <div class="ch"><h2 id="next-h">Next steps</h2></div>
+    <p class="answer" id="next-answer"></p>
+    <details class="deep"><summary>Deep dive: the full build plan</summary><div class="dd"><ol class="steps" id="steps"></ol></div></details>
+  </section>
+  <section class="c s6" id="assume" aria-labelledby="as-h">
+    <div class="ch"><h2 id="as-h">Assumptions to argue with</h2></div>
+    <p class="answer">The title odds are probably high.</p>
+    <details class="deep"><summary>Deep dive: five assumptions behind every number here</summary><div class="dd list" id="assumptions"></div></details>
+  </section>
+ </div>
+
+
+
+
+
+
+
+
+
+
+  <footer id="foot"></footer>
+</main>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const D = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = (x) => (x >= 0.995 ? ">99%" : x < 0.005 ? "<1%" : Math.round(x * 100) + "%");
+const last = (n) => n.replace(/ (Jr\.|III|II)$/, "").split(" ").pop();
+let SW = "n";
+const teams = () => (SW === "n" ? D.teams : D.teamsWide);
+const me = () => teams().find((t) => t.me);
+
+/* tooltip */
+const tip = $("#tip");
+document.addEventListener("pointermove", (e) => {
+  const t = e.target.closest("[data-tip]");
+  if (!t) { tip.classList.remove("on"); return; }
+  tip.textContent = t.dataset.tip; tip.classList.add("on");
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = e.clientY + 16 + "px";
+});
+
+/* scoreboard band */
+function renderBand() {
+  const m = D.teams.find((t) => t.me), mw = D.teamsWide.find((t) => t.me), w = D.week1;
+  $("#tsub").textContent = D.eyebrow;
+  const st = [
+    ["This week", pct(w.odds), "alert"],
+    ["Record", `${D.record[0]}–${D.record[1]}${D.record[2] ? "–" + D.record[2] : ""}<small>proj <b>${m.wins.toFixed(1)}–${(18 - m.wins).toFixed(1)}</b></small>`, ""],
+    ["Playoffs", pct(m.playoff), ""],
+    ["Title", `${Math.round(mw.title * 100)}–${Math.round(m.title * 100)}%`, "you"],
+  ];
+  $("#stats").innerHTML = st.map(([k, v, c]) => `<div class="stat ${c}"><span class="k">${k}</span><span class="v num">${v}</span></div>`).join("");
+}
+
+/* this week */
+/* Sleeper's API can't show locks until a player plays again, so Tray can mark one here (kept on this phone only) */
+const markKey = () => `wr-locks-w${D.week1.week}`;
+function marks() { try { return new Set(JSON.parse(localStorage.getItem(markKey()) || "[]")); } catch (e) { return new Set(); } }
+function toggleMark(id) { const m = marks(); m.has(id) ? m.delete(id) : m.add(id); try { localStorage.setItem(markKey(), JSON.stringify([...m])); } catch (e) {} renderWeek(); }
+const PILL = { "Locked": "good", "Lock now": "solid", "Live": "warn", "Final": "blue", "Pending": "warn" };
+function renderWeek() {
+  const w = D.week1, m = marks();
+  const rows = w.rows.map((r) => (r.canMark && m.has(r.id) ? { ...r, status: "Locked", why: `You marked this locked at ${r.score.toFixed(1)}.`, marked: true } : r));
+  const locked = rows.filter((r) => r.status === "Locked"), lockNow = rows.filter((r) => r.status === "Lock now");
+  const open = rows.filter((r) => !["Locked", "Final", "No games"].includes(r.status));
+  $("#week-meta").textContent = `Week ${w.week} · vs ${w.opp} · ${w.daysLeft}`;
+  $("#week-answer").innerHTML = `<em>${pct(w.odds)}</em> to win.` + (lockNow.length ? ` Lock ${lockNow.map((r) => esc(last(r.n))).join(" and ")} now.` : ` ${locked.length} locked, ${open.length} still open.`);
+  $("#vs").innerHTML = `<div class="t me"><span class="nm">You</span><span class="pts num">${w.me}</span><span class="pj">Projected ${w.projMe}</span></div>
+    <div class="mid">vs</div>
+    <div class="t r"><span class="nm">${esc(w.opp)}</span><span class="pts num">${w.oppPts}</span><span class="pj">Projected ${w.projOpp}</span></div>`;
+  $("#moves").innerHTML = w.swaps.map((s) => `<div class="mv"><span class="when">${esc(s.when)}</span><span class="what">${esc(s.what)}</span><span class="why">${esc(s.why)}</span></div>`).join("");
+  $("#locks").innerHTML = rows.map((r) => `<div class="lk"><span><b>${esc(r.n)}</b> <span class="sm">${esc(r.slot || "")}</span></span><span class="sc num">${r.score == null ? "–" : r.score.toFixed(1)}</span><span class="pill ${PILL[r.status] || "mute"}">${esc(r.status)}</span><span class="w">${esc(r.why)}${r.canMark ? ` <button class="mk" type="button" data-id="${esc(r.id)}">${r.marked ? "Undo" : "Mark locked"}</button>` : ""}</span></div>`).join("");
+  $("#week-note").textContent = w.oddsNote.split(". ").slice(1).join(". ");
+}
+
+/* trending + waivers */
+const VCH = { "Add": "good", "Buy-low add": "good", "Speculative add": "warn", "Watch": "blue", "Pass": "mute", "Owned": "mute", "Yours: keep": "you", "Yours: drop candidate": "bad" };
+const VLAB = { "Speculative add": "Maybe", "Yours: keep": "Keep", "Yours: drop candidate": "Drop", "Buy-low add": "Buy low" };
+function renderTrend() {
+  const T = D.trending; if (!T) { $("#trend").hidden = true; return; }
+  const m = T.move;
+  $("#trend-meta").textContent = T.meta;
+  $("#trend-answer").innerHTML = m ? `Drop ${esc(last(m.drop))}, add <b>${esc(last(m.add))}</b>.` : "No move needed this week.";
+  $("#swap").innerHTML = m ? `<div class="line"><span class="out">${esc(m.drop)}</span><span>${esc(m.add)}</span><span class="pill good">+${m.gain.toFixed(1)}/wk</span></div>
+    <div class="why">${esc(last(m.drop))}: ${esc(m.dropWhy)}. ${esc(m.addLast)}: ${esc(m.addWhy)}. Small gain, so bid low on FAAB.</div>` : "";
+  const item = (r, chip) => `<div class="li"><span class="n">${esc(r.name)}</span><span class="pill ${VCH[r.verdict] || "mute"}">${chip}</span><span class="w">${esc(r.why)}</span></div>`;
+  const group = (title, list, chipOf) => (list.length ? `<div><div class="lab">${title}</div><div class="list">${list.map((r) => item(r, chipOf(r))).join("")}</div></div>` : "");
+  const others = T.free.filter((r) => !m || r.name !== m.add).slice(0, 3);
+  const drops = T.yours.filter((r) => r.verdict === "Yours: drop candidate"), keeps = T.yours.filter((r) => r.verdict === "Yours: keep");
+  $("#tgroups").innerHTML = group("Other free options", others, (r) => `+${r.gain.toFixed(1)}`) + group("Watch one more game", T.watch, () => "Watch") +
+    `<div><div class="lab">On your team</div><div class="list">${drops.map((r) => item(r, "Drop")).join("")}${keeps.length ? `<div class="li"><span class="n">Keep</span><span class="pill you">Keep</span><span class="w">${keeps.map((r) => esc(last(r.name))).join(", ")}: trending up</span></div>` : ""}</div></div>`;
+  $("#trend-note").textContent = T.sub;
+  const k = (n) => (Math.abs(n) >= 1000 ? Math.round(Math.abs(n) / 1000) + "k" : Math.abs(n));
+  const row = (r) => `<tr><td>${esc(r.name)} <span class="sm">${esc(r.team)}</span></td><td class="r">${k(r.net)}</td><td class="sm">${esc(r.why)}</td><td><span class="pill ${VCH[r.verdict] || "mute"}">${esc(VLAB[r.verdict] || r.verdict)}</span></td></tr>`;
+  const head = (l) => `<tr><th>Player</th><th class="r">${l}</th><th>Why</th><th>For you</th></tr>`;
+  $("#t-add").innerHTML = head("Net adds") + T.add.map(row).join("");
+  $("#t-drop").innerHTML = head("Net drops") + T.drop.map(row).join("");
+  $("#adds").innerHTML = `<tr><th>Add</th><th>Pos</th><th class="r">Value</th><th>Drop</th><th class="r">+/wk</th></tr>` +
+    D.adds.map((a) => `<tr><td>${esc(a.name)} <span class="sm">${esc(a.team)}</span></td><td>${esc(a.pos)}</td><td class="r">${a.lv.toFixed(1)}</td><td>${esc(a.drop)}</td><td class="r">+${a.gain.toFixed(1)}</td></tr>`).join("");
+  $("#wv-note").innerHTML = D.notes.waivers;
+}
+
+/* season */
+function renderSeason() {
+  const T = teams(), m = me(), mw = D.teamsWide.find((t) => t.me), mn = D.teams.find((t) => t.me);
+  const rank = T.slice().sort((a, b) => b.wins - a.wins).indexOf(m) + 1;
+  $("#season-answer").innerHTML = `Projected <b>#${rank}</b>: ${m.wins.toFixed(1)}–${(18 - m.wins).toFixed(1)}, ${pct(m.playoff)} to make the playoffs.`;
+  const avg = T.reduce((a, t) => a + t.mean, 0) / T.length;
+  $("#season-facts").innerHTML = [["Title", `${Math.round(mw.title * 100)}–${Math.round(mn.title * 100)}%`], ["Avg seed", m.seed.toFixed(1)], ["Points/week", `${Math.round(m.mean)} (avg ${Math.round(avg)})`], ["Reach final", pct(m.final)]]
+    .map(([k, v]) => `<span class="fact">${k} <b>${v}</b></span>`).join("");
+  $("#strip").innerHTML = D.myWeeks.map((x) => x.res
+    ? `<div class="b" data-tip="Week ${x.w} vs ${esc(x.opp)}: ${x.res === "W" ? "won" : "lost"} ${esc(x.score)}"><i class="${x.res === "W" ? "won" : "lost"}" style="height:100%"></i></div>`
+    : `<div class="b ${x.w === D.week1.week ? "now" : ""}" data-tip="Week ${x.w} vs ${esc(x.opp)}: ${pct(x.odds)} to win"><i class="${x.odds < 0.5 ? "lo" : ""}" style="height:${Math.max(3, x.odds * 100)}%"></i></div>`).join("");
+  $("#strip-x").innerHTML = D.myWeeks.map((x) => `<span>${x.w}</span>`).join("");
+  $("#swing-note").textContent = SW === "n" ? "Each team's weekly total varies about 22 points around its average." : "Each team's weekly total varies about 30 points. More upsets, so your edge shrinks.";
+  const R = T.slice().sort((a, b) => b.wins - a.wins), mx = 18;
+  $("#race").innerHTML = R.map((t) => `<div class="ln"><span class="${t.me ? "pill you" : ""}" style="${t.me ? "justify-self:start" : ""}">${esc(t.me ? "You" : t.name)}</span><div class="tr" data-tip="${esc(t.name)}: ${t.wins.toFixed(1)} wins, ${pct(t.playoff)} playoffs, ${pct(t.title)} title"><i class="${t.me ? "me" : ""}" style="width:${(t.wins / mx) * 100}%"></i><span>${t.wins.toFixed(1)}</span></div></div>`).join("");
+  renderPower();
+}
+function setSwing(s) { SW = s; $("#sw-n").setAttribute("aria-pressed", s === "n"); $("#sw-w").setAttribute("aria-pressed", s === "w"); renderSeason(); }
+$("#sw-n").addEventListener("click", () => setSwing("n"));
+$("#locks").addEventListener("click", (e) => { const b = e.target.closest(".mk"); if (b) toggleMark(b.dataset.id); });
+$("#sw-w").addEventListener("click", () => setSwing("w"));
+
+function renderPower() {
+  const T = teams().slice().sort((a, b) => b.mean - a.mean), lo = Math.min(...T.map((t) => t.mean)) - 12, hi = Math.max(...T.map((t) => t.mean));
+  const style = Object.fromEntries(D.room.map((r) => [r.name, r.label]));
+  const lead = T[0].me ? T[0].mean - T[1].mean : 0;
+  $("#power-answer").innerHTML = T[0].me ? `You're <b>#1</b>, ${lead.toFixed(0)} points a week ahead of ${esc(T[1].name)}.` : `You're #${T.findIndex((t) => t.me) + 1}.`;
+  const head = `<span class="h"></span><span class="h">Team</span><span class="h">Per week</span><span class="h r">Playoffs</span><span class="h r">Title</span>`;
+  const row = (t, i) => `<span class="rk num">${i + 1}</span><span class="nm ${t.me ? "me" : ""}" data-tip="${esc(t.stars.join(", "))} · draft ${Math.round((t.draft || 0) * 100)}% · ${esc(style[t.name] || "")}">${esc(t.me ? "You" : t.name)}</span>
+    <span class="tr"><i class="${t.me ? "me" : ""}" style="width:${((t.mean - lo) / (hi - lo)) * 100}%"></i><span>${t.mean.toFixed(0)}</span></span><span class="r">${pct(t.playoff)}</span><span class="r">${pct(t.title)}</span>`;
+  $("#power-top").innerHTML = head + T.slice(0, 4).map(row).join("");
+  $("#power-all").innerHTML = head + T.map(row).join("");
+}
+
+/* lineup */
+function renderLineup() {
+  const S = D.slots, weak = S.filter((s) => s.diff < 0).sort((a, b) => a.diff - b.diff), strong = S.slice().sort((a, b) => b.diff - a.diff)[0];
+  $("#lineup-answer").innerHTML = weak.length ? `Weak spot: <em>guards</em>. Strength: <b>${esc(strong.slot)} ${esc(last(strong.name))} +${strong.diff.toFixed(1)}</b>.` : `Every slot beats the league average.`;
+  const mx = Math.max(...S.map((s) => Math.abs(s.diff)));
+  $("#slots").innerHTML = `<tr><th>Slot</th><th>Player</th><th class="r">Value</th><th>vs league avg</th></tr>` + S.map((s) => {
+    const w = (Math.abs(s.diff) / mx) * 50;
+    return `<tr><td><b>${s.slot}</b></td><td>${esc(s.name)}</td><td class="r">${s.lv.toFixed(1)}</td><td><div class="diff" data-tip="${s.diff >= 0 ? "+" : ""}${s.diff.toFixed(1)} vs the average ${s.slot}"><i style="left:${s.diff >= 0 ? 50 : 50 - w}%;width:${w}%;background:${s.diff >= 0 ? "var(--blue)" : "var(--red)"}"></i></div></td></tr>`;
+  }).join("");
+  $("#bench").innerHTML = `<tr><th>Bench</th><th>Pos</th><th class="r">Value</th><th class="r">Adds</th></tr>` + D.bench.map((b) => `<tr><td>${esc(b.name)} ${b.ir ? '<span class="pill bad">IR</span>' : ""}</td><td>${esc(b.pos)}</td><td class="r">${b.lv.toFixed(1)}</td><td class="r">${b.adds.toFixed(1)}</td></tr>`).join("");
+  const c = D.coverage;
+  $("#cover").innerHTML = [["Guards", c.G], ["Forwards", c.F], ["Centers", c.C], ["Center-only", c.Conly]].map(([k, v]) => `<span class="fact">${k} <b>${v}</b></span>`).join("");
+}
+
+/* trades + room */
+function renderTrades() {
+  const B = D.buy, t = B[0];
+  $("#trades-answer").innerHTML = t ? `Ask ${esc(t.owner)} about <b>${esc(t.name)}</b>: +${t.fitAdd.toFixed(1)}/wk for you.` : "No clear targets right now.";
+  $("#buy-top").innerHTML = B.slice(0, 3).map((b) => `<div class="li"><span class="n">${esc(b.name)} <span class="sm">from ${esc(b.owner)}</span></span><span class="pill good">+${b.fitAdd.toFixed(1)}</span><span class="w">Value rank #${b.lockRank}, market rank #${b.adpRank}</span></div>`).join("");
+  $("#buy").innerHTML = `<tr><th>Player</th><th>Owner</th><th class="r">Value rank</th><th class="r">Market rank</th><th class="r">Adds</th></tr>` +
+    B.map((b) => `<tr><td>${esc(b.name)} <span class="sm">${esc(b.pos)}</span></td><td>${esc(b.owner)} <span class="sm">${esc(b.ownerSharp)}</span></td><td class="r">#${b.lockRank}</td><td class="r">#${b.adpRank}</td><td class="r">+${b.fitAdd.toFixed(1)}</td></tr>`).join("");
+  $("#room-note").innerHTML = D.notes.room;
+  $("#room").innerHTML = D.room.map((r) => `<span class="${r.me ? "pill you" : ""}" style="justify-self:start">${esc(r.me ? "You" : r.name)}</span><span class="tr" data-tip="${esc(r.label)}"><i class="${r.me ? "me" : ""}" style="width:${Math.max(2, r.s * 100)}%"></i></span><span class="r num">${Math.round(r.s * 100)}</span>`).join("");
+}
+
+/* draft */
+function renderDraft() {
+  const P = D.myDraft, avg = P.reduce((a, p) => a + p.pct, 0) / P.length;
+  const rank = D.teams.slice().sort((a, b) => (b.draft || 0) - (a.draft || 0)).findIndex((t) => t.me) + 1;
+  $("#draft-answer").innerHTML = `<b>${Math.round(avg * 100)}%</b> of the best value at each pick. ${rank === 1 ? "Best draft in the league." : `#${rank} in the league.`}`;
+  const cnt = (g) => P.filter((p) => p.grade === g).length;
+  $("#draft-facts").innerHTML = [["Strong", cnt("strong"), "good"], ["Solid", cnt("solid"), "blue"], ["Questionable", cnt("q"), "warn"], ["Reach", cnt("reach"), "bad"]]
+    .map(([k, v]) => `<span class="fact">${k} <b>${v}</b></span>`).join("") + `<span class="fact">Dropped <b>${P.filter((p) => !p.kept).length}</b></span>`;
+  const GL = { strong: "good", solid: "blue", q: "warn", reach: "bad" };
+  $("#picks").innerHTML = P.map((p) => `<div class="pk"><div class="t"><span class="nm">${esc(p.name)}</span><span class="rd num">${p.round}.${p.round % 2 ? 10 : 1}</span></div>
+    <div class="t"><span class="sm">${esc(p.pos)} · pick ${p.pick} · ADP ${Math.round(p.adp)}</span><span class="pill ${GL[p.grade]}">${esc(p.gradeLabel)}</span></div>
+    <div class="meter"><i style="width:${Math.min(100, p.pct * 100)}%"></i></div>
+    <span class="sm">${p.pct >= 0.995 ? "Best value on the board." : "Could've had " + p.alts.map((a) => esc(a.n)).join(" or ")}${p.kept ? "" : " · dropped"}</span></div>`).join("");
+}
+
+/* playoffs, next, assumptions */
+function renderRest() {
+  const G = D.playoffGames.map((p) => ({ ...p, tot: p.games.reduce((a, b) => a + b, 0) })).sort((a, b) => b.tot - a.tot);
+  const top = G.filter((p) => p.tot === G[0].tot);
+  const m = D.teams.find((t) => t.me), prank = D.teams.slice().sort((a, b) => b.pmean - a.pmean).indexOf(m) + 1;
+  $("#po-answer").innerHTML = `<b>#${prank}</b> in playoff-week strength. Most games: ${top.map((p) => esc(last(p.name))).join(", ")} (${G[0].tot}).`;
+  const cell = (n) => `<span class="gm" style="background:${n >= 4 ? "var(--blue)" : n === 3 ? "var(--surface-2)" : "var(--track)"};color:${n >= 4 ? "#fff" : "var(--ink)"}">${n}</span>`;
+  $("#po").innerHTML = `<tr><th>Player</th><th>Wk 19</th><th>Wk 20</th><th>Wk 21</th><th class="r">Total</th></tr>` + G.map((p) => `<tr><td>${esc(p.name)} <span class="sm">${esc(p.team)}</span></td>${p.games.map((n) => `<td>${cell(n)}</td>`).join("")}<td class="r"><b>${p.tot}</b></td></tr>`).join("");
+  $("#next-answer").innerHTML = D.notes.next;
+  $("#steps").innerHTML = D.notes.steps.map((s) => `<li>${s}</li>`).join("");
+  $("#assumptions").innerHTML = D.notes.assumptions.map(([t, b]) => `<div class="li"><span class="n">${esc(t)}</span><span></span><span class="w">${esc(b)}</span></div>`).join("");
+  $("#foot").innerHTML = D.notes.footer;
+}
+
+/* tools */
+const deeps = () => [...document.querySelectorAll("details.deep")];
+function syncOpen() { $("#t-open").textContent = deeps().every((d) => d.open) ? "Close all deep dives" : "Open all deep dives"; }
+$("#t-open").addEventListener("click", () => { const open = !deeps().every((d) => d.open); deeps().forEach((d) => (d.open = open)); syncOpen(); });
+deeps().forEach((d) => d.addEventListener("toggle", syncOpen));
+const fsb = $("#t-fs");
+if (document.fullscreenEnabled) {
+  fsb.hidden = false;
+  fsb.addEventListener("click", () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (e) {} });
+  document.addEventListener("fullscreenchange", () => (fsb.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"));
+}
+/* on a phone the scoreboard scrolls away and only the section nav stays pinned */
+function pinBand() {
+  const b = $(".band"), n = $(".navrow");
+  b.style.top = innerWidth <= 720 ? `calc(env(safe-area-inset-top, 0px) - ${n.offsetTop - 8}px)` : "";
+  document.documentElement.style.setProperty("--bandh", (innerWidth <= 720 ? b.offsetHeight - n.offsetTop + 8 : b.offsetHeight) + "px");
+}
+/* nav tabs open one section full screen; the same tab again, "All", or Esc goes back to every section */
+const board = $(".board"), tabs = [...document.querySelectorAll(".nav a")];
+let autoOpened = [];
+function focusSection(id) {
+  autoOpened.forEach((d) => (d.open = false)); autoOpened = [];
+  document.querySelectorAll(".c.focus").forEach((c) => c.classList.remove("focus"));
+  const c = id && document.getElementById(id);
+  if (c) {
+    c.classList.add("focus"); board.dataset.focus = id;
+    c.querySelectorAll("details.deep").forEach((d) => { if (!d.open) { d.open = true; autoOpened.push(d); } });
+  } else delete board.dataset.focus;
+  tabs.forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === "#" + (c ? id : "all") ? "true" : "false"));
+  syncOpen();
+  scrollTo({ top: 0, behavior: "instant" });
+}
+tabs.forEach((a) => a.addEventListener("click", (e) => {
+  e.preventDefault();
+  const id = a.getAttribute("href").slice(1);
+  focusSection(id === "all" || id === board.dataset.focus ? "" : id);
+  a.scrollIntoView({ block: "nearest", inline: "nearest" });
+}));
+addEventListener("keydown", (e) => { if (e.key === "Escape" && board.dataset.focus) focusSection(""); });
+addEventListener("resize", pinBand);
+
+renderBand(); pinBand(); renderWeek(); renderTrend(); renderSeason(); renderLineup(); renderTrades(); renderDraft(); renderRest();
+</script>

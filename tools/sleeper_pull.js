@@ -16,7 +16,9 @@
 
   async function pull(opts) {
     const o = opts || {};
-    const get = o.fetchJson || (async (u) => { const r = await fetch(u); if (!r.ok) throw new Error(`${r.status} ${u}`); return r.json(); });
+    // every request gets a 20 s timeout and one retry, so a hung connection can't stall the refresh
+    const get1 = async (u) => { const r = await fetch(u, { signal: AbortSignal.timeout(20000) }); if (!r.ok) throw new Error(`${r.status} ${u}`); return r.json(); };
+    const get = o.fetchJson || (async (u) => { try { return await get1(u); } catch (e) { await new Promise((ok) => setTimeout(ok, 1500)); return get1(u); } });
     const now = o.now || new Date();
     const today = etDate(now);
     const modelIds = new Set((o.modelIds || []).map(String));

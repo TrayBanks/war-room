@@ -43,6 +43,7 @@ jobs:
 
   refresh:
     needs: gate
+    timeout-minutes: 12
     if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     environment:
@@ -54,6 +55,7 @@ jobs:
         with:
           node-version: 20
       - name: Pull Sleeper, run the models, build the page
+        timeout-minutes: 6
         run: tools/refresh.sh site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

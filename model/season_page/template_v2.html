@@ -424,10 +424,11 @@ async function pullLive() {
   const next = sch.filter((g) => g.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
   const week = Math.max(1, Math.min(18, (next && next.week) || LV.week));
   const games = sch.filter((g) => g.week === week).map((g) => ({ date: g.date, home: g.home.team, away: g.away.team, status: g.status }));
-  const ms = await getJSON(`https://api.sleeper.app/v1/league/${LV.league}/matchups/${week}`);
-  const me = ms.find((m) => m.roster_id === LV.rid);
+  const reads = (await Promise.all([0, 1, 2].map((i) => getJSON(`https://api.sleeper.app/v1/league/${LV.league}/matchups/${week}?r=${Date.now()}${i}`).catch(() => null)))).filter(Boolean);
+  const me = WR_WEEK.consensus(reads, LV.rid);
   if (!me) throw new Error("no matchup");
-  const op = ms.find((m) => m.matchup_id === me.matchup_id && m.roster_id !== LV.rid) || null;
+  const oppRid = (reads[0].find((m) => m.matchup_id === me.matchup_id && m.roster_id !== LV.rid) || {}).roster_id;
+  const op = oppRid ? WR_WEEK.consensus(reads, oppRid) : null;
   const ids = [...new Set([...(me.starters || []), ...((op && op.starters) || [])].map(String))].filter((id) => id && id !== "0");
   const per = await Promise.all(ids.map((id) => getJSON(`https://api.sleeper.com/stats/nba/player/${id}?season_type=regular&season=${LV.season}&grouping=week`)
     .then((g) => (g[String(week)] || []).map((x) => ({ player_id: id, date: x.date, team: x.team, pts_std: +((x.stats || {}).pts_std || 0), sp: +((x.stats || {}).sp || 0) })))
@@ -442,7 +443,7 @@ function computeLock(P) {
   const told = P.week === LV.week ? (Array.isArray(LV.manual) ? Object.fromEntries(LV.manual.map((id) => [id, ""])) : LV.manual || {}) : {};
   const manual = new Map([...Object.entries(told), ...marks(P.week)]);
   const side = (m, risk, man) => WR_WEEK.analyzeSide({ L: WR_LOCK, starters: (m.starters || []).map(String), points: m.starters_points || [], slots: LV.slots, player: pl,
-    schedule: P.games, stats: P.stats, today: P.today, manual: man, risk, z: LV.z });
+    schedule: P.games, stats: P.stats, today: P.today, manual: man, unsure: m.unsure || [], risk, z: LV.z });
   let mine = side(P.me, "even", manual);
   const opp = P.op ? side(P.op, "even", new Set()) : null;
   const risk = opp ? WR_WEEK.riskOf(mine.exp - opp.exp) : LV.risk;
@@ -516,7 +517,7 @@ async function checkLock() {
     lockLive = await pullLive(); lockAt = Date.now();
     renderLock(computeLock(lockLive));
     $("#lock-dot").classList.remove("off");
-    $("#lock-meta").textContent = `Live from Sleeper · checked ${lockLive.at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+    $("#lock-meta").textContent = `Live from Sleeper · checked ${lockLive.at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}${lockLive.me.agree ? "" : " · Sleeper's numbers are still settling"}`;
   } catch (e) {
     if (lockLive) { $("#lock-dot").classList.add("off"); $("#lock-meta").textContent = `Couldn't reach Sleeper. Last checked ${lockLive.at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`; }
     else renderLockFallback(`Couldn't reach Sleeper here. Showing the refresh from ${D.eyebrow.split("updated ").pop()}.`);

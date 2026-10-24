@@ -40,7 +40,7 @@ function player(id) {
 const statsOf = (ids) => W.rows.filter((r) => ids.includes(r[0])).map(([player_id, date, team, pts, sp]) => ({ player_id, date, team, pts_std: pts || 0, sp: sp || 0 }));
 const WKL = require(path.join(base, "tools", "lockweek.js"));
 const side = (team, risk, manualLocks) => WKL.analyzeSide({ L, starters: team.starters, points: team.starters_points, slots: W.slots, player, schedule,
-  stats: statsOf(team.starters), today, manual: manualLocks || new Map(), risk, z: Z });
+  stats: statsOf(team.starters), today, manual: manualLocks || new Map(), unsure: team.unsure || [], risk, z: Z });
 
 let me = side(W.me, "even", manual), op = W.opp ? side(W.opp, "even") : null;
 const diff = op ? me.exp - op.exp : 0;

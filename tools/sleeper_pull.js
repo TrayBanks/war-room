@@ -63,7 +63,11 @@
     // ---------- league ----------
     const results = [];
     for (let w = 1; w < cur; w++) results.push(Object.fromEntries(matchups[w - 1].map((m) => [m.roster_id, +(m.points || 0).toFixed(2)])));
-    const curRows = matchups[cur - 1] || [];
+    // the current week's matchup is read three times and settled by majority (Sleeper's replicas can disagree)
+    const WKL = typeof require !== "undefined" ? require("./lockweek.js") : root.WR_WEEK;
+    const extra2 = await Promise.all([1, 2].map((i) => get(`${A}/league/${LEAGUE}/matchups/${cur}?r=${Date.now()}${i}`).catch(() => null)));
+    const reads = [matchups[cur - 1], ...extra2].filter(Boolean);
+    const curRows = rosters.map((r) => WKL.consensus(reads, r.roster_id)).filter(Boolean);
     const LG = {
       asof: today, asofTs: now.toISOString(), curWeek: cur, myRid: mine.roster_id,
       users: Object.fromEntries(users.map((u) => [u.user_id, [u.display_name, (u.metadata && u.metadata.team_name) || ""]])),
@@ -107,6 +111,7 @@
     const oppRoster = rosters.find((r) => r.roster_id === oppRow.roster_id) || {};
     const userName = (uid) => (LG.users[uid] || [uid])[0];
     const side = (row, r) => ({ rid: r.roster_id, name: userName(r.owner_id), starters: (row.starters || []).map(String), starters_points: row.starters_points || [], points: row.points || 0,
+      unsure: row.unsure || [], agree: row.agree !== false,
       bench: (r.players || []).filter((id) => !(row.starters || []).includes(id) && !(r.reserve || []).includes(id)) });
     const ids = new Set([...(mine.players || []), ...(oppRow.starters || [])].map(String));
     const WK = {

@@ -12,6 +12,7 @@
   function analyzeSide(o) {
     // o: { L, starters, points, slots, player(id) -> {id, n, team, pos[], inj, mu, cv, rest}, schedule: [{date, home, away, status}],
     //      stats: [{player_id, date, team, pts_std, sp}], today, manual: Map(id -> locked game date or "") or Set, risk, z }
+    const unsure = new Set((o.unsure || []).map(String));
     const man = o.manual instanceof Map ? o.manual : new Map([...(o.manual || [])].map((id) => [String(id), ""]));
     const roster = o.starters.map((id, i) => Object.assign({}, o.player(id), { starter: true, slot: o.slots[i] || "UTIL" }));
     const stats = o.stats.filter((s) => o.starters.includes(String(s.player_id))).map((s) => Object.assign({}, s, { player_id: String(s.player_id) }));
@@ -32,7 +33,8 @@
         earlier.pts_std = off;                                   // the locked game is the one that counts
         for (const s of stats) if (s.player_id === id && s.date > earlier.date) s.sp = 0;
       } else {
-        if (manual) {
+        if (manual && unsure.has(id)) locks.add(id);             // reads disagreed: trust the lock he made
+        else if (manual) {
           // broken only if Sleeper counts a game played after the one he locked
           const prev = played[played.length - 2];
           const after = lockedOn ? latest.date > lockedOn : !!prev;
@@ -56,8 +58,22 @@
     return { res, now, exp, remFrac: tot ? rem / tot : 0, roster };
   }
 
+  /* Sleeper's matchup endpoint can answer differently from one read to the next (replicas catching up, or a lineup
+     being edited). Read it a few times and take, per roster, the most common lineup and per-starter the most common
+     count. Starters whose count differed between reads are "unsure": a manual lock is trusted for them. */
+  function consensus(reads, rid) {
+    const rows = reads.map((ms) => (ms || []).find((m) => m.roster_id === rid)).filter(Boolean);
+    if (!rows.length) return null;
+    const key = (r) => (r.starters || []).join(","), top = (arr) => { const c = new Map(); for (const v of arr) c.set(v, (c.get(v) || 0) + 1); return [...c.entries()].sort((a, b) => b[1] - a[1])[0][0]; };
+    const lineup = top(rows.map(key)), same = rows.filter((r) => key(r) === lineup), st = (same[0].starters || []).map(String);
+    const pts = st.map((_, i) => +top(same.map((r) => (r.starters_points || [])[i] || 0)));
+    const unsure = st.filter((_, i) => new Set(same.map((r) => (r.starters_points || [])[i])).size > 1);
+    return { roster_id: rid, matchup_id: same[0].matchup_id, starters: st, starters_points: pts, points: +pts.reduce((a, b) => a + b, 0).toFixed(2),
+      unsure, agree: !unsure.length && same.length === rows.length, reads: rows.length };
+  }
+
   const riskOf = (diff) => (diff < -15 ? "chase" : diff > 15 ? "protect" : "even");
-  const api = { analyzeSide, riskOf };
+  const api = { analyzeSide, riskOf, consensus };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.WR_WEEK = api;
 })(typeof self !== "undefined" ? self : this);

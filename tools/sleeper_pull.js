@@ -110,7 +110,7 @@
       bench: (r.players || []).filter((id) => !(row.starters || []).includes(id) && !(r.reserve || []).includes(id)) });
     const ids = new Set([...(mine.players || []), ...(oppRow.starters || [])].map(String));
     const WK = {
-      today, week: cur, slots: LG.slots,
+      today, week: cur, season, league: LEAGUE, slots: LG.slots,
       me: side(myRow, mine), opp: oppRoster.roster_id ? side(oppRow, oppRoster) : null,
       P: Object.fromEntries([...ids].map((id) => [id, [nameOf(id), P(id).team || "", posOf(id), injOf(id), fppg(id)]])),
       rows: stats.filter((r) => ids.has(String(r.player_id))).map((r) => [String(r.player_id), r.date, r.team, +((r.stats || {}).pts_std || 0), (r.stats || {}).sp || 0]),

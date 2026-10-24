@@ -125,7 +125,8 @@ details.deep > .dd { display: grid; gap: 14px; margin-top: 12px; }
 .vs .pts { font-family: var(--display); font-weight: 800; font-size: clamp(44px, 4.5vw, 64px); line-height: .95; }
 .vs .t.me .pts { color: var(--gold); }
 .vs .pj { font-size: 13px; color: var(--muted); }
-.vs .mid { font-family: var(--display); font-weight: 700; color: var(--muted); font-size: 18px; text-align: center; padding-bottom: 8px; }
+.vs .mid { font-family: var(--display); font-weight: 700; color: var(--muted); font-size: 18px; text-align: center; padding-bottom: 8px; display: grid; gap: 2px; }
+.vs .mid small { font-family: var(--body); font-size: 12.5px; font-weight: 700; color: var(--red); white-space: nowrap; }
 .moves { display: grid; gap: 8px; }
 .mv { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 2px 12px; align-items: baseline; }
 .mv .when { grid-row: span 2; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--red); font-size: 15px; }
@@ -153,6 +154,31 @@ details.deep > .dd { display: grid; gap: 14px; margin-top: 12px; }
 .strip .b.now i { box-shadow: 0 0 0 2px var(--gold-fill); }
 .strip .b i.won { background: var(--good); border-radius: 3px; }
 .strip .b i.lost { background: var(--red); opacity: .45; border-radius: 3px; }
+/* lock or wait */
+.lkr { display: grid; grid-template-columns: 112px minmax(0,1fr) auto; gap: 2px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.lkr:last-child { border-bottom: 0; }
+.lkr .vd { grid-row: span 2; justify-self: start; }
+.lkr .nm { font-weight: 700; font-size: 16px; min-width: 0; }
+.lkr .nm .sm { font-weight: 500; }
+.lkr .rs { grid-column: 2; font-size: 13.5px; color: var(--ink-2); }
+.lkr .sc { grid-column: 3; grid-row: 1 / span 2; text-align: right; font-family: var(--display); font-weight: 800; font-size: 26px; line-height: 1; }
+.lkr .sc small { display: block; font-family: var(--body); font-size: 11.5px; font-weight: 600; color: var(--muted); margin-top: 3px; }
+.lkr.act { background: var(--surface-2); box-shadow: inset 4px 0 0 var(--red); border-radius: 10px; padding: 12px 12px 12px 14px; margin-bottom: 6px; border-bottom: 0; }
+.lkr.quiet .nm, .lkr.quiet .sc { color: var(--muted); }
+@media (max-width: 520px) {
+  .lkr { grid-template-columns: auto minmax(0,1fr) auto; column-gap: 10px; padding: 9px 0; }
+  .lkr .vd { grid-row: auto; font-size: 12.5px; padding: 2px 8px; }
+  .lkr .sc { grid-row: auto; font-size: 22px; }
+  .lkr .sc small { display: inline; margin: 0 0 0 4px; }
+  .lkr .rs { grid-column: 1 / -1; }
+  .lkr.hold .rt, .lkr.quiet .rt { display: none; }    /* the line under the score says it; keep phones to one row */
+  .lkr.act { padding: 12px; }
+}
+.livebar { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.livebar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
+.livebar .dot.off { background: var(--muted); box-shadow: none; }
+.warnline { font-size: 14px; font-weight: 600; color: var(--red); }
+.warnline[hidden] { display: none; }
 .mk { border: 0; background: none; color: var(--blue); font-size: 12.5px; font-weight: 600; padding: 2px 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .mk:hover { color: var(--ink); }
 .strip-x { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 3px; font-size: 11px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
@@ -235,12 +261,23 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
 <main class="board">
  <div class="col">
   <section class="c s7" id="week" aria-labelledby="week-h">
-    <div class="ch"><h2 id="week-h">This week</h2><span class="meta" id="week-meta"></span></div>
-    <p class="answer" id="week-answer"></p>
+    <div class="ch"><h2 id="week-h">This week</h2><span class="meta" id="week-meta"></span><span class="livebar"><span class="dot off" id="lock-dot"></span><span id="lock-meta">Checking Sleeper…</span></span><button class="mk" id="lock-check" type="button">Check now</button></div>
+    <p class="answer" id="lock-answer"></p>
+    <p class="warnline" id="lock-warn" hidden></p>
     <div class="vs" id="vs"></div>
+    <div class="lab">Lock or wait</div>
+    <div id="lock-rows"></div>
     <div class="lab">Your next moves</div>
     <div class="moves" id="moves"></div>
-    <details class="deep"><summary>Deep dive: every starter's lock call</summary><div class="dd"><div id="locks"></div><p class="note" id="week-note"></p></div></details>
+    <details class="deep"><summary>Deep dive: their lineup and how the lock line works</summary><div class="dd">
+      <p class="note">Each starter counts one game a week. After a game you can lock it, but only before his next game tips; if you don't, his last game of the week counts.</p>
+      <p class="note">His line is what waiting is worth: the games he has left, counting the chance he sits. At or above the line: lock. Below: wait. With one game left the line is about his average.</p>
+      <p class="note" id="lock-risk"></p>
+      <p class="note">The lock calls check Sleeper every 2 minutes while this page is open. Sleeper doesn't report locks until a player plays again, so after you lock someone in Sleeper, tap "I locked this".</p>
+      <div class="lab">Their lineup</div>
+      <div id="opp-rows"></div>
+      <p class="note" id="week-note"></p>
+    </div></details>
   </section>
   <section class="c s7" id="season" aria-labelledby="season-h">
     <div class="ch"><h2 id="season-h">Season outlook</h2><span class="meta">6,000 simulated seasons on your real schedule</span></div>
@@ -326,6 +363,7 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
 </main>
 <div id="tip" role="tooltip"></div>
 
+<script>/*__LIBS__*/</script>
 <script>
 const D = /*__DATA__*/null;
 const $ = (s, el = document) => el.querySelector(s);
@@ -359,24 +397,139 @@ function renderBand() {
 }
 
 /* this week */
-/* Sleeper's API can't show locks until a player plays again, so Tray can mark one here (kept on this phone only) */
-const markKey = () => `wr-locks-w${D.week1.week}`;
-function marks() { try { return new Set(JSON.parse(localStorage.getItem(markKey()) || "[]")); } catch (e) { return new Set(); } }
-function toggleMark(id) { const m = marks(); m.has(id) ? m.delete(id) : m.add(id); try { localStorage.setItem(markKey(), JSON.stringify([...m])); } catch (e) {} renderWeek(); }
-const PILL = { "Locked": "good", "Lock now": "solid", "Live": "warn", "Final": "blue", "Pending": "warn" };
 function renderWeek() {
-  const w = D.week1, m = marks();
-  const rows = w.rows.map((r) => (r.canMark && m.has(r.id) ? { ...r, status: "Locked", why: `You marked this locked at ${r.score.toFixed(1)}.`, marked: true } : r));
-  const locked = rows.filter((r) => r.status === "Locked"), lockNow = rows.filter((r) => r.status === "Lock now");
-  const open = rows.filter((r) => !["Locked", "Final", "No games"].includes(r.status));
+  const w = D.week1;
   $("#week-meta").textContent = `Week ${w.week} · vs ${w.opp} · ${w.daysLeft}`;
-  $("#week-answer").innerHTML = `<em>${pct(w.odds)}</em> to win.` + (lockNow.length ? ` Lock ${lockNow.map((r) => esc(last(r.n))).join(" and ")} now.` : ` ${locked.length} locked, ${open.length} still open.`);
   $("#vs").innerHTML = `<div class="t me"><span class="nm">You</span><span class="pts num">${w.me}</span><span class="pj">Projected ${w.projMe}</span></div>
-    <div class="mid">vs</div>
+    <div class="mid">vs<small>${pct(w.odds)} to win</small></div>
     <div class="t r"><span class="nm">${esc(w.opp)}</span><span class="pts num">${w.oppPts}</span><span class="pj">Projected ${w.projOpp}</span></div>`;
   $("#moves").innerHTML = w.swaps.map((s) => `<div class="mv"><span class="when">${esc(s.when)}</span><span class="what">${esc(s.what)}</span><span class="why">${esc(s.why)}</span></div>`).join("");
-  $("#locks").innerHTML = rows.map((r) => `<div class="lk"><span><b>${esc(r.n)}</b> <span class="sm">${esc(r.slot || "")}</span></span><span class="sc num">${r.score == null ? "–" : r.score.toFixed(1)}</span><span class="pill ${PILL[r.status] || "mute"}">${esc(r.status)}</span><span class="w">${esc(r.why)}${r.canMark ? ` <button class="mk" type="button" data-id="${esc(r.id)}">${r.marked ? "Undo" : "Mark locked"}</button>` : ""}</span></div>`).join("");
+  $("#opp-rows").innerHTML = (w.opp_rows || []).map((r) => `<div class="lk"><span><b>${esc(r.n)}</b></span><span class="sc num">${r.score == null ? "–" : r.score.toFixed(1)}</span><span class="pill mute">${esc(r.status)}</span><span class="w">Expected to count about ${r.exp.toFixed(1)}</span></div>`).join("");
   $("#week-note").textContent = w.oddsNote.split(". ").slice(1).join(". ");
+}
+
+/* ---------- Lock or wait: the lock calls redone live from Sleeper (the last refresh is the fallback) ---------- */
+const LV = D.week1.live || null;
+const etToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const dayLong = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+const f1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
+const markKey = (wk) => `wr-locks-w${wk}`;
+// marks are kept on this phone as {player id: date of the game he locked}
+function marks(wk) { try { const v = JSON.parse(localStorage.getItem(markKey(wk)) || "{}"); return new Map(Array.isArray(v) ? v.map((id) => [id, ""]) : Object.entries(v)); } catch (e) { return new Map(); } }
+function toggleMark(wk, id, date) { const m = marks(wk); m.has(id) ? m.delete(id) : m.set(id, date || ""); try { localStorage.setItem(markKey(wk), JSON.stringify(Object.fromEntries(m))); } catch (e) {} if (lockLive) renderLock(computeLock(lockLive)); }
+async function getJSON(u) { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error(`${r.status}`); return r.json(); }
+async function pullLive() {
+  const sch = await getJSON(`https://api.sleeper.com/schedule/nba/regular/${LV.season}`);
+  const today = etToday();
+  const next = sch.filter((g) => g.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const week = Math.max(1, Math.min(18, (next && next.week) || LV.week));
+  const games = sch.filter((g) => g.week === week).map((g) => ({ date: g.date, home: g.home.team, away: g.away.team, status: g.status }));
+  const ms = await getJSON(`https://api.sleeper.app/v1/league/${LV.league}/matchups/${week}`);
+  const me = ms.find((m) => m.roster_id === LV.rid);
+  if (!me) throw new Error("no matchup");
+  const op = ms.find((m) => m.matchup_id === me.matchup_id && m.roster_id !== LV.rid) || null;
+  const ids = [...new Set([...(me.starters || []), ...((op && op.starters) || [])].map(String))].filter((id) => id && id !== "0");
+  const per = await Promise.all(ids.map((id) => getJSON(`https://api.sleeper.com/stats/nba/player/${id}?season_type=regular&season=${LV.season}&grouping=week`)
+    .then((g) => (g[String(week)] || []).map((x) => ({ player_id: id, date: x.date, team: x.team, pts_std: +((x.stats || {}).pts_std || 0), sp: +((x.stats || {}).sp || 0) })))
+    .catch(() => [])));
+  return { today, week, games, me, op, stats: per.flat(), at: new Date() };
+}
+function computeLock(P) {
+  const teamHint = {};
+  for (const s of P.stats) teamHint[s.player_id] = s.team;
+  const pl = (id) => { const r = LV.players[id]; return r ? { id, n: r[0], team: r[1] || teamHint[id] || "", pos: (r[2] || "").split("/").filter(Boolean), inj: r[3] || "", mu: r[4], cv: r[5], rest: r[6] }
+    : { id, n: id === "0" ? "Empty slot" : "Unknown player", team: teamHint[id] || "", pos: [], inj: "", mu: 15, cv: LV.pool, rest: 0.1 }; };
+  const told = P.week === LV.week ? (Array.isArray(LV.manual) ? Object.fromEntries(LV.manual.map((id) => [id, ""])) : LV.manual || {}) : {};
+  const manual = new Map([...Object.entries(told), ...marks(P.week)]);
+  const side = (m, risk, man) => WR_WEEK.analyzeSide({ L: WR_LOCK, starters: (m.starters || []).map(String), points: m.starters_points || [], slots: LV.slots, player: pl,
+    schedule: P.games, stats: P.stats, today: P.today, manual: man, risk, z: LV.z });
+  let mine = side(P.me, "even", manual);
+  const opp = P.op ? side(P.op, "even", new Set()) : null;
+  const risk = opp ? WR_WEEK.riskOf(mine.exp - opp.exp) : LV.risk;
+  if (risk !== "even") mine = side(P.me, risk, manual);
+  return { P, mine, opp, risk, marked: marks(P.week) };
+}
+const VD = { lock: ["Lock now", "solid"], hold: ["Wait", "blue"], wait: ["Not played", "mute"], live: ["Playing", "warn"], pending: ["Final pending", "warn"],
+  final: ["Done", "mute"], none: ["No games", "mute"], locked: ["Locked", "good"] };
+const VORDER = { lock: 0, live: 1, pending: 2, hold: 3, wait: 4, locked: 5, final: 6, none: 7 };
+function nextGame(P, team) { return P.games.filter((g) => (g.home === team || g.away === team) && g.status === "pre_game" && g.date >= P.today).sort((a, b) => a.date.localeCompare(b.date))[0]; }
+function reasonOf(r, P, marked) {
+  const c = r.latest, T = r.threshold, g = nextGame(P, r.pl.team), nd = g ? (g.date === P.today ? "tonight" : dayLong(g.date)) : "";
+  let t;
+  if (r.verdict === "lock") t = `${f1(c)} beats his ${f1(T)} line. Lock it before ${nd === "tonight" ? "tonight's" : nd + "'s"} game.`;
+  else if (r.verdict === "hold") t = r.k === 1 ? `Under his ${f1(T)} line. ${nd === "tonight" ? "Tonight's" : nd + "'s"} game counts unless you lock.` : `Under his ${f1(T)} line with ${r.k} games left. Next: ${nd}.`;
+  else if (r.verdict === "locked") t = marked ? `You marked ${f1(c || 0)} locked.` : r.inferred ? `Locked at ${f1(c || 0)}. Sleeper's count confirms it.` : `Locked at ${f1(c || 0)}.`;
+  else if (r.verdict === "live") t = "Game on now. Decide after it ends.";
+  else if (r.verdict === "final") t = `No games left. ${f1(c)} counts.`;
+  else if (r.verdict === "none") t = r.pl.id === "0" ? "Empty slot. Start someone who plays." : "No games left this week. Start someone who plays.";
+  else t = r.text;
+  if (r.broken) t = `Your lock didn't go through: Sleeper counts his latest game. ${t}`;
+  if (r.pl.inj && !["locked", "final"].includes(r.verdict)) t = `Listed ${r.pl.inj}. ${t}`;
+  return t;
+}
+function renderLock(S) {
+  const { P, mine } = S, rows = mine.res.rows.slice().sort((a, b) => VORDER[a.verdict] - VORDER[b.verdict]);
+  const names = (rs) => rs.map((r) => esc(last(r.n))).join(rs.length > 2 ? ", " : " and ");
+  const lockNow = rows.filter((r) => r.verdict === "lock"), live = rows.filter((r) => r.verdict === "live"), open = rows.filter((r) => ["hold", "wait", "pending"].includes(r.verdict));
+  let ans;
+  if (lockNow.length) ans = `Lock <em>${names(lockNow)}</em> now.`;
+  else if (live.length) ans = `Nothing to lock yet. ${names(live)} ${live.length > 1 ? "are" : "is"} playing.`;
+  else if (open.length) {
+    const nx = open.map((r) => nextGame(P, r.pl.team)).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date))[0];
+    ans = `Nothing to lock. Wait${nx ? ` for ${nx.date === P.today ? "tonight's" : dayLong(nx.date) + "'s"} games` : ""}.`;
+  } else ans = "All set: every starter is locked or done.";
+  $("#lock-answer").innerHTML = ans;
+  const broken = rows.filter((r) => r.broken);
+  $("#lock-warn").hidden = !broken.length;
+  $("#lock-warn").textContent = broken.length ? `${broken.map((r) => r.n).join(", ")}: your lock didn't go through. Sleeper is counting the newer game.` : "";
+  $("#lock-rows").innerHTML = rows.map((r) => {
+    const [lab, cls] = VD[r.verdict] || [r.verdict, "mute"], marked = S.marked.has(r.id);
+    const sub = ["lock", "hold"].includes(r.verdict) ? `line ${f1(r.threshold)}` : r.verdict === "wait" && r.threshold ? `needs ${f1(r.threshold)}` : "";
+    const played = P.stats.filter((x) => x.player_id === r.id && x.sp > 0).map((x) => x.date).sort().pop() || "";
+    const btn = ["lock", "hold"].includes(r.verdict) || (r.verdict === "locked" && marked) ? ` <button class="mk" type="button" data-id="${esc(r.id)}" data-date="${played}">${marked ? "Undo" : "I locked this"}</button>` : "";
+    return `<div class="lkr ${r.verdict === "lock" || r.broken ? "act" : ["final", "none", "locked"].includes(r.verdict) ? "quiet" : r.verdict === "hold" && !r.pl.inj ? "hold" : ""}"><span class="pill vd ${cls}">${lab}</span>
+      <span class="nm">${esc(r.n)} <span class="sm">${esc(r.slot)}</span></span>
+      <span class="sc num">${r.latest == null ? "–" : f1(r.latest)}${sub ? `<small>${sub}</small>` : ""}</span>
+      <span class="rs"><span class="rt">${esc(reasonOf(r, P, marked))}</span>${btn}</span></div>`;
+  }).join("");
+  const RISK = { chase: "You're behind, so lines lean toward waiting for a bigger game.", protect: "You're ahead, so lines lean toward locking good games.", even: "It's close, so the lines are neutral." };
+  const vp = document.querySelectorAll("#vs .pts");
+  if (vp.length === 2 && P.op) { vp[0].textContent = f1(P.me.points || 0); vp[1].textContent = f1(P.op.points || 0); }
+  $("#lock-risk").textContent = `Right now in Sleeper: you ${f1(P.me.points || 0)}, ${LV.oppName || "them"} ${P.op ? f1(P.op.points || 0) : "–"}. ${RISK[S.risk]}`;
+}
+function renderLockFallback(msg) {
+  const w = D.week1, M = { "Lock now": "lock", "Hold": "hold", "Wait": "wait", "Live": "live", "Pending": "pending", "Final": "final", "No games": "none", "Locked": "locked" };
+  const rows = w.rows.slice().sort((a, b) => VORDER[M[a.status] || "none"] - VORDER[M[b.status] || "none"]);
+  const lockNow = rows.filter((r) => r.status === "Lock now");
+  $("#lock-answer").innerHTML = lockNow.length ? `Lock <em>${lockNow.map((r) => esc(last(r.n))).join(" and ")}</em> now.` : "Nothing to lock as of the last refresh.";
+  $("#lock-rows").innerHTML = rows.map((r) => { const [lab, cls] = VD[M[r.status]] || [r.status, "mute"];
+    return `<div class="lkr ${M[r.status] === "lock" ? "act" : ""}"><span class="pill vd ${cls}">${lab}</span><span class="nm">${esc(r.n)} <span class="sm">${esc(r.slot || "")}</span></span>
+      <span class="sc num">${r.score == null ? "–" : r.score.toFixed(1)}</span><span class="rs">${esc(r.why)}</span></div>`; }).join("");
+  $("#lock-dot").classList.add("off");
+  $("#lock-meta").textContent = msg;
+}
+let lockLive = null, lockBusy = false, lockAt = 0;
+async function checkLock() {
+  if (!LV || lockBusy) return;
+  lockBusy = true; $("#lock-meta").textContent = "Checking Sleeper…";
+  try {
+    lockLive = await pullLive(); lockAt = Date.now();
+    renderLock(computeLock(lockLive));
+    $("#lock-dot").classList.remove("off");
+    $("#lock-meta").textContent = `Live from Sleeper · checked ${lockLive.at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  } catch (e) {
+    if (lockLive) { $("#lock-dot").classList.add("off"); $("#lock-meta").textContent = `Couldn't reach Sleeper. Last checked ${lockLive.at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`; }
+    else renderLockFallback(`Couldn't reach Sleeper here. Showing the refresh from ${D.eyebrow.split("updated ").pop()}.`);
+  } finally { lockBusy = false; }
+}
+function initLock() {
+  if (!LV) { $("#lock-rows").previousElementSibling.hidden = true; return; }
+  renderLockFallback("Checking Sleeper…");
+  checkLock();
+  setInterval(() => { if (document.visibilityState === "visible") checkLock(); }, 120000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - lockAt > 60000) checkLock(); });
+  $("#lock-check").addEventListener("click", checkLock);
+  $("#lock-rows").addEventListener("click", (e) => { const b = e.target.closest(".mk"); if (b && lockLive) toggleMark(lockLive.week, b.dataset.id, b.dataset.date); });
 }
 
 /* trending + waivers */
@@ -425,7 +578,6 @@ function renderSeason() {
 }
 function setSwing(s) { SW = s; $("#sw-n").setAttribute("aria-pressed", s === "n"); $("#sw-w").setAttribute("aria-pressed", s === "w"); renderSeason(); }
 $("#sw-n").addEventListener("click", () => setSwing("n"));
-$("#locks").addEventListener("click", (e) => { const b = e.target.closest(".mk"); if (b) toggleMark(b.dataset.id); });
 $("#sw-w").addEventListener("click", () => setSwing("w"));
 
 function renderPower() {
@@ -536,5 +688,5 @@ addEventListener("keydown", (e) => { if (e.key === "Escape" && board.dataset.foc
 addEventListener("resize", pinBand);
 
 if (D.liveLink) $("#t-live").hidden = false;
-renderBand(); pinBand(); renderWeek(); renderTrend(); renderSeason(); renderLineup(); renderTrades(); renderDraft(); renderRest();
+renderBand(); pinBand(); renderWeek(); initLock(); renderTrend(); renderSeason(); renderLineup(); renderTrades(); renderDraft(); renderRest();
 </script>

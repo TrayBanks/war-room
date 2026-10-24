@@ -1,4 +1,6 @@
 {
-  "_": "Locks Tray made that Sleeper's API can't show yet, by week: player ids. Edit on GitHub or tap 'I locked this' on the page.",
-  "1": ["1713", "1444"]
+  "_": "Locks Tray made that Sleeper's API can't show yet: {week: {player id: date of the locked game}}. Tapping 'I locked this' on the page does the same on his phone.",
+  "1": {
+    "1444": "2026-10-21"
+  }
 }

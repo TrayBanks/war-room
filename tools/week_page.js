@@ -19,7 +19,8 @@ const byId = Object.fromEntries(D.players.map((p) => [String(p.id), p]));
 const file = process.argv[2];
 const W = JSON.parse(fs.readFileSync(file, "utf8"));
 const locksFile = path.join(base, "data", "locks.json");
-const manual = new Set(((fs.existsSync(locksFile) ? JSON.parse(fs.readFileSync(locksFile, "utf8")) : {})[String(W.week)] || []).map(String));
+const told = (fs.existsSync(locksFile) ? JSON.parse(fs.readFileSync(locksFile, "utf8")) : {})[String(W.week)] || {};
+const manual = new Map(Array.isArray(told) ? told.map((id) => [String(id), ""]) : Object.entries(told).map(([id, d]) => [String(id), d || ""]));
 const today = W.today;
 const DAY = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
 const DAYL = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
@@ -37,44 +38,13 @@ function player(id) {
     inj: live[3] || "", mu, cv: p ? p.cv : POOL, rest: p ? p.rest : 0.1, known: !!p };
 }
 const statsOf = (ids) => W.rows.filter((r) => ids.includes(r[0])).map(([player_id, date, team, pts, sp]) => ({ player_id, date, team, pts_std: pts || 0, sp: sp || 0 }));
-const liveDates = new Set(schedule.filter((g) => g.status === "in_game").map((g) => g.date));
-
-function side(team, risk, extraLocks) {
-  const roster = team.starters.map((id, i) => ({ ...player(id), starter: true, slot: W.slots[i] || "UTIL" }));
-  const stats = statsOf(team.starters);
-  const official = Object.fromEntries(team.starters.map((id, i) => [id, team.starters_points[i]]));
-  const locks = new Set(extraLocks || []), inferred = new Set();
-  const pl0 = Object.fromEntries(roster.map((p) => [p.id, p]));
-  for (const id of team.starters) {
-    // while his game is on, Sleeper's count is the live partial score: leave his finished games alone
-    if (schedule.some((g) => g.status === "in_game" && (g.home === pl0[id].team || g.away === pl0[id].team))) continue;
-    const played = stats.filter((s) => s.player_id === id && s.sp > 0).sort((a, b) => a.date.localeCompare(b.date));
-    const off = official[id];
-    if (off == null || !played.length) continue;
-    const latest = played[played.length - 1];
-    if (played.length >= 2 && Math.abs(off - latest.pts_std) > 0.75 && played.slice(0, -1).some((s) => Math.abs(off - s.pts_std) <= 0.75)) {
-      inferred.add(id); locks.add(id);
-      const g = played.slice(0, -1).find((s) => Math.abs(off - s.pts_std) <= 0.75);
-      g.pts_std = off; played.splice(played.indexOf(g) + 1);   // the locked game is the one that counts
-      for (const s of stats) if (s.player_id === id && s.date > g.date) s.sp = 0;
-    } else latest.pts_std = off;                             // the league's counted number (stat corrections)
-  }
-  const res = L.analyzeWeek({ roster, schedule, stats, today, locks, risk, z: Z });
-  let now = 0, exp = 0, rem = 0, tot = 0;
-  for (const r of res.rows) {
-    const pl = roster.find((x) => x.id === r.id);
-    const sol = L.solve(pl.mu, pl.cv, r.q, 6, { risk: "even", z: Z });
-    const c = r.latest || 0;
-    r.exp = ["lock", "final", "locked"].includes(r.verdict) ? c : r.verdict === "none" ? 0 : r.verdict === "live" ? Math.max(c, pl.mu * 0.9) : sol.cont(c, r.k);
-    r.pl = pl; r.slot = pl.slot; r.inferred = inferred.has(r.id); r.manual = !inferred.has(r.id) && locks.has(r.id);
-    now += c; exp += r.exp; rem += r.k; tot += r.games;
-  }
-  return { res, now, exp, remFrac: tot ? rem / tot : 0, roster };
-}
+const WKL = require(path.join(base, "tools", "lockweek.js"));
+const side = (team, risk, manualLocks) => WKL.analyzeSide({ L, starters: team.starters, points: team.starters_points, slots: W.slots, player, schedule,
+  stats: statsOf(team.starters), today, manual: manualLocks || new Map(), risk, z: Z });
 
 let me = side(W.me, "even", manual), op = W.opp ? side(W.opp, "even") : null;
 const diff = op ? me.exp - op.exp : 0;
-const risk = diff < -15 ? "chase" : diff > 15 ? "protect" : "even";
+const risk = WKL.riskOf(diff);
 if (risk !== "even") me = side(W.me, risk, manual);
 
 // ---------- rows ----------
@@ -85,14 +55,15 @@ const rows = me.res.rows.map((r) => {
   if (r.verdict === "hold") why = `Line ${f1(r.threshold)}. ${fut.map((g) => vsText(pl.team, g)).join(", ")}.`;
   if (r.verdict === "lock") why = `Beats his ${f1(r.threshold)} line. ${fut.length} game${fut.length > 1 ? "s" : ""} left, worth about ${f1(L.solve(pl.mu, pl.cv, r.q, 6, { risk, z: Z }).cont(r.latest, r.k))} if you wait.`;
   if (r.verdict === "locked") why = r.inferred ? `Locked at ${f1(r.latest || 0)} (Sleeper's count shows it).` : `Locked at ${f1(r.latest || 0)}.`;
+  if (r.broken) why = `Your lock didn't go through: Sleeper counts his latest game (${f1(r.latest || 0)}). ${why}`;
   if (pl.inj && r.verdict !== "locked") why = `Listed ${pl.inj}. ${why}`;
   return { id: r.id, n: r.n, slot: r.slot, score: r.latest, status: STATUS[r.verdict] || r.verdict, why, exp: +r.exp.toFixed(1),
-    canMark: ["hold", "lock"].includes(r.verdict) && r.latest != null, src: r.verdict === "locked" ? (r.inferred ? "auto" : "told") : "" };
+    canMark: ["hold", "lock"].includes(r.verdict) && r.latest != null, src: r.verdict === "locked" ? (r.inferred ? "auto" : "told") : "", broken: !!r.broken };
 });
 
 // ---------- moves ----------
 const moves = [];
-for (const r of me.res.rows.filter((x) => x.verdict === "lock")) {
+for (const r of []) {   // lock calls live in the Lock or wait card (checked live on the page)
   const g = gamesOf(r.pl.team).find((x) => x.date >= today && x.status === "pre_game");
   moves.push({ rank: 0, when: g ? `Before ${DAYL(g.date)}` : "Now", what: `Lock ${r.n} at ${f1(r.latest)}`, why: `It beats his ${f1(r.threshold)} lock line. Waiting is worth less.` });
 }
@@ -143,6 +114,12 @@ const out = {
   rows, swaps,
   opp_rows: op ? op.res.rows.map((r) => ({ n: r.n, status: STATUS[r.verdict] || r.verdict, score: r.latest, exp: +r.exp.toFixed(1) })) : [],
 };
+// everything the page needs to redo these calls live from Sleeper between refreshes
+const zArr = Array.from(Z);
+const ids = [...new Set([...W.me.starters, ...W.me.bench, ...(W.opp ? [...W.opp.starters, ...(W.opp.bench || [])] : []), ...Object.keys(W.P)])];
+out.live = { league: W.league || "1398532731020828672", season: W.season || "2026", week: W.week, rid: W.me.rid, oppRid: W.opp ? W.opp.rid : null,
+  oppName: W.opp ? W.opp.name : "", slots: W.slots, risk, z: zArr.map((x) => +x.toFixed(4)), pool: POOL, manual: Object.fromEntries(manual),
+  players: Object.fromEntries(ids.map((id) => { const p = player(id); return [id, [p.n, p.team || "", p.pos.join("/"), p.inj, +p.mu.toFixed(2), +p.cv.toFixed(3), +(p.rest || 0.1).toFixed(3)]]; })) };
 const sdOf = (s) => Math.max(3, +(22 * Math.sqrt(s.remFrac)).toFixed(1));
 const proj = { [W.me.rid]: { mean: +me.exp.toFixed(1), sd: sdOf(me) } };
 if (op) proj[W.opp.rid] = { mean: +op.exp.toFixed(1), sd: sdOf(op) };

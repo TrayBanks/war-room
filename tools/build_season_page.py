@@ -117,6 +117,8 @@ D = {"record": rec, "trending": trend, "eyebrow": f"Slot 10 War Room · NBA Leag
      "myDraft": R["myDraft"], "slots": R["slots"], "bench": R["bench"], "coverage": R["coverage"], "adds": R["adds"],
      "buy": R["buy"], "playoffGames": R["myPlayoffGames"], "notes": notes}
 tpl = open(os.path.join(BASE, "model", "season_page", "template_v2.html")).read()
+libs = "\n".join(open(os.path.join(BASE, f)).read() for f in ("extension/lock.js", "tools/lockweek.js")).replace("</", "<\\/")
+tpl = tpl.replace("/*__LIBS__*/", libs)
 fill = lambda data: tpl.replace("/*__DATA__*/null", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
 body = fill(D)
 out = os.path.join(BASE, "reports", "slot10_war_room.html")

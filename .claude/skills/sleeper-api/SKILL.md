@@ -29,5 +29,5 @@ Notes
 - Never call authenticated endpoints and never read the user's token; `localStorage.user_id` is enough to find his team.
 - Matchups (verified week 1): `starters_points` is the league's counted number per starter, including a live partial score while his game is on. There is still no lock field; tools/week_page.js infers a lock once a starter plays again (counted points match an earlier game), and data/locks.json + the page's "Mark locked" cover the rest.
 - Rosters carry `settings.wins/losses/ties` (the real record).
-- **Matchups can disagree between reads** (verified Oct 24, 2026: six reads 2 s apart flipped Lillard 25.5/19.5 and the opponent's total 190–250). Never trust one read of `/matchups/{week}`: read it 3 times and take the per-starter majority (`tools/lockweek.js` `consensus`).
+- **Matchups can disagree between reads** (verified Oct 24, 2026: six reads 2 s apart flipped Lillard 25.5/19.5 and the opponent's total 190–250). Never trust one read of `/matchups/{week}`: read it 3 times and take the per-starter majority (`tools/lockweek.js` `consensus`). The flip can also last minutes (all three reads stale), so the feed can't prove a lock failed: a lock Tray made always wins.
 - Some sandboxes block these hosts from the shell; GitHub Actions runners reach them fine. Fetching from a page on sleeper.com (browser JS) works with CORS.

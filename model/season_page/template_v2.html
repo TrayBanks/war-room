@@ -464,7 +464,7 @@ function reasonOf(r, P, marked) {
   else if (r.verdict === "final") t = `No games left. ${f1(c)} counts.`;
   else if (r.verdict === "none") t = r.pl.id === "0" ? "Empty slot. Start someone who plays." : "No games left this week. Start someone who plays.";
   else t = r.text;
-  if (r.broken) t = `Your lock didn't go through: Sleeper counts his latest game. ${t}`;
+  if (r.feed != null) t = `${t} Sleeper's feed shows ${f1(r.feed)} right now; it flips between servers, so check the app if unsure.`;
   if (r.pl.inj && !["locked", "final"].includes(r.verdict)) t = `Listed ${r.pl.inj}. ${t}`;
   return t;
 }
@@ -480,15 +480,13 @@ function renderLock(S) {
     ans = `Nothing to lock. Wait${nx ? ` for ${nx.date === P.today ? "tonight's" : dayLong(nx.date) + "'s"} games` : ""}.`;
   } else ans = "All set: every starter is locked or done.";
   $("#lock-answer").innerHTML = ans;
-  const broken = rows.filter((r) => r.broken);
-  $("#lock-warn").hidden = !broken.length;
-  $("#lock-warn").textContent = broken.length ? `${broken.map((r) => r.n).join(", ")}: your lock didn't go through. Sleeper is counting the newer game.` : "";
+  $("#lock-warn").hidden = true;
   $("#lock-rows").innerHTML = rows.map((r) => {
     const [lab, cls] = VD[r.verdict] || [r.verdict, "mute"], marked = S.marked.has(r.id);
     const sub = ["lock", "hold"].includes(r.verdict) ? `line ${f1(r.threshold)}` : r.verdict === "wait" && r.threshold ? `needs ${f1(r.threshold)}` : "";
     const played = P.stats.filter((x) => x.player_id === r.id && x.sp > 0).map((x) => x.date).sort().pop() || "";
     const btn = ["lock", "hold"].includes(r.verdict) || (r.verdict === "locked" && marked) ? ` <button class="mk" type="button" data-id="${esc(r.id)}" data-date="${played}">${marked ? "Undo" : "I locked this"}</button>` : "";
-    return `<div class="lkr ${r.verdict === "lock" || r.broken ? "act" : ["final", "none", "locked"].includes(r.verdict) ? "quiet" : r.verdict === "hold" && !r.pl.inj ? "hold" : ""}"><span class="pill vd ${cls}">${lab}</span>
+    return `<div class="lkr ${r.verdict === "lock" ? "act" : ["final", "none", "locked"].includes(r.verdict) ? "quiet" : r.verdict === "hold" && !r.pl.inj ? "hold" : ""}"><span class="pill vd ${cls}">${lab}</span>
       <span class="nm">${esc(r.n)} <span class="sm">${esc(r.slot)}</span></span>
       <span class="sc num">${r.latest == null ? "–" : f1(r.latest)}${sub ? `<small>${sub}</small>` : ""}</span>
       <span class="rs"><span class="rt">${esc(reasonOf(r, P, marked))}</span>${btn}</span></div>`;

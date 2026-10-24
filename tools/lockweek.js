@@ -3,7 +3,8 @@
    - inferred: once a starter has played again, Sleeper's counted points (starters_points) matching an earlier game
      instead of his latest one means that earlier game is locked;
    - manual: locks Tray told us about (data/locks.json) or marked on his phone, each with the date of the game he locked;
-   - broken: a manual lock that Sleeper contradicts (it counts a game played after the locked one), so it never went through.
+   - conflict: Sleeper's feed counts a newer game for a manual lock. The feed flips between servers for minutes at a time
+     (seen Oct 24, 2026), so the lock Tray made wins and the page just notes the disagreement; the app is the final word.
    Needs lock.js (passed in as L). */
 (function (root) {
   "use strict";
@@ -18,7 +19,7 @@
     const stats = o.stats.filter((s) => o.starters.includes(String(s.player_id))).map((s) => Object.assign({}, s, { player_id: String(s.player_id) }));
     const official = {};
     o.starters.forEach((id, i) => { official[id] = o.points[i]; });
-    const locks = new Set(), inferred = new Set(), broken = new Set();
+    const locks = new Set(), inferred = new Set(), conflict = new Map();
     for (const p of roster) {
       const id = p.id, manual = man.has(id), lockedOn = man.get(id) || "";
       // while his game is on, Sleeper's count is the live partial score: leave his finished games alone
@@ -33,14 +34,17 @@
         earlier.pts_std = off;                                   // the locked game is the one that counts
         for (const s of stats) if (s.player_id === id && s.date > earlier.date) s.sp = 0;
       } else {
-        if (manual && unsure.has(id)) locks.add(id);             // reads disagreed: trust the lock he made
-        else if (manual) {
-          // broken only if Sleeper counts a game played after the one he locked
+        if (manual) {
+          locks.add(id);
           const prev = played[played.length - 2];
           const after = lockedOn ? latest.date > lockedOn : !!prev;
           const lockedGame = lockedOn ? played.find((s) => s.date === lockedOn) : prev;
-          if (after && close(off, latest.pts_std) && lockedGame && !close(latest.pts_std, lockedGame.pts_std)) broken.add(id);
-          else locks.add(id);
+          if (after && lockedGame && !close(latest.pts_std, lockedGame.pts_std)) {
+            // he locked an earlier game: that game counts, whatever the feed shows right now
+            if (!close(off, lockedGame.pts_std)) conflict.set(id, off);
+            for (const s of stats) if (s.player_id === id && s.date > lockedGame.date) s.sp = 0;
+            continue;
+          }
         }
         latest.pts_std = off;                                    // the league's counted number (stat corrections)
       }
@@ -52,7 +56,7 @@
       const sol = o.L.solve(pl.mu, pl.cv, r.q, 6, { risk: "even", z: o.z });
       const c = r.latest || 0;
       r.exp = ["lock", "final", "locked"].includes(r.verdict) ? c : r.verdict === "none" ? 0 : r.verdict === "live" ? Math.max(c, pl.mu * 0.9) : sol.cont(c, r.k);
-      r.pl = pl; r.slot = pl.slot; r.inferred = inferred.has(r.id); r.broken = broken.has(r.id);
+      r.pl = pl; r.slot = pl.slot; r.inferred = inferred.has(r.id); r.feed = conflict.has(r.id) ? conflict.get(r.id) : null;
       now += c; exp += r.exp; rem += r.k; tot += r.games;
     }
     return { res, now, exp, remFrac: tot ? rem / tot : 0, roster };

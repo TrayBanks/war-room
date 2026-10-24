@@ -55,10 +55,10 @@ const rows = me.res.rows.map((r) => {
   if (r.verdict === "hold") why = `Line ${f1(r.threshold)}. ${fut.map((g) => vsText(pl.team, g)).join(", ")}.`;
   if (r.verdict === "lock") why = `Beats his ${f1(r.threshold)} line. ${fut.length} game${fut.length > 1 ? "s" : ""} left, worth about ${f1(L.solve(pl.mu, pl.cv, r.q, 6, { risk, z: Z }).cont(r.latest, r.k))} if you wait.`;
   if (r.verdict === "locked") why = r.inferred ? `Locked at ${f1(r.latest || 0)} (Sleeper's count shows it).` : `Locked at ${f1(r.latest || 0)}.`;
-  if (r.broken) why = `Your lock didn't go through: Sleeper counts his latest game (${f1(r.latest || 0)}). ${why}`;
+  if (r.feed != null) why = `${why} Sleeper's feed shows ${f1(r.feed)} right now; check the app if unsure.`;
   if (pl.inj && r.verdict !== "locked") why = `Listed ${pl.inj}. ${why}`;
   return { id: r.id, n: r.n, slot: r.slot, score: r.latest, status: STATUS[r.verdict] || r.verdict, why, exp: +r.exp.toFixed(1),
-    canMark: ["hold", "lock"].includes(r.verdict) && r.latest != null, src: r.verdict === "locked" ? (r.inferred ? "auto" : "told") : "", broken: !!r.broken };
+    canMark: ["hold", "lock"].includes(r.verdict) && r.latest != null, src: r.verdict === "locked" ? (r.inferred ? "auto" : "told") : ""};
 });
 
 // ---------- moves ----------

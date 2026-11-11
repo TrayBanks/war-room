@@ -483,7 +483,7 @@ function renderTeam() {
 
 function renderWaivers() {
   if (!V) return;
-  const claims = Object.entries(V.claims).filter(([id]) => { const r = vp(id); return r && !vc(r, "owner"); }).sort((a, b) => b[1].gain - a[1].gain);
+  const claims = Object.entries(V.claims).filter(([id]) => { const r = vp(id); return r && !vc(r, "owner") && vc(r, "t") && !/^(Out|IR)$/.test(vc(r, "inj")); }).sort((a, b) => b[1].gain - a[1].gain);
   const c0 = claims[0];
   $("#wv-answer").innerHTML = c0 && c0[1].gain >= 0.5 ? `Claim <b>${esc(last(vc(vp(c0[0]), "n")))}</b> for $${c0[1].bid}, drop ${esc(last(vc(vp(c0[1].drop), "n")))}.` : "No claim is worth it today. Keep your FAAB.";
   $("#claims").innerHTML = claims.slice(0, 5).map(([id, c]) => { const r = vp(id), d = vp(c.drop);
@@ -573,6 +573,7 @@ function computeLock(P) {
   for (const day of days.slice(0, 2)) {
     const pp = WR_WEEK.planLineup({ L: WR_LOCK, z: LV.z, risk, slots: LV.slots, starters: lu, counted, locks: locked, roster: [...new Set([...roster, ...lu.filter((x) => x !== "0")])], player: pl, schedule: P.games, day, today: P.today });
     plan.push(pp); lu = pp.rows.map((r) => r.id || "0");
+    for (const r of pp.rows) if (r.id && r.plays && !r.fixed) counted[r.id] = Math.max(counted[r.id] || 0, r.worth);   // tonight banks about what he's worth
   }
   return { P, mine, opp, risk, marked: marks(P.week), plan, pl };
 }

@@ -118,6 +118,7 @@ let lineupNow = W.me.starters.slice();   // later days build on the day before (
 const plan = [...new Set(schedule.filter((g) => g.date >= today).map((g) => g.date))].sort().map((day) => {
   const pl = WKL.planLineup({ L, z: Z, risk, slots: W.slots, starters: lineupNow, counted, locks: lockedIds, roster: myRoster, player, schedule, day, today });
   lineupNow = pl.rows.map((r) => r.id || "0");
+  for (const r of pl.rows) if (r.id && r.plays && !r.fixed) counted[r.id] = Math.max(counted[r.id] || 0, r.worth);
   return { day, gain: pl.gain, rows: pl.rows.map((r) => ({ slot: r.slot, id: r.id, n: r.id ? player(r.id).n : "Empty", was: r.was && r.was !== "0" ? player(r.was).n : "Empty",
     change: r.change, locked: r.locked, fixed: r.fixed, plays: r.plays, worth: r.worth })) };
 });

@@ -125,7 +125,7 @@ for (const fa of freeAll.slice(0, 80)) {
 // recently dropped players who are free now get the same treatment
 for (const t of PL.tx) for (const id of Object.keys(t.drops || {})) {
   const p = P[id];
-  if (!p || p.owner || claims[id]) continue;
+  if (!p || p.owner || claims[id] || !p.t || p.inj === "Out" || p.inj === "IR") continue;
   let best = null;
   for (const d of active) { const v = teamValue(active.filter((x) => x !== d).concat([toEng(p)])).v - V0; if (!best || v > best.gain) best = { gain: +v.toFixed(2), drop: d.id }; }
   claims[id] = { gain: best.gain, drop: best.drop, bid: bidFor(best.gain, p) };

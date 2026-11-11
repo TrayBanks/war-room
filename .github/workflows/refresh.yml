@@ -57,6 +57,14 @@ jobs:
       - name: Pull Sleeper, run the models, build the page
         timeout-minutes: 6
         run: tools/refresh.sh site
+      - name: Save snapshot branch (the artifact sync publishes from it)
+        run: |
+          set -e
+          mkdir -p /tmp/snap && cp -r data/live reports/slot10_war_room.html site /tmp/snap/
+          cp reports/season_*.json reports/trending_*.json /tmp/snap/ 2>/dev/null || true
+          cd /tmp/snap && git init -q -b snapshot && git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Snapshot $(date -u +%FT%TZ)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshot:snapshot
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

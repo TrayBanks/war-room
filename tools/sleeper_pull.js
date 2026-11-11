@@ -8,6 +8,9 @@
 //   extras   players the model doesn't know (rostered or top free agents), injuries, free-agent pool
 //   trending Sleeper's most added / dropped (48 h) with each player's latest games, owner and teammates out
 //   week     the current matchup for week_calls.js / week_page.js: both lineups, official points, box scores, schedule
+//   pool     every player worth a look (rostered, useful free agents, anyone in a recent transaction): preseason
+//            projection, last season and this season per game, minutes, last 10 games; plus league transactions
+//            (this week and last) and each team's FAAB spent
 (function (root) {
   "use strict";
   const A = "https://api.sleeper.app/v1", B = "https://api.sleeper.com";
@@ -39,6 +42,12 @@
     const [stats, prevStats] = await Promise.all([
       get(`${B}/stats/nba/${season}/${cur}?season_type=regular`), cur > 1 ? get(`${B}/stats/nba/${season}/${cur - 1}?season_type=regular`) : Promise.resolve([])]);
 
+    // season totals (this season and last), every week's box scores so far, and league transactions
+    const [sNow, sLast, txs] = await Promise.all([
+      get(`${B}/stats/nba/${season}?season_type=regular`), get(`${B}/stats/nba/${+season - 1}?season_type=regular`).catch(() => []),
+      Promise.all([cur, cur - 1].filter((w) => w >= 1).map((w) => get(`${A}/league/${LEAGUE}/transactions/${w}`).catch(() => []))).then((a) => a.flat())]);
+    const weekStats = await Promise.all(Array.from({ length: cur }, (_, i) => i + 1 === cur ? stats : i + 1 === cur - 1 ? prevStats
+      : get(`${B}/stats/nba/${season}/${i + 1}?season_type=regular`).catch(() => [])));
     const P = (id) => players[id] || {};
     const nameOf = (id) => { const p = P(id); return p.full_name || [p.first_name, p.last_name].filter(Boolean).join(" ") || String(id); };
     const posOf = (id) => (P(id).fantasy_positions || []).join("/");
@@ -123,7 +132,32 @@
       rows: stats.filter((r) => ids.has(String(r.player_id))).map((r) => [String(r.player_id), r.date, r.team, +((r.stats || {}).pts_std || 0), (r.stats || {}).sp || 0]),
       games: sched.filter((g) => g.week === cur).map((g) => [g.date, g.home.team, g.away.team, g.status]),
     };
-    return { date: today, league: LG, extras: { extra, inj, fa }, trending: TR, week: WK };
+    // ---------- pool ----------
+    const tot = (arr) => Object.fromEntries((arr || []).map((r) => [String(r.player_id), r.stats || {}]));
+    const totNow = tot(sNow), totLast = tot(sLast);
+    const perG = (s) => (s && s.gp ? +((s.pts_std || 0) / s.gp).toFixed(2) : null);
+    const minG = (s) => (s && s.gp ? +(((s.min != null ? s.min : (s.sp || 0) / 60)) / s.gp).toFixed(1) : null);
+    const gl = {};
+    for (const rows of weekStats) for (const r of rows || []) { const st = r.stats || {}; if ((st.sp || 0) > 0) (gl[r.player_id] = gl[r.player_id] || []).push([r.date.slice(5), +(+(st.pts_std || 0)).toFixed(1), Math.round(st.sp / 60)]); }
+    const txIds = new Set();
+    for (const t of txs) for (const k of ["adds", "drops"]) for (const id of Object.keys(t[k] || {})) txIds.add(id);
+    const poolIds = new Set([...rostered, ...txIds]);
+    for (const id of Object.keys(players)) {
+      if (poolIds.has(id) || !P(id).team) continue;
+      const pr = fppg(id), ln = perG(totLast[id]), nw = perG(totNow[id]);
+      if ((pr != null && pr >= 9) || (nw != null && nw >= 12 && totNow[id].gp >= 2) || (ln != null && ln >= 14 && totLast[id].gp >= 20)) poolIds.add(id);
+    }
+    const pool = {};
+    for (const id of poolIds) {
+      const l = totLast[id], n = totNow[id];
+      pool[id] = [nameOf(id), P(id).team || "", posOf(id) || "UTIL", injOf(id), ownerOf[id] || 0, fppg(id), l && l.gp ? l.gp : 0, perG(l), n && n.gp ? n.gp : 0, perG(n), minG(n), minG(l),
+        (gl[id] || []).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 10)];
+    }
+    const tx = txs.filter((t) => t.status === "complete").sort((a, b) => b.created - a.created).map((t) => ({ t: t.created, type: t.type, adds: t.adds || {}, drops: t.drops || {},
+      bid: (t.settings && t.settings.waiver_bid) || null, rids: t.roster_ids || [] }));
+    const POOL = { asof: today, cur, cols: ["name", "team", "pos", "inj", "owner", "proj", "lastGp", "lastFp", "gp", "fp", "min", "lastMin", "logs"], players: pool, tx,
+      faab: Object.fromEntries(rosters.map((r) => [r.roster_id, r.settings.waiver_budget_used || 0])), budget: league.settings.waiver_budget || 100 };
+    return { date: today, league: LG, extras: { extra, inj, fa }, trending: TR, week: WK, pool: POOL };
   }
 
   const api = { pull, etDate };
@@ -139,7 +173,7 @@
       const out = await pull({ modelIds: ctx.WR_DATA.players.map((p) => p.id) });
       const dir = path.join(base, "data", "live");
       fs.mkdirSync(dir, { recursive: true });
-      for (const k of ["league", "extras", "trending", "week"]) fs.writeFileSync(path.join(dir, `${k}_${out.date}.json`), JSON.stringify(out[k]));
+      for (const k of ["league", "extras", "trending", "week", "pool"]) fs.writeFileSync(path.join(dir, `${k}_${out.date}.json`), JSON.stringify(out[k]));
       console.error(`pulled week ${out.league.curWeek} as of ${out.league.asofTs}`);
       console.log(out.date);
     })().catch((e) => { console.error(e); process.exit(1); });

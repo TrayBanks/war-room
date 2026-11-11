@@ -76,8 +76,55 @@
       unsure, agree: !unsure.length && same.length === rows.length, reads: rows.length };
   }
 
+  /* Start these 9: best lineup from a given day on.
+     Each player's worth that day: if he plays that day, his counted score plus the value of the games he has left (lock.js
+     cont); if not, just the score he has banked (a bench player who sits that day can be swapped in later at no cost).
+     Fixed in place: locked starters, and anyone whose game that day has already tipped (Sleeper locks them). A bench player
+     whose game already tipped can't start that day. Bitmask DP over the 9 slots.
+     o: { L, z, risk, slots, starters: [ids by slot], counted: {id: score}, locks: Set, roster: [ids], player(id), schedule, day, today } */
+  const SLOT_OK = { PG: ["PG"], SG: ["SG"], G: ["PG", "SG"], SF: ["SF"], PF: ["PF"], F: ["SF", "PF"], C: ["C"], UTIL: null };
+  const fits = (slot, pos) => !SLOT_OK[slot] || (pos || []).some((x) => SLOT_OK[slot].includes(x));
+  function planLineup(o) {
+    const day = o.day || o.today, tipped = (team) => o.schedule.some((g) => g.date === day && g.status !== "pre_game" && (g.home === team || g.away === team));
+    const left = (team) => o.schedule.filter((g) => (g.home === team || g.away === team) && g.status === "pre_game" && g.date >= day).length;
+    const playsDay = (team) => o.schedule.some((g) => g.date === day && (g.home === team || g.away === team));
+    const worth = (id) => {
+      const p = o.player(id), c = o.counted[id] || 0, k = left(p.team);
+      const q0 = Math.max(0, Math.min(1, 1 - (p.rest || 0.07))), q = /^(Out|IR|Suspended)$/i.test(p.inj || "") ? 0 : /^(Questionable|GTD|DTD|Doubtful)$/i.test(p.inj || "") ? q0 * 0.6 : q0;
+      // only a player who plays that day can use the slot that day; anyone else can be swapped in later for free,
+      // so off days are worth just the score he has banked
+      return k && q && playsDay(p.team) ? o.L.solve(p.mu, p.cv, q, 6, { risk: o.risk || "even", z: o.z }).cont(c, k) : c;
+    };
+    const fixed = {}, used = new Set();
+    o.slots.forEach((s, i) => { const id = o.starters[i]; if (id && id !== "0" && (o.locks.has(id) || (day === o.today && tipped(o.player(id).team)))) { fixed[i] = id; used.add(id); } });
+    const free = o.slots.map((s, i) => i).filter((i) => fixed[i] == null);
+    const cands = o.roster.filter((id) => !used.has(id) && !(day === o.today && tipped(o.player(id).team) && !o.starters.includes(id)));
+    const val = Object.fromEntries(cands.map((id) => [id, worth(id)]));
+    const F = free.length, full = (1 << F) - 1;
+    let best = new Map([[0, { v: 0, pick: [] }]]);
+    for (const id of cands) {
+      const nx = new Map(best);
+      for (const [mask, st] of best) for (let j = 0; j < F; j++) {
+        if (mask & (1 << j) || !fits(o.slots[free[j]], o.player(id).pos)) continue;
+        const m2 = mask | (1 << j), v = st.v + val[id] + (o.starters[free[j]] === id ? 0.05 : 0), cur = nx.get(m2);   // ties: leave him where he is
+        if (!cur || v > cur.v) nx.set(m2, { v, pick: st.pick.concat([[free[j], id]]) });
+      }
+      best = nx;
+    }
+    let top = null;
+    for (const [mask, st] of best) if (!top || st.v > top.v || (st.v === top.v && mask === full)) top = st;
+    const lineup = o.slots.map((s, i) => fixed[i] || null);
+    for (const [i, id] of top.pick) lineup[i] = id;
+    const rows = o.slots.map((s, i) => {
+      const id = lineup[i], was = o.starters[i];
+      return { slot: s, id, was, change: !!id && id !== was, fixed: fixed[i] != null, locked: !!(id && o.locks.has(id)), plays: id ? playsDay(o.player(id).team) : false, worth: id ? +(fixed[i] != null ? (o.counted[id] || 0) : val[id]).toFixed(1) : 0 };
+    });
+    const nowVal = o.slots.reduce((a, s, i) => { const id = o.starters[i]; return a + (!id || id === "0" ? 0 : fixed[i] != null ? o.counted[id] || 0 : cands.includes(id) ? val[id] : 0); }, 0);
+    return { day, rows, total: +rows.reduce((a, r) => a + r.worth, 0).toFixed(1), gain: +(rows.reduce((a, r) => a + r.worth, 0) - nowVal).toFixed(1) };
+  }
+
   const riskOf = (diff) => (diff < -15 ? "chase" : diff > 15 ? "protect" : "even");
-  const api = { analyzeSide, riskOf, consensus };
+  const api = { analyzeSide, riskOf, consensus, planLineup, fits };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.WR_WEEK = api;
 })(typeof self !== "undefined" ? self : this);

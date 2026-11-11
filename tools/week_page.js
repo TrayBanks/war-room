@@ -15,6 +15,10 @@ global.WR_DEFAULT_Z = D.league.lock.z;
 const L = require(path.join(base, "extension/lock.js"));
 const Z = D.league.lock.z, POOL = D.league.lock.pool_cv;
 const byId = Object.fromEntries(D.players.map((p) => [String(p.id), p]));
+// rest-of-season per-game values from tools/values.js (last season + preseason + this season), when the refresh made them
+const valFile = path.join(base, "reports", `values_${path.basename(process.argv[2]).replace(/^week_|\.json$/g, "")}.json`);
+const VAL = fs.existsSync(valFile) ? JSON.parse(fs.readFileSync(valFile, "utf8")) : null;
+const vEst = (id) => { if (!VAL || !VAL.players[id]) return null; return VAL.players[id][VAL.cols.indexOf("est")]; };
 
 const file = process.argv[2];
 const W = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -33,7 +37,7 @@ const fits = (slot, pos) => !SLOT_OK[slot] || pos.some((p) => SLOT_OK[slot].incl
 
 function player(id) {
   const p = byId[id], live = W.P[id] || [];
-  const mu = p ? p.f : live[4] || 12;
+  const mu = vEst(id) != null ? vEst(id) : p ? p.f : live[4] || 12;
   return { id, n: live[0] || (p && p.n) || id, team: live[1] || (p && p.t), pos: (live[2] || (p ? p.p.join("/") : "")).split("/").filter(Boolean),
     inj: live[3] || "", mu, cv: p ? p.cv : POOL, rest: p ? p.rest : 0.1, known: !!p };
 }
@@ -93,7 +97,7 @@ for (const r of me.res.rows) {
 }
 cands.sort((a, b) => a.rank - b.rank || b.gain - a.gain);
 const usedS = new Set(), usedB = new Set();
-for (const c of cands) { if (usedS.has(c.s) || usedB.has(c.b)) continue; usedS.add(c.s); usedB.add(c.b); moves.push(c); }
+// bench swaps now come from the "Start these 9" plan (planLineup); moves keep injury checks
 for (const r of me.res.rows) {
   if (!/^(Questionable|GTD|DTD|Doubtful)$/i.test(r.pl.inj) || !["hold", "wait"].includes(r.verdict) || usedS.has(r.id)) continue;
   const alt = bench.find((b) => fits(r.slot, b.pos));
@@ -106,12 +110,23 @@ if (!swaps.length) swaps.push({ when: "This week", what: "No moves: hold everyon
 const myTeams = new Set([...W.me.starters, ...W.me.bench].map((id) => player(id).team));
 const left = [...new Set(schedule.filter((g) => g.status === "pre_game" && g.date >= today && (myTeams.has(g.home) || myTeams.has(g.away))).map((g) => g.date))].sort();
 const RISK = { chase: "You're behind, so the lock lines chase upside: hold for bigger games.", protect: "You're ahead, so the lock lines protect the lead: lock good games sooner.", even: "It's close, so the lock lines are neutral." };
+// ---------- start these 9: today and each game day left ----------
+const counted = {}, lockedIds = new Set();
+for (const r of me.res.rows) { if (["lock", "hold", "final", "locked", "live", "pending"].includes(r.verdict) && r.latest != null) counted[r.id] = r.latest; if (r.verdict === "locked") lockedIds.add(r.id); }
+const myRoster = [...W.me.starters, ...W.me.bench].filter((id) => id && id !== "0");
+let lineupNow = W.me.starters.slice();   // later days build on the day before (tentative: those games haven't happened)
+const plan = [...new Set(schedule.filter((g) => g.date >= today).map((g) => g.date))].sort().map((day) => {
+  const pl = WKL.planLineup({ L, z: Z, risk, slots: W.slots, starters: lineupNow, counted, locks: lockedIds, roster: myRoster, player, schedule, day, today });
+  lineupNow = pl.rows.map((r) => r.id || "0");
+  return { day, gain: pl.gain, rows: pl.rows.map((r) => ({ slot: r.slot, id: r.id, n: r.id ? player(r.id).n : "Empty", was: r.was && r.was !== "0" ? player(r.was).n : "Empty",
+    change: r.change, locked: r.locked, fixed: r.fixed, plays: r.plays, worth: r.worth })) };
+});
 const out = {
   week: W.week, today, opp: W.opp ? W.opp.name : "", me: +W.me.points.toFixed(1), oppPts: W.opp ? +W.opp.points.toFixed(1) : 0,
   projMe: Math.round(me.exp), projOpp: op ? Math.round(op.exp) : 0, risk,
   daysLeft: left.length ? `${left.map(DAY).join(" · ")} left` : "Week is done",
   oddsNote: `to win this week. ${RISK[risk]}`,
-  rows, swaps,
+  rows, swaps, plan,
   opp_rows: op ? op.res.rows.map((r) => ({ n: r.n, status: STATUS[r.verdict] || r.verdict, score: r.latest, exp: +r.exp.toFixed(1) })) : [],
 };
 // everything the page needs to redo these calls live from Sleeper between refreshes

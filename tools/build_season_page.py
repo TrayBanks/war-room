@@ -111,11 +111,15 @@ if os.path.exists(tp):
              "yours": sorted(yours, key=lambda r: r["net"]),
              "add": [slim(r) for r in ups], "drop": [slim(r) for r in downs]}
 
+vf = os.path.join(BASE, "reports", f"values_{d}.json")
+VALUES = json.load(open(vf)) if os.path.exists(vf) else None
+if VALUES:   # keep the page light: claims for the best 40 only
+    VALUES["claims"] = dict(sorted(VALUES["claims"].items(), key=lambda kv: -kv[1]["gain"])[:40])
 rec = LG.get("record", {}).get(str(my_rid), [0, 0, 0])
 D = {"record": rec, "trending": trend, "eyebrow": f"Slot 10 War Room · NBA League Revamped · Lock-In · Week {cur} · updated {stamp}",
      "teams": teams, "teamsWide": RW["teams"], "cum": R["cum"], "myWeeks": weeks, "week1": WK, "room": room,
      "myDraft": R["myDraft"], "slots": R["slots"], "bench": R["bench"], "coverage": R["coverage"], "adds": R["adds"],
-     "buy": R["buy"], "playoffGames": R["myPlayoffGames"], "notes": notes}
+     "buy": R["buy"], "playoffGames": R["myPlayoffGames"], "notes": notes, "values": VALUES}
 tpl = open(os.path.join(BASE, "model", "season_page", "template_v2.html")).read()
 libs = "\n".join(open(os.path.join(BASE, f)).read() for f in ("extension/lock.js", "tools/lockweek.js")).replace("</", "<\\/")
 tpl = tpl.replace("/*__LIBS__*/", libs)

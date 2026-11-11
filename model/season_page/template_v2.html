@@ -174,6 +174,21 @@ details.deep > .dd { display: grid; gap: 14px; margin-top: 12px; }
   .lkr.hold .rt, .lkr.quiet .rt { display: none; }    /* the line under the score says it; keep phones to one row */
   .lkr.act { padding: 12px; }
 }
+.prow { display: grid; grid-template-columns: 74px minmax(0,1fr) auto; gap: 2px 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.prow:last-child { border-bottom: 0; }
+.prow .vd { grid-row: span 2; justify-self: start; }
+.prow .nm { font-weight: 700; min-width: 0; }
+.prow .nm .sm { font-weight: 500; }
+.prow .nums { grid-column: 3; grid-row: 1 / span 2; text-align: right; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.prow .nums b { font-family: var(--display); font-size: 22px; color: var(--ink); font-weight: 800; }
+.prow .rs { grid-column: 2; font-size: 13px; color: var(--ink-2); }
+.prow .tag { font-size: 11.5px; font-weight: 700; color: var(--warn); margin-left: 6px; }
+.prow .tag.up { color: var(--good); }
+.glab { margin-top: 6px; }
+.plan .prow { grid-template-columns: 48px minmax(0,1fr) auto; }
+.plan .prow .vd { font-family: var(--display); font-weight: 800; font-size: 16px; color: var(--muted); }
+.plan .prow.in { background: var(--surface-2); box-shadow: inset 4px 0 0 var(--good); border-radius: 10px; padding: 9px 10px; border-bottom: 0; margin-bottom: 4px; }
+@media (max-width: 520px) { .prow { grid-template-columns: 64px minmax(0,1fr) auto; column-gap: 8px; } .prow .nums b { font-size: 19px; } .prow.quiet .rs { display: none; } }
 .livebar { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
 .livebar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
 .livebar .dot.off { background: var(--muted); box-shadow: none; }
@@ -249,7 +264,7 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
     </div>
     <div class="navrow">
       <nav class="nav" aria-label="Sections">
-        <a href="#all" aria-current="true">All</a><a href="#week">This week</a><a href="#trend">Waivers</a><a href="#season">Season</a><a href="#power">Power</a><a href="#lineup">Lineup</a><a href="#trades">Trades</a><a href="#draft">Draft</a><a href="#playoffs">Playoffs</a><a href="#next">Next</a>
+        <a href="#all" aria-current="true">All</a><a href="#week">This week</a><a href="#trend">Waivers</a><a href="#season">Season</a><a href="#power">Power</a><a href="#lineup">Team</a><a href="#trades">Trades</a><a href="#draft">Draft</a><a href="#playoffs">Playoffs</a><a href="#next">Next</a>
       </nav>
       <a class="tool" id="t-live" href="https://traybanks.github.io/war-room/" target="_blank" rel="noopener" hidden>Live page (updates 4×/day)</a>
       <button class="tool" id="t-open" type="button">Open all deep dives</button>
@@ -265,6 +280,9 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
     <p class="answer" id="lock-answer"></p>
     <p class="warnline" id="lock-warn" hidden></p>
     <div class="vs" id="vs"></div>
+    <div class="lab">Start these 9 today</div>
+    <div id="plan"></div>
+    <p class="note" id="plan-next"></p>
     <div class="lab">Lock or wait</div>
     <div id="lock-rows"></div>
     <div class="lab">Your next moves</div>
@@ -301,11 +319,18 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
  </div>
  <div class="col">
   <section class="c s5" id="trend" aria-labelledby="trend-h">
-    <div class="ch"><h2 id="trend-h">Waivers · trending on Sleeper</h2><span class="meta" id="trend-meta"></span></div>
-    <p class="answer" id="trend-answer"></p>
-    <div class="swap" id="swap"></div>
-    <div class="cols3" id="tgroups"></div>
-    <details class="deep"><summary>Deep dive: all trending players and the waiver math</summary><div class="dd">
+    <div class="ch"><h2 id="trend-h">Waivers · league moves</h2><span class="livebar"><span class="dot off" id="mv-dot"></span><span id="mv-meta">Checking Sleeper…</span></span></div>
+    <p class="answer" id="wv-answer"></p>
+    <div class="lab">League moves this week</div>
+    <div id="mv-rows"></div>
+    <div class="lab">Best claims for you</div>
+    <div id="claims"></div>
+    <p class="note" id="hold-note"></p>
+    <details class="deep"><summary>Deep dive: trending across Sleeper and the waiver math</summary><div class="dd">
+      <div class="lab">Trending on Sleeper <span class="sm" id="trend-sub"></span></div>
+      <p class="note" id="trend-answer"></p>
+      <div class="swap" id="swap"></div>
+      <div class="cols3" id="tgroups"></div>
       <p class="note" id="trend-note"></p>
       <div class="lab">Most added</div><div class="tbl"><table id="t-add"></table></div>
       <div class="lab">Most dropped</div><div class="tbl"><table id="t-drop"></table></div>
@@ -314,10 +339,18 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
     </div></details>
   </section>
   <section class="c s6" id="lineup" aria-labelledby="lineup-h">
-    <div class="ch"><h2 id="lineup-h">Your lineup vs the league</h2></div>
-    <p class="answer" id="lineup-answer"></p>
-    <div class="tbl"><table id="slots"></table></div>
-    <details class="deep"><summary>Deep dive: bench and position coverage</summary><div class="dd"><div class="tbl"><table id="bench"></table></div><div class="facts" id="cover"></div><p class="note">"Adds" is what each bench player adds per week: he fills in when a starter sits or has fewer games.</p></div></details>
+    <div class="ch"><h2 id="lineup-h">Your team</h2><span class="meta" id="team-meta"></span></div>
+    <p class="answer" id="team-answer"></p>
+    <div class="facts" id="groups"></div>
+    <div id="roster"></div>
+    <details class="deep"><summary>Deep dive: league leaderboards, team rankings and game logs</summary><div class="dd">
+      <p class="note">Values blend last season, the preseason projection and this season (this season counts about half after 12 games, weighted toward the last 5). Rank = rest-of-season lock value among every player worth a look. Hold line = the 140th best player: a 10-team league rosters 140.</p>
+      <div class="lab">Team rankings</div><div class="tbl"><table id="team-ranks"></table></div>
+      <div class="lab">Fantasy points per game leaders this season</div><div class="tbl"><table id="leaders"></table></div>
+      <div class="lab">Your players' last 10 games</div><div class="tbl"><table id="glogs"></table></div>
+      <div class="lab">Your best lineup and bench (preseason values)</div>
+      <div class="tbl"><table id="slots"></table></div><div class="tbl"><table id="bench"></table></div><div class="facts" id="cover"></div>
+    </div></details>
   </section>
  </div>
  <div class="col">
@@ -408,6 +441,84 @@ function renderWeek() {
   $("#week-note").textContent = w.oddsNote.split(". ").slice(1).join(". ");
 }
 
+/* ---------- season values (tools/values.js): ranks, tiers, claims, team composition ---------- */
+const V = D.values || null;
+const vc = (row, k) => row[V.cols.indexOf(k)];
+const vp = (id) => (V && V.players[id] ? V.players[id] : null);
+function valRow(id) { const r = vp(id); return r ? [vc(r, "n"), vc(r, "t"), vc(r, "pos"), vc(r, "inj"), vc(r, "est"), 0.35, 0.1] : null; }
+const TIERC = { Core: "good", Starter: "blue", Hold: "mute", Fringe: "warn", Cut: "bad" };
+const VERDC = { Keep: "good", Hold: "blue", Shop: "warn", Cut: "bad" };
+const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`; };
+
+function renderTeam() {
+  if (!V) { $("#lineup").hidden = true; return; }
+  const me = V.teams.find((t) => t.me), G = { G: "guards", F: "forwards", C: "centers" };
+  const gs = ["G", "F", "C"].map((g) => ({ g, ...me.groups[g] })).sort((a, b) => a.rank - b.rank);
+  const best = gs[0], worst = gs[gs.length - 1];
+  $("#team-meta").textContent = `Roster #${me.rank} of 10 · ${me.record[0]}–${me.record[1]}`;
+  $("#team-answer").innerHTML = `Strongest at ${G[best.g]} (#${best.rank} of 10). Weakest at <em>${G[worst.g]}</em> (#${worst.rank})${worst.n >= 6 ? `, even with ${worst.n} of them` : ""}.`;
+  $("#groups").innerHTML = ["G", "F", "C"].map((g) => `<span class="fact">${G[g][0].toUpperCase() + G[g].slice(1)} <b>#${me.groups[g].rank}</b> of 10 · ${me.groups[g].n} players, ${me.groups[g].holdable} above the hold line</span>`).join("");
+  const mine = V.mine.map((m) => ({ ...m, r: vp(m.id) })).filter((m) => m.r);
+  const order = { Cut: 0, Shop: 1, Hold: 2, Keep: 3 };
+  $("#roster").innerHTML = ["G", "F", "C"].map((g) => {
+    const rows = mine.filter((m) => vc(m.r, "grp") === g).sort((a, b) => vc(a.r, "rank") - vc(b.r, "rank"));
+    if (!rows.length) return "";
+    return `<div class="lab glab">${G[g][0].toUpperCase() + G[g].slice(1)} · #${me.groups[g].rank} of 10</div>` + rows.map((m) => {
+      const r = m.r, tr = vc(r, "trend"), fpR = vc(r, "fpRank");
+      return `<div class="prow ${m.verdict === "Keep" ? "quiet" : ""}"><span class="pill vd ${VERDC[m.verdict]}">${m.verdict}</span>
+        <span class="nm">${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "pos"))} · ${vc(r, "tier")} · #${vc(r, "rank")} overall, #${vc(r, "posRank")} at ${g}${m.ir ? " · IR" : ""}</span>${tr ? `<span class="tag ${/up|Hot/.test(tr) ? "up" : ""}">${esc(tr)}</span>` : ""}</span>
+        <span class="nums"><b>${vc(r, "fp") == null ? "–" : vc(r, "fp").toFixed(1)}</b><br>FP/g${fpR ? ` · #${fpR}` : ""} · L5 ${vc(r, "fp5") == null ? "–" : vc(r, "fp5").toFixed(1)}</span>
+        <span class="rs">${esc(m.why)}</span></div>`; }).join("");
+  }).join("");
+  $("#team-ranks").innerHTML = `<tr><th>Team</th><th class="r">Record</th><th class="r">Roster</th><th class="r">G</th><th class="r">F</th><th class="r">C</th></tr>` +
+    V.teams.slice().sort((a, b) => a.rank - b.rank).map((t) => `<tr${t.me ? ' style="font-weight:700"' : ""}><td>${esc(t.me ? "You" : t.name)}</td><td class="r">${t.record[0]}–${t.record[1]}</td><td class="r">#${t.rank}</td><td class="r">#${t.groups.G.rank}</td><td class="r">#${t.groups.F.rank}</td><td class="r">#${t.groups.C.rank}</td></tr>`).join("");
+  const lead = Object.entries(V.players).filter(([, r]) => vc(r, "fpRank")).sort((a, b) => vc(a[1], "fpRank") - vc(b[1], "fpRank"));
+  const mineIds = new Set(V.mine.map((m) => m.id));
+  const top = lead.slice(0, 25).concat(lead.filter(([id], i) => i >= 25 && mineIds.has(id)));
+  $("#leaders").innerHTML = `<tr><th class="r">#</th><th>Player</th><th>Owner</th><th class="r">FP/g</th><th class="r">L5</th><th class="r">Min</th><th class="r">GP</th></tr>` + top.map(([id, r]) => {
+    const o = vc(r, "owner"), own = o ? (o === D.week1.live.rid ? "You" : V.owners[o]) : "Free agent";
+    return `<tr${mineIds.has(id) ? ' style="font-weight:700"' : ""}><td class="r">${vc(r, "fpRank")}</td><td>${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "t"))}</span></td><td class="sm">${esc(own)}</td><td class="r">${vc(r, "fp").toFixed(1)}</td><td class="r">${vc(r, "fp5") == null ? "–" : vc(r, "fp5").toFixed(1)}</td><td class="r">${vc(r, "min") == null ? "–" : vc(r, "min").toFixed(0)}</td><td class="r">${vc(r, "gp")}</td></tr>`; }).join("");
+  $("#glogs").innerHTML = `<tr><th>Player</th><th>Last 10 (newest first): FP, minutes</th></tr>` + mine.map((m) => `<tr><td>${esc(vc(m.r, "n"))}</td><td class="sm">${(V.logs[m.id] || []).map((g) => `${g[1]}<span style="opacity:.6">/${g[2]}m</span>`).join(" · ") || "No games yet"}</td></tr>`).join("");
+}
+
+function renderWaivers() {
+  if (!V) return;
+  const claims = Object.entries(V.claims).filter(([id]) => { const r = vp(id); return r && !vc(r, "owner"); }).sort((a, b) => b[1].gain - a[1].gain);
+  const c0 = claims[0];
+  $("#wv-answer").innerHTML = c0 && c0[1].gain >= 0.5 ? `Claim <b>${esc(last(vc(vp(c0[0]), "n")))}</b> for $${c0[1].bid}, drop ${esc(last(vc(vp(c0[1].drop), "n")))}.` : "No claim is worth it today. Keep your FAAB.";
+  $("#claims").innerHTML = claims.slice(0, 5).map(([id, c]) => { const r = vp(id), d = vp(c.drop);
+    return `<div class="prow ${c.gain < 0.5 ? "quiet" : ""}"><span class="pill vd ${c.gain >= 0.5 ? "good" : "mute"}">${c.gain >= 0.5 ? "Claim" : "Watch"}</span>
+      <span class="nm">${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "pos"))} · ${esc(vc(r, "t"))} · ${vc(r, "tier")} · #${vc(r, "rank")}</span>${vc(r, "trend") ? `<span class="tag ${/up|Hot/.test(vc(r, "trend")) ? "up" : ""}">${esc(vc(r, "trend"))}</span>` : ""}</span>
+      <span class="nums"><b>+${c.gain.toFixed(1)}</b><br>a week · bid $${c.bid}</span>
+      <span class="rs">${vc(r, "fp") != null ? `${vc(r, "fp").toFixed(1)} FP/g this season, ${vc(r, "fp5") != null ? vc(r, "fp5").toFixed(1) : "–"} last 5.` : "No games this season."}${d ? ` Drop ${esc(vc(d, "n"))}.` : ""}</span></div>`; }).join("") || '<p class="note">No free agents beat anyone on your roster.</p>';
+  $("#hold-note").textContent = `Hold line for a 10-team league (the 140th best player): ${V.holdLine.toFixed(1)} lock value. The best free agents sit around ${V.replacement.toFixed(1)}. FAAB left: $${V.faabLeft} of $${V.budget}.`;
+  renderMoves(V.moves.map((m) => ({ ...m })), false);
+}
+function renderMoves(moves, live, at) {
+  const name = (id) => { const r = vp(id); return r ? vc(r, "n") : "a player"; };
+  const rows = moves.filter((m) => m.adds.length || m.drops.length).slice(0, 12);
+  $("#mv-rows").innerHTML = rows.map((m) => {
+    const drop = m.drops.find((id) => vp(id)), dr = drop ? vp(drop) : null, c = drop ? V.claims[drop] : null;
+    const stillFree = drop && !(live && live.owned && live.owned.has(drop));
+    let pill = ["Info", "mute"];
+    if (dr && stillFree && !m.me) pill = c && c.gain >= 0.5 ? [`Claim $${c.bid}`, "good"] : ["Core", "Starter", "Hold"].includes(vc(dr, "tier")) ? ["Worth a look", "warn"] : ["Let go", "mute"];
+    const what = [m.adds.length ? `added ${m.adds.map((id) => esc(name(id))).join(", ")}` : "", m.drops.length ? `dropped ${m.drops.map((id) => esc(name(id))).join(", ")}` : ""].filter(Boolean).join(", ");
+    const detail = dr ? `${esc(vc(dr, "n"))}: ${vc(dr, "tier")}, #${vc(dr, "rank")} overall, ${vc(dr, "fp") != null ? vc(dr, "fp").toFixed(1) + " FP/g" : "no games"}${c ? `; +${c.gain.toFixed(1)} a week for you` : ""}.` : "";
+    return `<div class="prow ${pill[1] === "mute" ? "quiet" : ""}"><span class="pill vd ${pill[1]}">${pill[0]}</span><span class="nm">${esc(m.me ? "You" : m.team)} <span class="sm">${what}${m.bid ? ` · $${m.bid}` : ""}</span></span>
+      <span class="nums">${ago(m.t)}</span><span class="rs">${detail}</span></div>`; }).join("") || '<p class="note">No adds or drops in the last week.</p>';
+  $("#mv-dot").classList.toggle("off", !live);
+  $("#mv-meta").textContent = live ? `Live from Sleeper · checked ${at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "As of the last refresh";
+}
+function liveMoves(P) {
+  if (!V || !P.tx) return;
+  const owners = Object.fromEntries((P.rosters || []).map((r) => [r.roster_id, V.owners[r.roster_id]]));
+  const owned = new Set((P.rosters || []).flatMap((r) => (r.players || []).map(String)));
+  const since = Date.now() - 7 * 864e5;
+  const moves = P.tx.filter((t) => t.status === "complete" && t.created >= since).sort((a, b) => b.created - a.created).map((t) => ({ t: t.created, type: t.type, team: owners[(t.roster_ids || [])[0]] || "",
+    me: (t.roster_ids || []).includes(LV.rid), bid: (t.settings && t.settings.waiver_bid) || null, adds: Object.keys(t.adds || {}), drops: Object.keys(t.drops || {}) }));
+  renderMoves(moves, { owned }, P.at);
+}
+
 /* ---------- Lock or wait: the lock calls redone live from Sleeper (the last refresh is the fallback) ---------- */
 const LV = D.week1.live || null;
 const etToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -433,12 +544,16 @@ async function pullLive() {
   const per = await Promise.all(ids.map((id) => getJSON(`https://api.sleeper.com/stats/nba/player/${id}?season_type=regular&season=${LV.season}&grouping=week`)
     .then((g) => (g[String(week)] || []).map((x) => ({ player_id: id, date: x.date, team: x.team, pts_std: +((x.stats || {}).pts_std || 0), sp: +((x.stats || {}).sp || 0) })))
     .catch(() => [])));
-  return { today, week, games, me, op, stats: per.flat(), at: new Date() };
+  const [ro, tx] = await Promise.all([getJSON(`https://api.sleeper.app/v1/league/${LV.league}/rosters`).catch(() => null),
+    Promise.all([week, week - 1].filter((w) => w >= 1).map((w) => getJSON(`https://api.sleeper.app/v1/league/${LV.league}/transactions/${w}`).catch(() => []))).then((a) => a.flat())]);
+  const mineR = ro && ro.find((r) => r.roster_id === LV.rid);
+  const roster = mineR ? (mineR.players || []).map(String).filter((id) => !(mineR.reserve || []).map(String).includes(id)) : null;
+  return { today, week, games, me, op, stats: per.flat(), roster, rosters: ro, tx, at: new Date() };
 }
 function computeLock(P) {
   const teamHint = {};
   for (const s of P.stats) teamHint[s.player_id] = s.team;
-  const pl = (id) => { const r = LV.players[id]; return r ? { id, n: r[0], team: r[1] || teamHint[id] || "", pos: (r[2] || "").split("/").filter(Boolean), inj: r[3] || "", mu: r[4], cv: r[5], rest: r[6] }
+  const pl = (id) => { const r = LV.players[id] || valRow(id); return r ? { id, n: r[0], team: r[1] || teamHint[id] || "", pos: (r[2] || "").split("/").filter(Boolean), inj: r[3] || "", mu: r[4], cv: r[5], rest: r[6] }
     : { id, n: id === "0" ? "Empty slot" : "Unknown player", team: teamHint[id] || "", pos: [], inj: "", mu: 15, cv: LV.pool, rest: 0.1 }; };
   const told = P.week === LV.week ? (Array.isArray(LV.manual) ? Object.fromEntries(LV.manual.map((id) => [id, ""])) : LV.manual || {}) : {};
   const manual = new Map([...Object.entries(told), ...marks(P.week)]);
@@ -448,7 +563,18 @@ function computeLock(P) {
   const opp = P.op ? side(P.op, "even", new Set()) : null;
   const risk = opp ? WR_WEEK.riskOf(mine.exp - opp.exp) : LV.risk;
   if (risk !== "even") mine = side(P.me, risk, manual);
-  return { P, mine, opp, risk, marked: marks(P.week) };
+  // start these 9: today, then the next game day (tentative: depends on today's games)
+  const counted = {}, locked = new Set();
+  for (const r of mine.res.rows) { if (["lock", "hold", "final", "locked", "live", "pending"].includes(r.verdict) && r.latest != null) counted[r.id] = r.latest; if (r.verdict === "locked") locked.add(r.id); }
+  const roster = (P.roster || (D.week1.live && Object.keys(LV.players)) || []).filter((id) => id && id !== "0");
+  const days = [...new Set(P.games.filter((g) => g.date >= P.today).map((g) => g.date))].sort();
+  const plan = [];
+  let lu = (P.me.starters || []).map(String);
+  for (const day of days.slice(0, 2)) {
+    const pp = WR_WEEK.planLineup({ L: WR_LOCK, z: LV.z, risk, slots: LV.slots, starters: lu, counted, locks: locked, roster: [...new Set([...roster, ...lu.filter((x) => x !== "0")])], player: pl, schedule: P.games, day, today: P.today });
+    plan.push(pp); lu = pp.rows.map((r) => r.id || "0");
+  }
+  return { P, mine, opp, risk, marked: marks(P.week), plan, pl };
 }
 const VD = { lock: ["Lock now", "solid"], hold: ["Wait", "blue"], wait: ["Not played", "mute"], live: ["Playing", "warn"], pending: ["Final pending", "warn"],
   final: ["Done", "mute"], none: ["No games", "mute"], locked: ["Locked", "good"] };
@@ -479,7 +605,10 @@ function renderLock(S) {
     const nx = open.map((r) => nextGame(P, r.pl.team)).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date))[0];
     ans = `Nothing to lock. Wait${nx ? ` for ${nx.date === P.today ? "tonight's" : dayLong(nx.date) + "'s"} games` : ""}.`;
   } else ans = "All set: every starter is locked or done.";
+  const today = S.plan && S.plan[0], ins = today ? today.rows.filter((r) => r.change && r.id) : [];
+  if (ins.length) ans += ins.length === 1 ? ` Start <b>${esc(last(S.pl(ins[0].id).n))}</b> at ${ins[0].slot}${ins[0].was && ins[0].was !== "0" ? ` for ${esc(last(S.pl(ins[0].was).n))}` : ""}.` : ` Make <b>${ins.length}</b> lineup changes today.`;
   $("#lock-answer").innerHTML = ans;
+  renderPlan(S.plan, S.pl, P);
   $("#lock-warn").hidden = true;
   $("#lock-rows").innerHTML = rows.map((r) => {
     const [lab, cls] = VD[r.verdict] || [r.verdict, "mute"], marked = S.marked.has(r.id);
@@ -496,6 +625,20 @@ function renderLock(S) {
   if (vp.length === 2 && P.op) { vp[0].textContent = f1(P.me.points || 0); vp[1].textContent = f1(P.op.points || 0); }
   $("#lock-risk").textContent = `Right now in Sleeper: you ${f1(P.me.points || 0)}, ${LV.oppName || "them"} ${P.op ? f1(P.op.points || 0) : "–"}. ${RISK[S.risk]}`;
 }
+function renderPlan(plan, pl, P) {
+  if (!plan || !plan.length) { $("#plan").innerHTML = '<p class="note">No games left this week.</p>'; $("#plan-next").textContent = ""; return; }
+  const t = plan[0], dname = (d) => (d === etToday() ? "today" : dayLong(d));
+  const opp = (team, d) => { const g = (P ? P.games : []).find((x) => x.date === d && (x.home === team || x.away === team)); return g ? (g.home === team ? `vs ${g.away}` : `at ${g.home}`) : ""; };
+  $("#plan").innerHTML = `<div class="plan">${t.rows.map((r) => {
+    const p = r.id ? pl(r.id) : null, wasN = r.was && r.was !== "0" && r.change ? last(pl(r.was).n) : "";
+    const tag = r.locked ? "Locked" : r.change ? (wasN ? `In for ${esc(wasN)}` : "Fill this slot") : r.plays ? `Plays ${esc(opp(p.team, t.day))}` : "Off today";
+    return `<div class="prow ${r.change ? "in" : ""}"><span class="vd">${esc(r.slot)}</span><span class="nm">${p ? esc(p.n) : "Empty"}</span>
+      <span class="nums"><b>${r.worth.toFixed(1)}</b></span><span class="rs">${tag}</span></div>`; }).join("")}</div>`;
+  const nx = plan[1], ch = nx ? nx.rows.filter((r) => r.change && r.id) : [];
+  $("#plan-next").textContent = !nx ? "" : ch.length ? `Next game day (${dname(nx.day)}), if tonight goes as expected: ${ch.map((r) => `${last(pl(r.id).n)} in at ${r.slot}${r.was && r.was !== "0" ? " for " + last(pl(r.was).n) : ""}`).join("; ")}. Recheck after tonight's games.`
+    : `Next game day (${dname(nx.day)}): no changes expected. Recheck after tonight's games.`;
+  $("#plan").previousElementSibling.textContent = t.day === etToday() ? "Start these 9 today" : `Start these 9 on ${dayLong(t.day)}`;
+}
 function renderLockFallback(msg) {
   const w = D.week1, M = { "Lock now": "lock", "Hold": "hold", "Wait": "wait", "Live": "live", "Pending": "pending", "Final": "final", "No games": "none", "Locked": "locked" };
   const rows = w.rows.slice().sort((a, b) => VORDER[M[a.status] || "none"] - VORDER[M[b.status] || "none"]);
@@ -504,6 +647,12 @@ function renderLockFallback(msg) {
   $("#lock-rows").innerHTML = rows.map((r) => { const [lab, cls] = VD[M[r.status]] || [r.status, "mute"];
     return `<div class="lkr ${M[r.status] === "lock" ? "act" : ""}"><span class="pill vd ${cls}">${lab}</span><span class="nm">${esc(r.n)} <span class="sm">${esc(r.slot || "")}</span></span>
       <span class="sc num">${r.score == null ? "–" : r.score.toFixed(1)}</span><span class="rs">${esc(r.why)}</span></div>`; }).join("");
+  const fp = (D.week1.plan || []).map((d) => ({ day: d.day, rows: d.rows.map((r) => ({ ...r, was: r.was })) }));
+  if (fp.length) {   // refresh plan carries names, not ids
+    const byN = (n) => ({ n, team: "" });
+    $("#plan").innerHTML = `<div class="plan">${fp[0].rows.map((r) => `<div class="prow ${r.change ? "in" : ""}"><span class="vd">${esc(r.slot)}</span><span class="nm">${esc(r.n)}</span><span class="nums"><b>${r.worth.toFixed(1)}</b></span><span class="rs">${r.locked ? "Locked" : r.change ? `In for ${esc(last(r.was))}` : r.plays ? "Plays" : "Off"}</span></div>`).join("")}</div>`;
+    $("#plan-next").textContent = `As of the last refresh (${fp[0].day}).`;
+  }
   $("#lock-dot").classList.add("off");
   $("#lock-meta").textContent = msg;
 }
@@ -514,6 +663,7 @@ async function checkLock() {
   try {
     lockLive = await pullLive(); lockAt = Date.now();
     renderLock(computeLock(lockLive));
+    liveMoves(lockLive);
     $("#lock-dot").classList.remove("off");
     $("#lock-meta").textContent = `Live from Sleeper · checked ${lockLive.at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}${lockLive.me.agree ? "" : " · Sleeper's numbers are still settling"}`;
   } catch (e) {
@@ -537,7 +687,7 @@ const VLAB = { "Speculative add": "Maybe", "Yours: keep": "Keep", "Yours: drop c
 function renderTrend() {
   const T = D.trending; if (!T) { $("#trend").hidden = true; return; }
   const m = T.move;
-  $("#trend-meta").textContent = T.meta;
+  $("#trend-sub") && ($("#trend-sub").textContent = T.meta);
   $("#trend-answer").innerHTML = m ? `Drop ${esc(last(m.drop))}, add <b>${esc(last(m.add))}</b>.` : "No move needed this week.";
   $("#swap").innerHTML = m ? `<div class="line"><span class="out">${esc(m.drop)}</span><span>${esc(m.add)}</span><span class="pill good">+${m.gain.toFixed(1)}/wk</span></div>
     <div class="why">${esc(last(m.drop))}: ${esc(m.dropWhy)}. ${esc(m.addLast)}: ${esc(m.addWhy)}. Small gain, so bid low on FAAB.</div>` : "";
@@ -594,7 +744,7 @@ function renderPower() {
 /* lineup */
 function renderLineup() {
   const S = D.slots, weak = S.filter((s) => s.diff < 0).sort((a, b) => a.diff - b.diff), strong = S.slice().sort((a, b) => b.diff - a.diff)[0];
-  $("#lineup-answer").innerHTML = weak.length ? `Weak spot: <em>guards</em>. Strength: <b>${esc(strong.slot)} ${esc(last(strong.name))} +${strong.diff.toFixed(1)}</b>.` : `Every slot beats the league average.`;
+  void (weak.length ? `Weak spot: <em>guards</em>. Strength: <b>${esc(strong.slot)} ${esc(last(strong.name))} +${strong.diff.toFixed(1)}</b>.` : `Every slot beats the league average.`);
   const mx = Math.max(...S.map((s) => Math.abs(s.diff)));
   $("#slots").innerHTML = `<tr><th>Slot</th><th>Player</th><th class="r">Value</th><th>vs league avg</th></tr>` + S.map((s) => {
     const w = (Math.abs(s.diff) / mx) * 50;
@@ -687,5 +837,5 @@ addEventListener("keydown", (e) => { if (e.key === "Escape" && board.dataset.foc
 addEventListener("resize", pinBand);
 
 if (D.liveLink) $("#t-live").hidden = false;
-renderBand(); pinBand(); renderWeek(); initLock(); renderTrend(); renderSeason(); renderLineup(); renderTrades(); renderDraft(); renderRest();
+renderBand(); pinBand(); renderWeek(); initLock(); renderTrend(); renderWaivers(); renderSeason(); renderLineup(); renderTeam(); renderTrades(); renderDraft(); renderRest();
 </script>

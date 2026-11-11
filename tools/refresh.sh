@@ -6,8 +6,9 @@ cd "$(dirname "$0")/.."
 SITE="${1:-site}"
 D="${WR_DATE:-$(node tools/sleeper_pull.js)}"
 L=data/live
+node tools/values.js "$L/pool_$D.json" "$L/league_$D.json"
 node tools/week_page.js "$L/week_$D.json"
-node tools/season_report.js "$L/league_$D.json" "$L/extras_$D.json" "$L/weekproj_$D.json" | sed -n 2p
-WR_SD=30 WR_TAG=_wide node tools/season_report.js "$L/league_$D.json" "$L/extras_$D.json" "$L/weekproj_$D.json" > /dev/null
+WR_VALUES="reports/values_$D.json" node tools/season_report.js "$L/league_$D.json" "$L/extras_$D.json" "$L/weekproj_$D.json" | sed -n 2p
+WR_SD=30 WR_TAG=_wide WR_VALUES="reports/values_$D.json" node tools/season_report.js "$L/league_$D.json" "$L/extras_$D.json" "$L/weekproj_$D.json" > /dev/null
 node tools/trending.js "$L/trending_$D.json" "$L/league_$D.json" "$L/extras_$D.json" > /dev/null
 python3 tools/build_season_page.py "$D" --site "$SITE"

@@ -24,6 +24,10 @@ for (const [id, [n, t, pos, inj, fppg]] of Object.entries(EX.extra)) {
 }
 const eng = new E.Engine(D);
 for (const p of eng.players) { p.inj = EX.inj[p.id] || ""; }
+// in season: rest-of-season values from tools/values.js (last season + preseason + this season) replace the preseason ones;
+// the draft grades keep the draft-time value (lv0)
+const VF = process.env.WR_VALUES && fs.existsSync(process.env.WR_VALUES) ? JSON.parse(fs.readFileSync(process.env.WR_VALUES, "utf8")) : null;
+if (VF) for (const p of eng.players) { const r = VF.players[p.id]; if (!r) continue; const lv = r[VF.cols.indexOf("lv")]; p.lv0 = p.lv; p.lvp = p.lvp ? p.lvp * lv / p.lv : lv; p.lv = lv; }
 const adj = (p, key) => { const v = p[key] != null ? p[key] : p.lv; return p.inj === "Out" ? v * 0.5 : /GTD|DTD|Questionable/.test(p.inj) ? v * 0.95 : v; };
 const S = (p) => adj(p, "lv"), SP = (p) => adj(p, "lvp");
 const P = (id) => eng.byId.get(String(id));
@@ -35,7 +39,7 @@ const mine = rosters.find((r) => r.me);
 const slotOwner = Object.fromEntries(Object.entries(LG.draft_order).map(([u, s]) => [s, u]));
 const picks = LG.picks.map(([pid, slot], i) => ({ pick_no: i + 1, round: Math.ceil((i + 1) / 10), draft_slot: slot, player_id: pid, picked_by: slotOwner[slot], metadata: {} }));
 const st = eng.compute({ status: "complete", settings: { teams: 10, rounds: 14, pick_timer: 120 }, draft_order: LG.draft_order }, picks, { userId: ME, mode: "lock" });
-const myDraft = st.myLog.map((e) => { const p = P(e.pid); return { pick: e.pick_no, round: e.round, name: e.name, pos: e.pos.join("/"), team: e.team, lv: +p.lv.toFixed(1), inj: p.inj, adp: p.adp, grade: e.grade, gradeLabel: e.gradeLabel, pct: +Math.min(1, e.pct).toFixed(3), alts: e.alts.map((a) => ({ n: a.n, s: +a.s.toFixed(1) })), kept: mine.players.includes(p) }; });
+const myDraft = st.myLog.map((e) => { const p = P(e.pid); return { pick: e.pick_no, round: e.round, name: e.name, pos: e.pos.join("/"), team: e.team, lv: +(p.lv0 != null ? p.lv0 : p.lv).toFixed(1), inj: p.inj, adp: p.adp, grade: e.grade, gradeLabel: e.gradeLabel, pct: +Math.min(1, e.pct).toFixed(3), alts: e.alts.map((a) => ({ n: a.n, s: +a.s.toFixed(1) })), kept: mine.players.includes(p) }; });
 const room = st.room.map((r) => ({ name: userName(slotOwner[r.slot]), slot: r.slot, s: +r.s.toFixed(2), sd: +r.sd.toFixed(2), label: r.label, captured: r.captured != null ? +r.captured.toFixed(3) : null, reaches: r.reaches, steals: r.steals, me: slotOwner[r.slot] === ME }));
 const draftGrade = {};
 for (const e of st.log) { const u = userName(slotOwner[e.slot]); (draftGrade[u] = draftGrade[u] || []).push(Math.min(1, e.pct)); }

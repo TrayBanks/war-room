@@ -109,8 +109,18 @@ const myPlayers = mine.map((x) => {
   else if (p.lv >= holdLine) { verdict = "Hold"; why = "Above the hold line for a 10-team league."; }
   else { verdict = swap && swap.gain > 0 ? "Cut" : "Hold"; why = swap && swap.gain > 0 ? `Below the hold line; ${P[swap.add].n} is a small upgrade.` : "Below the hold line, but no free agent beats him for your lineup."; }
   if (p.trend === "Minutes down" && verdict !== "Cut") why += " Minutes are down lately: watch his role.";
-  if (p.trend === "Cold, minutes steady") why += " Cold, but his minutes are steady: likely noise.";
-  return { id: x.id, adds, swap, verdict, why, ir: !!x.ir };
+  // how long to hold him: long term / watch / short term / cut first
+  let horizon, hwhy;
+  const lowMin = p.min != null && p.min < 22, under = p.fp != null && p.est && p.fp < 0.8 * p.est, hot = /Hot|Minutes up/.test(p.trend);
+  if (x.ir && p.lv < holdLine) { horizon = "Cut first"; hwhy = "Lowest value on the roster: drop him when he has to come off IR."; }
+  else if (verdict === "Cut" && hot) { horizon = "Short term"; hwhy = "Below the hold line but on a hot streak: ride it, cut when his minutes dip."; }
+  else if (verdict === "Cut") { horizon = "Cut first"; hwhy = "Below free-agent level."; }
+  else if (p.tier === "Core" || p.tier === "Starter") {
+    if (p.trend === "Minutes down" || lowMin || under) { horizon = "Watch"; hwhy = p.trend === "Minutes down" ? "Minutes are falling." : lowMin ? `Only ${p.min} minutes a game: his value needs a bigger role.` : `Scoring ${p.fp} a game, under his ${p.est} value.`; }
+    else { horizon = "Long term"; hwhy = p.trend === "Minutes up" ? "Role is growing." : "Steady role and value."; }
+  } else if (p.trend === "Cold, minutes steady" && p.lv >= holdLine) { horizon = "Watch"; hwhy = "Cold, but minutes are steady: usually bad luck."; }
+  else { horizon = "Short term"; hwhy = hot ? "Playable now while his minutes are up." : "Useful now, first to go when you need a spot."; }
+  return { id: x.id, adds, swap, verdict, why, ir: !!x.ir, horizon, hwhy };
 });
 
 // ---------- free agents worth a claim, with a FAAB bid ----------

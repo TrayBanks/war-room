@@ -185,6 +185,9 @@ details.deep > .dd { display: grid; gap: 14px; margin-top: 12px; }
 .prow .tag { font-size: 11.5px; font-weight: 700; color: var(--warn); margin-left: 6px; }
 .prow .tag.up { color: var(--good); }
 .glab { margin-top: 6px; }
+.hz { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; vertical-align: 1px; color: #fff; }
+.hz.long-term { background: var(--good); } .hz.watch { background: var(--warn); } .hz.short-term { background: var(--blue); } .hz.cut-first { background: var(--red); }
+.facts .hz { margin-left: 0; }
 .plan .prow { grid-template-columns: 48px minmax(0,1fr) auto; }
 .plan .prow .vd { font-family: var(--display); font-weight: 800; font-size: 16px; color: var(--muted); }
 .plan .prow.in { background: var(--surface-2); box-shadow: inset 4px 0 0 var(--good); border-radius: 10px; padding: 9px 10px; border-bottom: 0; margin-bottom: 4px; }
@@ -346,6 +349,7 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
   <section class="c s6" id="lineup" aria-labelledby="lineup-h">
     <div class="ch"><h2 id="lineup-h">Your team</h2><span class="meta" id="team-meta"></span></div>
     <p class="answer" id="team-answer"></p>
+    <div class="facts" id="horizons"></div>
     <div class="facts" id="groups"></div>
     <div id="roster"></div>
     <details class="deep"><summary>Deep dive: league leaderboards, team rankings and game logs</summary><div class="dd">
@@ -462,6 +466,8 @@ function renderTeam() {
   const best = gs[0], worst = gs[gs.length - 1];
   $("#team-meta").textContent = `Roster #${me.rank} of 10 · ${me.record[0]}–${me.record[1]}`;
   $("#team-answer").innerHTML = `Strongest at ${G[best.g]} (#${best.rank} of 10). Weakest at <em>${G[worst.g]}</em> (#${worst.rank})${worst.n >= 6 ? `, even with ${worst.n} of them` : ""}.`;
+  const HZ = ["Long term", "Watch", "Short term", "Cut first"], hzc = (h) => V.mine.filter((m) => m.horizon === h).length;
+  $("#horizons").innerHTML = HZ.map((h) => `<span class="fact"><span class="hz ${h.replace(" ", "-").toLowerCase()}">${h}</span> <b>${hzc(h)}</b></span>`).join("");
   $("#groups").innerHTML = ["G", "F", "C"].map((g) => `<span class="fact">${G[g][0].toUpperCase() + G[g].slice(1)} <b>#${me.groups[g].rank}</b> of 10 · ${me.groups[g].n} players, ${me.groups[g].holdable} above the hold line</span>`).join("");
   const mine = V.mine.map((m) => ({ ...m, r: vp(m.id) })).filter((m) => m.r);
   const order = { Cut: 0, Shop: 1, Hold: 2, Keep: 3 };
@@ -471,9 +477,9 @@ function renderTeam() {
     return `<div class="lab glab">${G[g][0].toUpperCase() + G[g].slice(1)} · #${me.groups[g].rank} of 10</div>` + rows.map((m) => {
       const r = m.r, tr = vc(r, "trend"), fpR = vc(r, "fpRank");
       return `<div class="prow ${m.verdict === "Keep" ? "quiet" : ""}"><span class="pill vd ${VERDC[m.verdict]}">${m.verdict}</span>
-        <span class="nm">${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "pos"))} · ${vc(r, "tier")} · #${vc(r, "rank")} overall, #${vc(r, "posRank")} at ${g}${m.ir ? " · IR" : ""}</span>${tr ? `<span class="tag ${/up|Hot/.test(tr) ? "up" : ""}">${esc(tr)}</span>` : ""}</span>
+        <span class="nm">${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "pos"))} · ${vc(r, "tier")} · #${vc(r, "rank")} overall, #${vc(r, "posRank")} at ${g}${m.ir ? " · IR" : ""}</span>${tr ? `<span class="tag ${/up|Hot/.test(tr) ? "up" : ""}">${esc(tr)}</span>` : ""}${m.horizon ? `<span class="hz ${m.horizon.replace(" ", "-").toLowerCase()}">${m.horizon}</span>` : ""}</span>
         <span class="nums"><b>${vc(r, "fp") == null ? "–" : vc(r, "fp").toFixed(1)}</b><br>FP/g${fpR ? ` · #${fpR}` : ""} · L5 ${vc(r, "fp5") == null ? "–" : vc(r, "fp5").toFixed(1)}</span>
-        <span class="rs">${esc(m.why)}</span></div>`; }).join("");
+        <span class="rs">${m.hwhy ? `<b>${esc(m.horizon)}:</b> ${esc(m.hwhy)} ` : ""}${esc(m.why)}</span></div>`; }).join("");
   }).join("");
   $("#team-ranks").innerHTML = `<tr><th>Team</th><th class="r">Record</th><th class="r">Roster</th><th class="r">G</th><th class="r">F</th><th class="r">C</th></tr>` +
     V.teams.slice().sort((a, b) => a.rank - b.rank).map((t) => `<tr${t.me ? ' style="font-weight:700"' : ""}><td>${esc(t.me ? "You" : t.name)}</td><td class="r">${t.record[0]}–${t.record[1]}</td><td class="r">#${t.rank}</td><td class="r">#${t.groups.G.rank}</td><td class="r">#${t.groups.F.rank}</td><td class="r">#${t.groups.C.rank}</td></tr>`).join("");

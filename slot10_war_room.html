@@ -1,0 +1,1126 @@
+<title>Slot 10 War Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: broadcast-style scoreboard band pinned on top; below it a full-width 12-column board of cards.
+   Each card leads with one answer line and a few facts; the detail sits in a "Deep dive" fold. */
+:root {
+  --bg: #EDF1F8; --surface: #FFFFFF; --surface-2: #F4F7FC; --line: #D3DCEB;
+  --ink: #0A1A3D; --ink-2: #33456B; --muted: #66779A;
+  --band: #0A1A3D; --band-2: #12285A; --band-fg: #FFFFFF; --band-muted: #A9B9DA;
+  --red: #C8102E; --blue: #1D428A; --gold: #A8760A; --gold-fill: #F2B33D;
+  --good: #12804A; --warn: #C25E00; --other: #9DB0D3; --track: #E2E8F3;
+  --display: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #050E24; --surface: #0C1A3B; --surface-2: #10224B; --line: #1E3566;
+  --ink: #F3F6FC; --ink-2: #C3CFE6; --muted: #8798BD;
+  --band: #030A1C; --band-2: #0E2150; --band-fg: #FFFFFF; --band-muted: #93A6CF;
+  --red: #EE2E47; --blue: #4C86E8; --gold: #F2B33D; --gold-fill: #F2B33D;
+  --good: #36C27C; --warn: #FF9A3D; --other: #36508A; --track: #15295A;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #050E24; --surface: #0C1A3B; --surface-2: #10224B; --line: #1E3566;
+  --ink: #F3F6FC; --ink-2: #C3CFE6; --muted: #8798BD;
+  --band: #030A1C; --band-2: #0E2150; --band-fg: #FFFFFF; --band-muted: #93A6CF;
+  --red: #EE2E47; --blue: #4C86E8; --gold: #F2B33D; --gold-fill: #F2B33D;
+  --good: #36C27C; --warn: #FF9A3D; --other: #36508A; --track: #15295A;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 150px); }
+body { background: var(--bg); color: var(--ink); font: 400 15.5px/1.45 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--band); }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.05; text-wrap: balance; }
+p { margin: 0; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--gold-fill); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---- scoreboard band ---- */
+.band { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--band); color: var(--band-fg); border-bottom: 4px solid var(--red); }
+.band .in { max-width: 2400px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px 10px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.band .top { display: flex; align-items: center; gap: 16px 28px; flex-wrap: wrap; }
+.team { display: grid; gap: 2px; min-width: 0; }
+.team h1 { font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; text-transform: uppercase; letter-spacing: .01em; }
+.team .sub { font-size: 13px; color: var(--band-muted); }
+.stats { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.stat { background: var(--band-2); border-radius: 10px; padding: 6px 12px 7px; display: grid; min-width: 92px; }
+.stat .k { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--band-muted); font-weight: 600; }
+.stat .v { font-family: var(--display); font-weight: 800; font-size: 30px; line-height: 1; }
+.stat.alert .v { color: #FF6B7E; }
+.stat.you .v { color: var(--gold-fill); }
+.stat .v { white-space: nowrap; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+.stat .v small { white-space: nowrap; font-family: var(--body); font-size: 13px; font-weight: 600; color: var(--band-muted); letter-spacing: 0; }
+.stat .v small b { color: var(--band-fg); font-weight: 700; }
+.navrow { display: flex; gap: 6px; align-items: center; }
+.nav { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.tool { flex: none; border: 0; cursor: pointer; background: var(--band-2); color: var(--band-fg); font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; }
+.tool:hover { background: #1B3570; }
+.tool[hidden] { display: none; }
+a.tool { text-decoration: none; display: inline-flex; align-items: center; }
+#t-live { background: var(--red); }
+@media (max-width: 720px) { #t-live:not([hidden]) { display: inline-flex; font-size: 12px; padding: 5px 10px; } }
+.nav::-webkit-scrollbar { display: none; }
+.nav a { flex: none; color: var(--band-fg); text-decoration: none; font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .03em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 1px #2A4378; }
+.nav a:hover { background: var(--band-2); }
+.nav a[aria-current="true"] { background: var(--red); box-shadow: none; }
+@media (max-width: 720px) {
+  .band .in { padding-block: 10px 8px; gap: 8px; }
+  .team h1 { font-size: 24px; } .team .sub { display: none; }
+  .stats { margin-left: 0; display: grid; grid-template-columns: .95fr 1.3fr .85fr 1fr; width: 100%; gap: 5px; }
+  .stat { min-width: 0; padding: 5px 7px; } .stat .k { font-size: 9.5px; letter-spacing: .03em; white-space: nowrap; } .stat .v { font-size: 20px; }
+  .stat .v small { font-size: 11.5px; flex-basis: 100%; }
+  .tool { display: none; }
+}
+
+/* ---- board ---- */
+.board { max-width: 2400px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 48px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.col { display: contents; }
+.c { grid-column: span 12; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; display: grid; gap: 12px; min-width: 0; container-type: inline-size; }
+#week { order: 1; } #trend { order: 2; } #season { order: 3; } #power { order: 4; } #lineup { order: 5; } #trades { order: 6; } #draft { order: 7; } #playoffs { order: 8; } #next { order: 9; } #assume { order: 10; } footer { order: 11; }
+@media (min-width: 1100px) and (max-width: 1279px) { .s7 { grid-column: span 7; } .s5 { grid-column: span 5; } .s6 { grid-column: span 6; } .s4 { grid-column: span 4; } .s8 { grid-column: span 8; } }
+@media (min-width: 1280px) {
+  .board { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr); padding-block: 20px 40px; }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .c { padding: 18px 20px; }
+}
+.ch { display: flex; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; }
+.ch h2 { font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); }
+.ch .meta { font-size: 13px; color: var(--muted); }
+.answer { font-family: var(--display); font-weight: 700; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.1; }
+.answer em { font-style: normal; color: var(--red); }
+.answer b { color: var(--gold); font-weight: 800; }
+.facts { display: flex; gap: 8px; flex-wrap: wrap; }
+.fact { background: var(--surface-2); border-radius: 8px; padding: 6px 10px; font-size: 14px; color: var(--ink-2); }
+.fact b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.list { display: grid; gap: 0; }
+.li { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.li:last-child { border-bottom: 0; }
+.li .n { font-weight: 600; }
+.li .w { grid-column: 1; font-size: 13px; color: var(--muted); }
+.li .pill { grid-row: 1 / span 2; grid-column: 2; }
+.pill { font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: .03em; text-transform: uppercase; padding: 2px 10px; border-radius: 999px; white-space: nowrap; box-shadow: inset 0 0 0 1.5px currentColor; }
+.pill.good { color: var(--good); } .pill.bad { color: var(--red); } .pill.warn { color: var(--warn); } .pill.you { color: var(--gold); } .pill.mute { color: var(--muted); } .pill.blue { color: var(--blue); }
+.pill.solid { background: var(--red); color: #fff; box-shadow: none; }
+.lab { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+details.deep { border-top: 1px solid var(--line); padding-top: 10px; }
+details.deep > summary { cursor: pointer; list-style: none; font-weight: 600; color: var(--blue); font-size: 14.5px; display: inline-flex; gap: 8px; align-items: center; }
+details.deep > summary::-webkit-details-marker { display: none; }
+details.deep > summary::before { content: "+"; font-family: var(--display); font-weight: 800; font-size: 18px; width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 6px; background: var(--surface-2); }
+details.deep[open] > summary::before { content: "–"; }
+details.deep > .dd { display: grid; gap: 14px; margin-top: 12px; }
+.note { font-size: 13.5px; color: var(--ink-2); max-width: 75ch; }
+
+/* this week */
+.vs { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: end; gap: 10px; background: var(--surface-2); border-radius: 10px; padding: 12px 14px; }
+.vs .t { display: grid; gap: 0; }
+.vs .t.r { text-align: right; }
+.vs .nm { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.vs .pts { font-family: var(--display); font-weight: 800; font-size: clamp(44px, 4.5vw, 64px); line-height: .95; }
+.vs .t.me .pts { color: var(--gold); }
+.vs .pj { font-size: 13px; color: var(--muted); }
+.vs .mid { font-family: var(--display); font-weight: 700; color: var(--muted); font-size: 18px; text-align: center; padding-bottom: 8px; display: grid; gap: 2px; }
+.vs .mid small { font-family: var(--body); font-size: 12.5px; font-weight: 700; color: var(--red); white-space: nowrap; }
+.moves { display: grid; gap: 8px; }
+.mv { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 2px 12px; align-items: baseline; }
+.mv .when { grid-row: span 2; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--red); font-size: 15px; }
+.mv .what { font-weight: 600; }
+.mv .why { grid-column: 2; font-size: 13px; color: var(--muted); }
+@container (max-width: 520px) { .mv { grid-template-columns: minmax(0,1fr); } .mv .when { grid-row: auto; } .mv .why { grid-column: 1; } }
+.lk { display: grid; grid-template-columns: minmax(0,1fr) 58px auto; gap: 0 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.lk:last-child { border-bottom: 0; }
+.lk .sc { font-family: var(--display); font-weight: 700; font-size: 20px; text-align: right; }
+.lk .w { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+
+/* trending */
+.swap { display: grid; gap: 4px; background: var(--surface-2); border-radius: 10px; padding: 12px 14px; }
+.swap .line { font-family: var(--display); font-weight: 700; font-size: 24px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.swap .line .out { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 2px; }
+.swap .why { font-size: 13.5px; color: var(--ink-2); }
+.cols3 { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; }
+@container (min-width: 760px) { .cols3 { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+
+/* season */
+.strip { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 3px; align-items: end; height: 92px; }
+.strip .b { position: relative; height: 100%; display: grid; align-items: end; }
+.strip .b i { display: block; border-radius: 3px 3px 0 0; background: var(--blue); }
+.strip .b i.lo { background: var(--red); }
+.strip .b.now i { box-shadow: 0 0 0 2px var(--gold-fill); }
+.strip .b i.won { background: var(--good); border-radius: 3px; }
+.strip .b i.lost { background: var(--red); opacity: .45; border-radius: 3px; }
+/* lock or wait */
+.lkr { display: grid; grid-template-columns: 112px minmax(0,1fr) auto; gap: 2px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.lkr:last-child { border-bottom: 0; }
+.lkr .vd { grid-row: span 2; justify-self: start; }
+.lkr .nm { font-weight: 700; font-size: 16px; min-width: 0; }
+.lkr .nm .sm { font-weight: 500; }
+.lkr .rs { grid-column: 2; font-size: 13.5px; color: var(--ink-2); }
+.lkr .sc { grid-column: 3; grid-row: 1 / span 2; text-align: right; font-family: var(--display); font-weight: 800; font-size: 26px; line-height: 1; }
+.lkr .sc small { display: block; font-family: var(--body); font-size: 11.5px; font-weight: 600; color: var(--muted); margin-top: 3px; }
+.lkr.act { background: var(--surface-2); box-shadow: inset 4px 0 0 var(--red); border-radius: 10px; padding: 12px 12px 12px 14px; margin-bottom: 6px; border-bottom: 0; }
+.lkr.quiet .nm, .lkr.quiet .sc { color: var(--muted); }
+@media (max-width: 520px) {
+  .lkr { grid-template-columns: auto minmax(0,1fr) auto; column-gap: 10px; padding: 9px 0; }
+  .lkr .vd { grid-row: auto; font-size: 12.5px; padding: 2px 8px; }
+  .lkr .sc { grid-row: auto; font-size: 22px; }
+  .lkr .sc small { display: inline; margin: 0 0 0 4px; }
+  .lkr .rs { grid-column: 1 / -1; }
+  .lkr.hold .rt, .lkr.quiet .rt { display: none; }    /* the line under the score says it; keep phones to one row */
+  .lkr.act { padding: 12px; }
+}
+.prow { display: grid; grid-template-columns: 74px minmax(0,1fr) auto; gap: 2px 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.prow:last-child { border-bottom: 0; }
+.prow .vd { grid-row: span 2; justify-self: start; }
+.prow .nm { font-weight: 700; min-width: 0; }
+.prow .nm .sm { font-weight: 500; }
+.prow .nums { grid-column: 3; grid-row: 1 / span 2; text-align: right; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.prow .nums b { font-family: var(--display); font-size: 22px; color: var(--ink); font-weight: 800; }
+.prow .rs { grid-column: 2; font-size: 13px; color: var(--ink-2); }
+.prow .tag { font-size: 11.5px; font-weight: 700; color: var(--warn); margin-left: 6px; }
+.prow .tag.up { color: var(--good); }
+.glab { margin-top: 6px; }
+.hz { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; vertical-align: 1px; color: #fff; }
+.hz.long-term { background: var(--good); } .hz.watch { background: var(--warn); } .hz.short-term { background: var(--blue); } .hz.cut-first { background: var(--red); }
+.facts .hz { margin-left: 0; }
+.plan .prow { grid-template-columns: 48px minmax(0,1fr) auto; }
+.plan .prow .vd { font-family: var(--display); font-weight: 800; font-size: 16px; color: var(--muted); }
+.plan .prow.in { background: var(--surface-2); box-shadow: inset 4px 0 0 var(--good); border-radius: 10px; padding: 9px 10px; border-bottom: 0; margin-bottom: 4px; }
+@media (max-width: 520px) { .prow { grid-template-columns: 64px minmax(0,1fr) auto; column-gap: 8px; } .prow .nums b { font-size: 19px; } .prow.quiet .rs { display: none; } }
+/* narrow phones and the Galaxy Z Fold cover screen (344 px): page chrome */
+@media (max-width: 380px) {
+  .band .in, .board { padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); }
+  .team h1 { font-size: 21px; }
+  .stats { grid-template-columns: 1fr 1fr !important; gap: 4px; }
+  .stat .v { font-size: 19px; }
+  .nav a { font-size: 13.5px; padding: 4px 10px; }
+  .c { padding: 13px 12px; gap: 10px; }
+}
+/* any card narrower than 400 px (cover screen, or a column on the inner screen / a tablet): compact insides */
+@container (max-width: 400px) {
+  .answer { font-size: 21px; }
+  .ch h2 { font-size: 17px; }
+  .vs { padding: 10px; gap: 6px; }
+  .vs .pts { font-size: 34px; }
+  .vs .mid { font-size: 14px; }
+  .vs .pj, .vs .nm { font-size: 11.5px; }
+  .fact { font-size: 12.5px; padding: 5px 8px; }
+  .prow, .plan .prow, .lkr { grid-template-columns: auto minmax(0,1fr) auto; column-gap: 8px; }
+  .prow .vd { grid-row: auto; }
+  .prow .nums { grid-column: 1 / -1; grid-row: auto; text-align: left; white-space: normal; }
+  .prow .nums b { font-size: 17px; margin-right: 4px; }
+  .prow .nums br { display: none; }
+  .prow .rs { grid-column: 1 / -1; }
+  .plan .prow .nums { grid-column: 3; grid-row: 1; text-align: right; }
+  .plan .prow .rs { grid-column: 2 / -1; }
+  .lkr .vd { font-size: 11.5px; padding: 2px 7px; grid-row: auto; }
+  .lkr .sc { font-size: 19px; }
+  .lkr .sc small { display: none; }
+  .lkr .rs { grid-column: 1 / -1; }
+  .mk.lbtn { padding: 6px 12px; min-height: 34px; }
+  .hz { font-size: 11px; }
+  table { font-size: 12.5px; } th, td { padding: 6px 5px; }
+}
+/* week card wide enough (inner screen, tablet, focus view): lineup and lock calls side by side */
+.wk-split { display: grid; gap: 12px; min-width: 0; }
+.wk-col { display: grid; gap: 10px; align-content: start; min-width: 0; container-type: inline-size; }
+@container (min-width: 560px) { .wk-split { grid-template-columns: minmax(0,1fr) minmax(0,1fr); column-gap: 22px; } }
+/* Galaxy Z Fold inner screen (about 673-841 px) and small tablets: two columns of cards, This week across the top */
+@media (min-width: 600px) and (max-width: 1099px) {
+  .board { grid-auto-flow: row dense; }
+  .s7, .s5, .s6, .s4, .s8 { grid-column: span 6; }
+  #week { grid-column: 1 / -1; }
+}
+.livebar { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.livebar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
+.livebar .dot.off { background: var(--muted); box-shadow: none; }
+.warnline { font-size: 14px; font-weight: 600; color: var(--red); }
+.warnline[hidden] { display: none; }
+.mk { border: 0; background: none; color: var(--blue); font-size: 12.5px; font-weight: 600; padding: 2px 4px; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.mk:hover { color: var(--ink); }
+.mk.lbtn { display: inline-flex; align-items: center; margin: 6px 0 2px; padding: 7px 14px; min-height: 36px; border-radius: 999px; text-decoration: none;
+  background: var(--blue); color: #fff; font-size: 13.5px; font-weight: 700; }
+.mk.lbtn:hover { filter: brightness(1.1); color: #fff; }
+.mk.lbtn.undo { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
+.lkr .rs { display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; }
+.strip-x { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 3px; font-size: 11px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.pw { display: grid; grid-template-columns: 22px minmax(0, 140px) minmax(0,1fr) 52px 52px; gap: 6px 10px; align-items: center; font-size: 14px; }
+.pw .h { font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.pw .r { text-align: right; font-variant-numeric: tabular-nums; }
+.pw .rk { font-family: var(--display); font-weight: 800; font-size: 18px; color: var(--muted); }
+.pw .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pw .me { color: var(--gold); font-weight: 700; }
+.tr { position: relative; height: 16px; background: var(--track); border-radius: 4px; }
+.tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--other); }
+.tr i.me { background: var(--gold-fill); }
+.tr span { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 11.5px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.toggle { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
+.toggle button { border: 0; background: transparent; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
+.toggle button[aria-pressed="true"] { background: var(--band); color: #fff; }
+
+/* tables */
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.sm { font-size: 12.5px; color: var(--muted); }
+.diff { position: relative; height: 12px; min-width: 90px; }
+.diff::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--line); }
+.diff i { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+.gm { display: inline-grid; place-items: center; width: 26px; height: 22px; border-radius: 4px; font-size: 12.5px; font-weight: 600; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.pk { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; }
+.pk .t { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.pk .nm { font-weight: 700; }
+.pk .rd { font-family: var(--display); font-weight: 800; color: var(--muted); }
+.meter { height: 5px; background: var(--track); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--blue); }
+.sharp { display: grid; grid-template-columns: minmax(0, 130px) minmax(0,1fr) 36px; gap: 6px 10px; align-items: center; font-size: 14px; }
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.race { display: grid; gap: 4px; }
+.race .ln { display: grid; grid-template-columns: minmax(0, 130px) minmax(0,1fr); gap: 10px; align-items: center; font-size: 13.5px; }
+footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
+
+/* focus view: a nav tab fills the screen with one section, summary left, deep dive open on the right */
+.board[data-focus] { grid-template-columns: minmax(0, 1fr); }
+.board[data-focus] .col { display: contents; }
+.board[data-focus] .c:not(.focus), .board[data-focus] footer { display: none; }
+.c.focus { grid-column: 1 / -1; min-height: calc(100dvh - var(--bandh, 150px) - 44px); align-content: start; }
+.c.focus #power-top, .c.focus #buy-top { display: none; }
+@media (min-width: 1100px) {
+  .c.focus { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: 36px; row-gap: 0; padding: 26px 30px; }
+  .c.focus > * { grid-column: 1; margin-bottom: 16px; }
+  .c.focus > details.deep { grid-column: 2; grid-row: 1 / span 12; margin: 0; border-top: 0; border-left: 1px solid var(--line); padding: 0 0 0 30px; }
+  .c.focus > details.deep > .dd { margin-top: 14px; }
+  .c.focus .answer { font-size: clamp(30px, 2.5vw, 44px); }
+  .c.focus .cols3 { grid-template-columns: minmax(0, 1fr); }
+}
+#tip { position: fixed; z-index: 40; pointer-events: none; background: var(--band); color: #fff; font-size: 12.5px; padding: 6px 9px; border-radius: 6px; max-width: 260px; opacity: 0; transition: opacity .12s; }
+#tip.on { opacity: 1; }
+@media (min-width: 2100px) { body { font-size: 16.5px; } .answer { font-size: 34px; } }
+:fullscreen body, body:fullscreen { overflow-y: auto; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } html { scroll-behavior: auto; } }
+</style>
+
+<header class="band">
+  <div class="in">
+    <div class="top">
+      <div class="team"><h1 id="tname">It's Always Dame Time</h1><span class="sub" id="tsub"></span></div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="navrow">
+      <nav class="nav" aria-label="Sections">
+        <a href="#all" aria-current="true">All</a><a href="#week">This week</a><a href="#trend">Waivers</a><a href="#season">Season</a><a href="#power">Power</a><a href="#lineup">Team</a><a href="#trades">Trades</a><a href="#draft">Draft</a><a href="#playoffs">Playoffs</a><a href="#next">Next</a>
+      </nav>
+      <a class="tool" id="t-live" href="https://traybanks.github.io/war-room/" target="_blank" rel="noopener" hidden>Live page (updates 4×/day)</a>
+      <button class="tool" id="t-open" type="button">Open all deep dives</button>
+      <button class="tool fs" id="t-fs" type="button" hidden>Full screen</button>
+    </div>
+  </div>
+</header>
+
+<main class="board">
+ <div class="col">
+  <section class="c s7" id="week" aria-labelledby="week-h">
+    <div class="ch"><h2 id="week-h">This week</h2><span class="meta" id="week-meta"></span><span class="livebar"><span class="dot off" id="lock-dot"></span><span id="lock-meta">Checking Sleeper…</span></span><button class="mk" id="lock-check" type="button">Check now</button></div>
+    <p class="answer" id="lock-answer"></p>
+    <p class="warnline" id="lock-warn" hidden></p>
+    <div class="vs" id="vs"></div>
+    <div class="wk-split">
+      <div class="wk-col"><div class="lab">Start these 9 today</div>
+      <div id="plan"></div>
+      <p class="note" id="plan-next"></p></div>
+      <div class="wk-col"><div class="lab">Lock or wait</div>
+      <div id="lock-rows"></div></div>
+    </div>
+    <div class="lab">Your next moves</div>
+    <div class="moves" id="moves"></div>
+    <details class="deep"><summary>Deep dive: their lineup and how the lock line works</summary><div class="dd">
+      <p class="note">Each starter counts one game a week. After a game you can lock it, but only before his next game tips; if you don't, his last game of the week counts.</p>
+      <p class="note">His line is what waiting is worth: the games he has left, counting the chance he sits. At or above the line: lock. Below: wait. With one game left the line is about his average.</p>
+      <p class="note" id="lock-risk"></p>
+      <p class="note">The lock calls check Sleeper every 2 minutes while this page is open. Sleeper doesn't report locks until a player plays again, so after you lock someone in Sleeper, tap "I locked this".</p>
+      <div class="lab">Their lineup</div>
+      <div id="opp-rows"></div>
+      <p class="note" id="week-note"></p>
+    </div></details>
+  </section>
+  <section class="c s7" id="season" aria-labelledby="season-h">
+    <div class="ch"><h2 id="season-h">Season outlook</h2><span class="meta">6,000 simulated seasons on your real schedule</span></div>
+    <p class="answer" id="season-answer"></p>
+    <div class="facts" id="season-facts"></div>
+    <div class="lab">Chance you win each week</div>
+    <div><div class="strip" id="strip"></div><div class="strip-x" id="strip-x"></div></div>
+    <details class="deep"><summary>Deep dive: the race, and what if weeks swing more</summary><div class="dd">
+      <div class="toggle" role="group" aria-label="Weekly swing"><button id="sw-n" aria-pressed="true">Normal swings (±22)</button><button id="sw-w" aria-pressed="false">Wilder swings (±30)</button></div>
+      <p class="note" id="swing-note"></p>
+      <div class="lab">Expected wins after 18 weeks</div>
+      <div class="race" id="race"></div>
+    </div></details>
+  </section>
+  <section class="c s8" id="draft" aria-labelledby="draft-h">
+    <div class="ch"><h2 id="draft-h">Your draft</h2></div>
+    <p class="answer" id="draft-answer"></p>
+    <div class="facts" id="draft-facts"></div>
+    <details class="deep"><summary>Deep dive: all 14 picks, graded</summary><div class="dd"><div class="cards" id="picks"></div><p class="note">Grade = his Lock-In value as a share of the best value still on the board at that pick. Strong ≥ 95%, Solid ≥ 85%, Questionable ≥ 75%, Reach below.</p></div></details>
+  </section>
+ </div>
+ <div class="col">
+  <section class="c s5" id="trend" aria-labelledby="trend-h">
+    <div class="ch"><h2 id="trend-h">Waivers · league moves</h2><span class="livebar"><span class="dot off" id="mv-dot"></span><span id="mv-meta">Checking Sleeper…</span></span></div>
+    <p class="answer" id="wv-answer"></p>
+    <div class="lab">League moves this week</div>
+    <div id="mv-rows"></div>
+    <div class="lab">Best claims for you</div>
+    <div id="claims"></div>
+    <p class="note" id="hold-note"></p>
+    <details class="deep"><summary>Deep dive: trending across Sleeper and the waiver math</summary><div class="dd">
+      <div class="lab">Trending on Sleeper <span class="sm" id="trend-sub"></span></div>
+      <p class="note" id="trend-answer"></p>
+      <div class="swap" id="swap"></div>
+      <div class="cols3" id="tgroups"></div>
+      <p class="note" id="trend-note"></p>
+      <div class="lab">Most added</div><div class="tbl"><table id="t-add"></table></div>
+      <div class="lab">Most dropped</div><div class="tbl"><table id="t-drop"></table></div>
+      <div class="lab">Best waiver swaps for your roster</div><div class="tbl"><table id="adds"></table></div>
+      <p class="note" id="wv-note"></p>
+    </div></details>
+  </section>
+  <section class="c s6" id="lineup" aria-labelledby="lineup-h">
+    <div class="ch"><h2 id="lineup-h">Your team</h2><span class="meta" id="team-meta"></span></div>
+    <p class="answer" id="team-answer"></p>
+    <div class="facts" id="horizons"></div>
+    <div class="facts" id="groups"></div>
+    <div id="roster"></div>
+    <details class="deep"><summary>Deep dive: league leaderboards, team rankings and game logs</summary><div class="dd">
+      <p class="note">Values blend last season, the preseason projection and this season (this season counts about half after 12 games, weighted toward the last 5). Rank = rest-of-season lock value among every player worth a look. Hold line = the 140th best player: a 10-team league rosters 140.</p>
+      <div class="lab">Team rankings</div><div class="tbl"><table id="team-ranks"></table></div>
+      <div class="lab">Fantasy points per game leaders this season</div><div class="tbl"><table id="leaders"></table></div>
+      <div class="lab">Your players' last 10 games</div><div class="tbl"><table id="glogs"></table></div>
+      <div class="lab">Your best lineup and bench (preseason values)</div>
+      <div class="tbl"><table id="slots"></table></div><div class="tbl"><table id="bench"></table></div><div class="facts" id="cover"></div>
+    </div></details>
+  </section>
+ </div>
+ <div class="col">
+  <section class="c s5" id="power" aria-labelledby="power-h">
+    <div class="ch"><h2 id="power-h">Power rankings</h2><span class="meta">points per week, best lineup</span></div>
+    <p class="answer" id="power-answer"></p>
+    <div class="pw" id="power-top"></div>
+    <details class="deep"><summary>Deep dive: all 10 teams</summary><div class="dd"><div class="pw" id="power-all"></div><p class="note">Draft = average share of the best value left at each pick. Style = how that manager drafted (learned from the real draft).</p></div></details>
+  </section>
+  <section class="c s6" id="trades" aria-labelledby="trades-h">
+    <div class="ch"><h2 id="trades-h">Trade targets</h2><span class="meta">market price below Lock-In value</span></div>
+    <p class="answer" id="trades-answer"></p>
+    <div class="list" id="buy-top"></div>
+    <details class="deep"><summary>Deep dive: full target list and how managers drafted</summary><div class="dd"><div class="tbl"><table id="buy"></table></div><p class="note" id="room-note"></p><div class="sharp" id="room"></div></div></details>
+  </section>
+  <section class="c s4" id="playoffs" aria-labelledby="po-h">
+    <div class="ch"><h2 id="po-h">Playoff weeks 19–21</h2></div>
+    <p class="answer" id="po-answer"></p>
+    <details class="deep"><summary>Deep dive: games per week for every player</summary><div class="dd"><div class="tbl"><table id="po"></table></div></div></details>
+  </section>
+  <section class="c s6" id="next" aria-labelledby="next-h">
+    <div class="ch"><h2 id="next-h">Next steps</h2></div>
+    <p class="answer" id="next-answer"></p>
+    <details class="deep"><summary>Deep dive: the full build plan</summary><div class="dd"><ol class="steps" id="steps"></ol></div></details>
+  </section>
+  <section class="c s6" id="assume" aria-labelledby="as-h">
+    <div class="ch"><h2 id="as-h">Assumptions to argue with</h2></div>
+    <p class="answer">The title odds are probably high.</p>
+    <details class="deep"><summary>Deep dive: five assumptions behind every number here</summary><div class="dd list" id="assumptions"></div></details>
+  </section>
+ </div>
+
+
+
+
+
+
+
+
+
+
+  <footer id="foot"></footer>
+</main>
+<div id="tip" role="tooltip"></div>
+
+<script>/* War Room — Lock-In decision math (pure, no DOM).
+   Sleeper rule: each starter counts ONE game per week. After a game you may lock it, but only before his next game
+   starts. If you never lock, his final game of the week counts.
+
+   For a player with latest score c and k scheduled games left, each played with probability q:
+     V_0(c) = c
+     V_k(c) = (1-q)·V_{k-1}(c) + q·A_k,   A_k = E[ max(X, V_{k-1}(X)) ]      (X = next game's score)
+   which solves to V_k(c) = α_k·c + B_k with α_k = (1-q)^k. Lock when c ≥ V_k(c), i.e. c ≥ T_k = B_k / (1 − α_k).
+   Risk modes apply a utility u(x) = x^γ before solving (γ > 1 chases upside, γ < 1 protects a lead). */
+(function (root) {
+  "use strict";
+  const RISK = { even: 1, chase: 1.35, protect: 0.75 };
+
+  function scoreGrid(mu, cv, z) {
+    return z.map((zz) => Math.max(0, mu * (1 + cv * zz)));
+  }
+
+  function solve(mu, cv, q, kmax, opts) {
+    const g = RISK[(opts && opts.risk) || "even"] || 1;
+    const z = (opts && opts.z) || root.WR_DEFAULT_Z;
+    const xs = scoreGrid(mu, cv, z).map((x) => Math.pow(x, g));
+    const alpha = [1], B = [0], T = [0];
+    for (let k = 1; k <= kmax; k++) {
+      let s = 0;
+      for (const x of xs) s += Math.max(x, alpha[k - 1] * x + B[k - 1]);
+      const A = s / xs.length;
+      alpha[k] = (1 - q) * alpha[k - 1];
+      B[k] = (1 - q) * B[k - 1] + q * A;
+      T[k] = alpha[k] < 1 ? Math.pow(B[k] / (1 - alpha[k]), 1 / g) : 0;
+    }
+    const cont = (c, k) => Math.pow(alpha[k] * Math.pow(Math.max(0, c), g) + B[k], 1 / g);
+    return { T, cont, gamma: g };
+  }
+
+  const dayName = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+
+  /* One player's week. games: team schedule rows this week [{date, status}], logs: [{date, score, sp}] */
+  function analyzePlayer(pl, games, logs, today, opts) {
+    const o = opts || {};
+    const q0 = Math.max(0, Math.min(1, 1 - (pl.rest || 0.07)));
+    const q = pl.inj === "Out" ? 0 : /^(Questionable|DTD|Doubtful)$/i.test(pl.inj || "") ? q0 * 0.6 : q0;
+    const sched = games.slice().sort((a, b) => a.date.localeCompare(b.date));
+    // a game in progress can show partial stats: never treat those as a finished score
+    const liveDates = new Set(sched.filter((g) => g.status === "in_game").map((g) => g.date));
+    const played = logs.filter((l) => (l.sp || 0) > 0 && !liveDates.has(l.date)).sort((a, b) => a.date.localeCompare(b.date));
+    const latest = played.length ? played[played.length - 1] : null;
+    const live = sched.find((g) => g.status === "in_game");
+    const lastDate = latest ? latest.date : null;
+    // a finished game with no stat line yet (Sleeper posts finals a few minutes late): don't decide on stale data
+    const yday = new Date(Date.parse(today + "T12:00:00Z") - 864e5).toISOString().slice(0, 10);
+    const pending = sched.find((g) => g.status === "complete" && g.date >= yday && !logs.find((l) => l.date === g.date) && (!lastDate || g.date > lastDate));
+    const future = sched.filter((g) => g.status !== "complete" && g.status !== "in_game" && (!lastDate || g.date > lastDate) && g.date >= today);
+    const k = future.length;
+    const sol = solve(pl.mu, pl.cv, q, 6, { risk: o.risk, z: o.z });
+    const out = { id: pl.id, n: pl.n, pos: pl.pos, starter: !!pl.starter, games: sched.length, playedCount: played.length,
+      latest: latest ? latest.score : null, latestDay: latest ? dayName(latest.date) : null, k, q,
+      next: future[0] ? dayName(future[0].date) : null, lines: sol.T.slice(1, 5), timeline: sched.map((g) => {
+        const lg = logs.find((l) => l.date === g.date);
+        const isLive = g.status === "in_game", wait = pending && pending.date === g.date;
+        return { day: dayName(g.date), date: g.date, played: !isLive && !!(lg && lg.sp > 0), dnp: !isLive && !wait && (!!(lg && !(lg.sp > 0)) || (g.status === "complete" && !lg)),
+          score: !isLive && lg && lg.sp > 0 ? lg.score : null, live: isLive, pending: !!wait };
+      }) };
+    if (o.locked) return { ...out, verdict: "locked", text: latest ? `Locked at ${latest.score.toFixed(1)}` : "Marked locked" };
+    if (live && (!lastDate || live.date >= lastDate)) return { ...out, verdict: "live", text: latest ? `Playing now. ${latest.score.toFixed(1)} from ${out.latestDay} can no longer be locked.` : "Playing now. Decide after the game." };
+    if (pending) return { ...out, verdict: "pending", text: `${dayName(pending.date)}'s final isn't in Sleeper's stats yet. Check back in a few minutes.` };
+    if (!latest) {
+      if (k === 0) return { ...out, verdict: "none", text: out.starter ? "No games left this week. Start someone who plays." : "No games left this week." };
+      const need = sol.T[k - 1];
+      return { ...out, verdict: "wait", threshold: need, text: k - 1 > 0 ? `First game ${out.next}. Lock it if he scores ${need.toFixed(1)}+.` : `Only game ${out.next}. It counts automatically.` };
+    }
+    if (k === 0) return { ...out, verdict: "final", threshold: 0, text: `No games left. ${latest.score.toFixed(1)} counts automatically.` };
+    const T = sol.T[k], hold = sol.cont(latest.score, k);
+    if (latest.score >= T) return { ...out, verdict: "lock", threshold: T, gain: latest.score - hold,
+      text: `Lock ${latest.score.toFixed(1)}. Waiting is worth about ${hold.toFixed(1)} with ${k} game${k > 1 ? "s" : ""} left.` };
+    return { ...out, verdict: "hold", threshold: T, gain: hold - latest.score,
+      text: `Hold. ${latest.score.toFixed(1)} is under the ${T.toFixed(1)} lock line; waiting is worth about ${hold.toFixed(1)}.` };
+  }
+
+  /* Whole roster for a week. */
+  function analyzeWeek(input) {
+    const { roster, schedule, stats, today, locks, risk, z } = input;
+    const byTeam = {};
+    for (const g of schedule) for (const t of [g.home, g.away]) (byTeam[t] = byTeam[t] || []).push({ date: g.date, status: g.status });
+    const logsBy = {};
+    for (const r of stats) (logsBy[String(r.player_id)] = logsBy[String(r.player_id)] || []).push({ date: r.date, score: +r.pts_std || 0, sp: +r.sp || 0 });
+    const rows = roster.map((pl) => analyzePlayer(pl, byTeam[pl.team] || [], logsBy[String(pl.id)] || [], today, { risk, z, locked: locks && locks.has(String(pl.id)) }));
+    const order = { lock: 0, pending: 1, live: 2, hold: 3, wait: 4, final: 5, none: 6, locked: 7 };
+    rows.sort((a, b) => (b.starter - a.starter) || (order[a.verdict] - order[b.verdict]) || ((b.latest || 0) - (a.latest || 0)));
+    const count = (v) => rows.filter((r) => r.starter && r.verdict === v).length;
+    return { rows, summary: { lock: count("lock"), live: count("live"), pending: count("pending"), hold: count("hold"), wait: count("wait"), final: count("final"), locked: count("locked"), none: count("none") } };
+  }
+
+  const api = { solve, analyzePlayer, analyzeWeek, RISK };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.WR_LOCK = api;
+})(typeof self !== "undefined" ? self : this);
+
+/* Lock-In week logic shared by tools/week_page.js (Node, every refresh) and the live "Lock or wait" card (browser).
+   Sleeper's API has no lock field, so locks are worked out here:
+   - inferred: once a starter has played again, Sleeper's counted points (starters_points) matching an earlier game
+     instead of his latest one means that earlier game is locked;
+   - manual: locks Tray told us about (data/locks.json) or marked on his phone, each with the date of the game he locked;
+   - conflict: Sleeper's feed counts a newer game for a manual lock. The feed flips between servers for minutes at a time
+     (seen Oct 24, 2026), so the lock Tray made wins and the page just notes the disagreement; the app is the final word.
+   Needs lock.js (passed in as L). */
+(function (root) {
+  "use strict";
+  const close = (a, b) => Math.abs(a - b) <= 0.75;
+
+  function analyzeSide(o) {
+    // o: { L, starters, points, slots, player(id) -> {id, n, team, pos[], inj, mu, cv, rest}, schedule: [{date, home, away, status}],
+    //      stats: [{player_id, date, team, pts_std, sp}], today, manual: Map(id -> locked game date or "") or Set, risk, z }
+    const unsure = new Set((o.unsure || []).map(String));
+    const man = o.manual instanceof Map ? o.manual : new Map([...(o.manual || [])].map((id) => [String(id), ""]));
+    const roster = o.starters.map((id, i) => Object.assign({}, o.player(id), { starter: true, slot: o.slots[i] || "UTIL" }));
+    const stats = o.stats.filter((s) => o.starters.includes(String(s.player_id))).map((s) => Object.assign({}, s, { player_id: String(s.player_id) }));
+    const official = {};
+    o.starters.forEach((id, i) => { official[id] = o.points[i]; });
+    const locks = new Set(), inferred = new Set(), conflict = new Map();
+    for (const p of roster) {
+      const id = p.id, manual = man.has(id), lockedOn = man.get(id) || "";
+      // while his game is on, Sleeper's count is the live partial score: leave his finished games alone
+      const live = o.schedule.some((g) => g.status === "in_game" && (g.home === p.team || g.away === p.team));
+      const played = stats.filter((s) => s.player_id === id && s.sp > 0).sort((a, b) => a.date.localeCompare(b.date));
+      const off = official[id];
+      if (live || off == null || !played.length) { if (manual) locks.add(id); continue; }
+      const latest = played[played.length - 1];
+      const earlier = played.slice(0, -1).find((s) => close(off, s.pts_std));
+      if (played.length >= 2 && !close(off, latest.pts_std) && earlier) {
+        inferred.add(id); locks.add(id);
+        earlier.pts_std = off;                                   // the locked game is the one that counts
+        for (const s of stats) if (s.player_id === id && s.date > earlier.date) s.sp = 0;
+      } else {
+        if (manual) {
+          locks.add(id);
+          const prev = played[played.length - 2];
+          const after = lockedOn ? latest.date > lockedOn : !!prev;
+          const lockedGame = lockedOn ? played.find((s) => s.date === lockedOn) : prev;
+          if (after && lockedGame && !close(latest.pts_std, lockedGame.pts_std)) {
+            // he locked an earlier game: that game counts, whatever the feed shows right now
+            if (!close(off, lockedGame.pts_std)) conflict.set(id, off);
+            for (const s of stats) if (s.player_id === id && s.date > lockedGame.date) s.sp = 0;
+            continue;
+          }
+        }
+        latest.pts_std = off;                                    // the league's counted number (stat corrections)
+      }
+    }
+    const res = o.L.analyzeWeek({ roster, schedule: o.schedule, stats, today: o.today, locks, risk: o.risk, z: o.z });
+    let now = 0, exp = 0, rem = 0, tot = 0;
+    for (const r of res.rows) {
+      const pl = roster.find((x) => x.id === r.id);
+      const sol = o.L.solve(pl.mu, pl.cv, r.q, 6, { risk: "even", z: o.z });
+      const c = r.latest || 0;
+      r.exp = ["lock", "final", "locked"].includes(r.verdict) ? c : r.verdict === "none" ? 0 : r.verdict === "live" ? Math.max(c, pl.mu * 0.9) : sol.cont(c, r.k);
+      r.pl = pl; r.slot = pl.slot; r.inferred = inferred.has(r.id); r.feed = conflict.has(r.id) ? conflict.get(r.id) : null;
+      now += c; exp += r.exp; rem += r.k; tot += r.games;
+    }
+    return { res, now, exp, remFrac: tot ? rem / tot : 0, roster };
+  }
+
+  /* Sleeper's matchup endpoint can answer differently from one read to the next (replicas catching up, or a lineup
+     being edited). Read it a few times and take, per roster, the most common lineup and per-starter the most common
+     count. Starters whose count differed between reads are "unsure": a manual lock is trusted for them. */
+  function consensus(reads, rid) {
+    const rows = reads.map((ms) => (ms || []).find((m) => m.roster_id === rid)).filter(Boolean);
+    if (!rows.length) return null;
+    const key = (r) => (r.starters || []).join(","), top = (arr) => { const c = new Map(); for (const v of arr) c.set(v, (c.get(v) || 0) + 1); return [...c.entries()].sort((a, b) => b[1] - a[1])[0][0]; };
+    const lineup = top(rows.map(key)), same = rows.filter((r) => key(r) === lineup), st = (same[0].starters || []).map(String);
+    const pts = st.map((_, i) => +top(same.map((r) => (r.starters_points || [])[i] || 0)));
+    const unsure = st.filter((_, i) => new Set(same.map((r) => (r.starters_points || [])[i])).size > 1);
+    return { roster_id: rid, matchup_id: same[0].matchup_id, starters: st, starters_points: pts, points: +pts.reduce((a, b) => a + b, 0).toFixed(2),
+      unsure, agree: !unsure.length && same.length === rows.length, reads: rows.length };
+  }
+
+  /* Start these 9: best lineup from a given day on.
+     Each player's worth that day: if he plays that day, his counted score plus the value of the games he has left (lock.js
+     cont); if not, just the score he has banked (a bench player who sits that day can be swapped in later at no cost).
+     Fixed in place: locked starters, and anyone whose game that day has already tipped (Sleeper locks them). A bench player
+     whose game already tipped can't start that day. Bitmask DP over the 9 slots.
+     o: { L, z, risk, slots, starters: [ids by slot], counted: {id: score}, locks: Set, roster: [ids], player(id), schedule, day, today } */
+  const SLOT_OK = { PG: ["PG"], SG: ["SG"], G: ["PG", "SG"], SF: ["SF"], PF: ["PF"], F: ["SF", "PF"], C: ["C"], UTIL: null };
+  const fits = (slot, pos) => !SLOT_OK[slot] || (pos || []).some((x) => SLOT_OK[slot].includes(x));
+  function planLineup(o) {
+    const day = o.day || o.today, tipped = (team) => o.schedule.some((g) => g.date === day && g.status !== "pre_game" && (g.home === team || g.away === team));
+    const left = (team) => o.schedule.filter((g) => (g.home === team || g.away === team) && g.status === "pre_game" && g.date >= day).length;
+    const playsDay = (team) => o.schedule.some((g) => g.date === day && (g.home === team || g.away === team));
+    const worth = (id) => {
+      const p = o.player(id), c = o.counted[id] || 0, k = left(p.team);
+      const q0 = Math.max(0, Math.min(1, 1 - (p.rest || 0.07))), q = /^(Out|IR|Suspended)$/i.test(p.inj || "") ? 0 : /^(Questionable|GTD|DTD|Doubtful)$/i.test(p.inj || "") ? q0 * 0.6 : q0;
+      // only a player who plays that day can use the slot that day; anyone else can be swapped in later for free,
+      // so off days are worth just the score he has banked
+      return k && q && playsDay(p.team) ? o.L.solve(p.mu, p.cv, q, 6, { risk: o.risk || "even", z: o.z }).cont(c, k) : c;
+    };
+    const fixed = {}, used = new Set();
+    o.slots.forEach((s, i) => { const id = o.starters[i]; if (id && id !== "0" && (o.locks.has(id) || (day === o.today && tipped(o.player(id).team)))) { fixed[i] = id; used.add(id); } });
+    const free = o.slots.map((s, i) => i).filter((i) => fixed[i] == null);
+    const cands = o.roster.filter((id) => !used.has(id) && !(day === o.today && tipped(o.player(id).team) && !o.starters.includes(id)));
+    const val = Object.fromEntries(cands.map((id) => [id, worth(id)]));
+    const F = free.length, full = (1 << F) - 1;
+    let best = new Map([[0, { v: 0, pick: [] }]]);
+    for (const id of cands) {
+      const nx = new Map(best);
+      for (const [mask, st] of best) for (let j = 0; j < F; j++) {
+        if (mask & (1 << j) || !fits(o.slots[free[j]], o.player(id).pos)) continue;
+        const m2 = mask | (1 << j), v = st.v + val[id] + (o.starters[free[j]] === id ? 0.05 : 0), cur = nx.get(m2);   // ties: leave him where he is
+        if (!cur || v > cur.v) nx.set(m2, { v, pick: st.pick.concat([[free[j], id]]) });
+      }
+      best = nx;
+    }
+    let top = null;
+    for (const [mask, st] of best) if (!top || st.v > top.v || (st.v === top.v && mask === full)) top = st;
+    const lineup = o.slots.map((s, i) => fixed[i] || null);
+    for (const [i, id] of top.pick) lineup[i] = id;
+    const rows = o.slots.map((s, i) => {
+      const id = lineup[i], was = o.starters[i];
+      return { slot: s, id, was, change: !!id && id !== was, fixed: fixed[i] != null, locked: !!(id && o.locks.has(id)), plays: id ? playsDay(o.player(id).team) : false, worth: id ? +(fixed[i] != null ? (o.counted[id] || 0) : val[id]).toFixed(1) : 0 };
+    });
+    const nowVal = o.slots.reduce((a, s, i) => { const id = o.starters[i]; return a + (!id || id === "0" ? 0 : fixed[i] != null ? o.counted[id] || 0 : cands.includes(id) ? val[id] : 0); }, 0);
+    return { day, rows, total: +rows.reduce((a, r) => a + r.worth, 0).toFixed(1), gain: +(rows.reduce((a, r) => a + r.worth, 0) - nowVal).toFixed(1) };
+  }
+
+  const riskOf = (diff) => (diff < -15 ? "chase" : diff > 15 ? "protect" : "even");
+  const api = { analyzeSide, riskOf, consensus, planLineup, fits };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.WR_WEEK = api;
+})(typeof self !== "undefined" ? self : this);
+</script>
+<script>
+const D = {"record": [0, 3, 0], "trending": {"meta": "Last 48 hours · as of Sat Nov 14, 1:56 AM CT", "sub": "Net = adds minus drops across all of Sleeper. +/wk = what he'd add to your lineup in place of your weakest bench player (projection nudged toward his latest game when he played 20+ minutes; one game is a small sample).", "move": {"drop": "Dejounte Murray", "dropWhy": "Listed Out", "add": "Kelly Oubre Jr.", "addLast": "Oubre", "addWhy": "19.5 FP in 30 min · Haliburton out", "gain": 0.52, "alts": []}, "free": [{"name": "Kelly Oubre Jr.", "team": "IND", "pos": "PF/SF", "net": 17127, "verdict": "Speculative add", "gain": 0.52, "why": "19.5 FP in 30 min · Haliburton out", "fp": 19.5}], "watch": [], "yours": [{"name": "Dejounte Murray", "team": "NOP", "pos": "PG/SG", "net": -6680, "verdict": "Yours: drop candidate", "gain": null, "why": "Listed Out", "fp": null}, {"name": "Yves Missi", "team": "NOP", "pos": "C", "net": 3670, "verdict": "Yours: drop candidate", "gain": null, "why": "Listed Out", "fp": null}, {"name": "Day'Ron Sharpe", "team": "BKN", "pos": "C", "net": 4034, "verdict": "Yours: keep", "gain": null, "why": "25.5 FP in 19 min", "fp": 25.5}, {"name": "Jeremiah Fears", "team": "NOP", "pos": "PG/SG", "net": 4552, "verdict": "Yours: keep", "gain": null, "why": "25 FP in 34 min · Murray out", "fp": 25}, {"name": "Sidy Cissoko", "team": "POR", "pos": "C/PF", "net": 13580, "verdict": "Yours: drop candidate", "gain": null, "why": "7 FP in 26 min · Morant out", "fp": 7}, {"name": "Sandro Mamukelashvili", "team": "LAL", "pos": "C/PF", "net": 25296, "verdict": "Yours: keep", "gain": null, "why": "19 FP in 26 min", "fp": 19}], "add": [{"name": "Daniss Jenkins", "team": "DET", "pos": "PG/SG", "net": 47306, "verdict": "Owned", "gain": null, "why": "22 FP in 42 min · Joe out", "fp": 22}, {"name": "De'Anthony Melton", "team": "GSW", "pos": "PG/SG", "net": 34320, "verdict": "Owned", "gain": null, "why": "16 FP in 18 min · Butler out", "fp": 16}, {"name": "Sandro Mamukelashvili", "team": "LAL", "pos": "C/PF", "net": 25296, "verdict": "Yours: keep", "gain": null, "why": "19 FP in 26 min", "fp": 19}, {"name": "Kelly Oubre Jr.", "team": "IND", "pos": "PF/SF", "net": 17127, "verdict": "Speculative add", "gain": 0.52, "why": "19.5 FP in 30 min · Haliburton out", "fp": 19.5}, {"name": "Sidy Cissoko", "team": "POR", "pos": "C/PF", "net": 13580, "verdict": "Yours: drop candidate", "gain": null, "why": "7 FP in 26 min · Morant out", "fp": 7}, {"name": "Davion Mitchell", "team": "MIA", "pos": "PG", "net": 12807, "verdict": "Owned", "gain": null, "why": "36.5 FP in 39 min · Thompson out", "fp": 36.5}, {"name": "Jalen Smith", "team": "CHI", "pos": "C/PF", "net": 9592, "verdict": "Owned", "gain": null, "why": "26 FP in 32 min · Wilson out", "fp": 26}, {"name": "Alex Caruso", "team": "OKC", "pos": "PF/SF", "net": 9027, "verdict": "Owned", "gain": null, "why": "11 FP in 27 min · Williams out", "fp": 11}, {"name": "Cameron Johnson", "team": "DEN", "pos": "PF/SF/SG", "net": 7872, "verdict": "Owned", "gain": null, "why": "22.5 FP in 30 min · Strawther out", "fp": 22.5}, {"name": "Kevin Huerter", "team": "DET", "pos": "SF/SG", "net": 7425, "verdict": "Pass", "gain": 0.06, "why": "8 FP in 24 min · Joe out", "fp": 8}, {"name": "Saddiq Bey", "team": "NOP", "pos": "PF/SF", "net": 7080, "verdict": "Owned", "gain": null, "why": "31 FP in 35 min · Murray out", "fp": 31}, {"name": "Jared McCain", "team": "OKC", "pos": "PG/SG", "net": 6570, "verdict": "Owned", "gain": null, "why": "19 FP in 31 min · Williams out", "fp": 19}, {"name": "Patrick Williams", "team": "CHI", "pos": "PF", "net": 6237, "verdict": "Pass", "gain": 0.47, "why": "16.5 FP in 24 min · Wilson out", "fp": 16.5}, {"name": "Collin Murray-Boyles", "team": "TOR", "pos": "C/PF", "net": 5250, "verdict": "Owned", "gain": null, "why": "21.5 FP in 32 min · Leonard out", "fp": 21.5}], "drop": [{"name": "Brayden Burries", "team": "MIL", "pos": "PG/SG", "net": -17248, "verdict": "Owned", "gain": null, "why": "9 FP in 19 min", "fp": 9}, {"name": "Jamal Shead", "team": "TOR", "pos": "PG/SG", "net": -12176, "verdict": "Owned", "gain": null, "why": "9 FP in 22 min", "fp": 9}, {"name": "Precious Achiuwa", "team": "SAC", "pos": "C/PF", "net": -11832, "verdict": "Pass", "gain": 0, "why": "Listed Out", "fp": null}, {"name": "Ja'Kobe Walter", "team": "TOR", "pos": "SF/SG", "net": -8776, "verdict": "Owned", "gain": null, "why": "8.5 FP in 32 min", "fp": 8.5}, {"name": "Dejounte Murray", "team": "NOP", "pos": "PG/SG", "net": -6680, "verdict": "Yours: drop candidate", "gain": null, "why": "Listed Out", "fp": null}, {"name": "Jakob Poeltl", "team": "TOR", "pos": "C", "net": -6678, "verdict": "Owned", "gain": null, "why": "14.5 FP in 25 min", "fp": 14.5}, {"name": "Jalen Green", "team": "PHX", "pos": "SF/SG", "net": -6084, "verdict": "Owned", "gain": null, "why": "10.5 FP in 21 min", "fp": 10.5}, {"name": "Isaiah Jackson", "team": "LAC", "pos": "C", "net": -4494, "verdict": "Pass", "gain": 0.44, "why": "9.5 FP in 17 min", "fp": 9.5}, {"name": "Nolan Traore", "team": "BKN", "pos": "PG", "net": -4355, "verdict": "Pass", "gain": 0.5, "why": "Didn't play last game", "fp": null}, {"name": "Mikal Bridges", "team": "NYK", "pos": "PF/SF/SG", "net": -4140, "verdict": "Owned", "gain": null, "why": "17 FP in 29 min", "fp": 17}, {"name": "Yves Missi", "team": "NOP", "pos": "C", "net": 3670, "verdict": "Yours: drop candidate", "gain": null, "why": "Listed Out", "fp": null}, {"name": "Sidy Cissoko", "team": "POR", "pos": "C/PF", "net": 13580, "verdict": "Yours: drop candidate", "gain": null, "why": "7 FP in 26 min · Morant out", "fp": 7}]}, "eyebrow": "Slot 10 War Room · NBA League Revamped · Lock-In · Week 4 · updated Sat Nov 14, 1:56 AM CT", "teams": [{"rid": 1, "name": "Nickgarrison", "me": false, "mean": 209.6, "pmean": 208, "wins": 6.94, "playoff": 0.157, "final": 0.01, "title": 0.002, "seed": 7.95, "seedDist": [0.001, 0.003, 0.007, 0.018, 0.042, 0.085, 0.145, 0.261, 0.346, 0.091], "draft": 0.841, "stars": ["Shai Gilgeous-Alexander", "Tyrese Maxey", "Pascal Siakam"]}, {"rid": 2, "name": "Spence24s", "me": false, "mean": 240.2, "pmean": 240.4, "wins": 11.94, "playoff": 0.982, "final": 0.579, "title": 0.357, "seed": 2.39, "seedDist": [0.355, 0.278, 0.161, 0.101, 0.057, 0.029, 0.014, 0.003, 0.001, 0], "draft": 0.891, "stars": ["Jayson Tatum", "Bam Adebayo", "Jamal Murray"]}, {"rid": 3, "name": "LawyerMan2", "me": false, "mean": 226, "pmean": 225.5, "wins": 11.16, "playoff": 0.945, "final": 0.263, "title": 0.103, "seed": 3.34, "seedDist": [0.17, 0.197, 0.212, 0.176, 0.118, 0.072, 0.037, 0.014, 0.004, 0], "draft": 0.841, "stars": ["Giannis Antetokounmpo", "Jalen Brunson", "Deni Avdija"]}, {"rid": 4, "name": "TrayBanks", "me": true, "mean": 234.6, "pmean": 235.4, "wins": 9.62, "playoff": 0.827, "final": 0.29, "title": 0.153, "seed": 4.69, "seedDist": [0.033, 0.093, 0.153, 0.198, 0.197, 0.153, 0.096, 0.053, 0.02, 0.004], "draft": 0.845, "stars": ["Alperen Şengün", "Jalen Johnson", "Donovan Clingan"]}, {"rid": 5, "name": "changodinho44", "me": false, "mean": 218.3, "pmean": 220.1, "wins": 9.22, "playoff": 0.662, "final": 0.102, "title": 0.037, "seed": 5.6, "seedDist": [0.025, 0.044, 0.078, 0.121, 0.181, 0.213, 0.176, 0.107, 0.048, 0.006], "draft": 0.843, "stars": ["Luka Dončić", "Donovan Mitchell", "Kevin Durant"]}, {"rid": 6, "name": "SergeantSleaze", "me": false, "mean": 231.6, "pmean": 231.3, "wins": 12.1, "playoff": 0.981, "final": 0.433, "title": 0.207, "seed": 2.44, "seedDist": [0.359, 0.253, 0.171, 0.099, 0.067, 0.032, 0.013, 0.005, 0.002, 0], "draft": 0.835, "stars": ["Nikola Jokić", "Anthony Davis", "Dyson Daniels"]}, {"rid": 7, "name": "slimmothy", "me": false, "mean": 215.7, "pmean": 215, "wins": 6.87, "playoff": 0.21, "final": 0.019, "title": 0.005, "seed": 7.63, "seedDist": [0.001, 0.003, 0.013, 0.028, 0.054, 0.113, 0.192, 0.259, 0.271, 0.068], "draft": 0.858, "stars": ["Scottie Barnes", "Cameron Boozer", "Nickeil Alexander-Walker"]}, {"rid": 8, "name": "ii3igt", "me": false, "mean": 230.7, "pmean": 231, "wins": 10.27, "playoff": 0.866, "final": 0.266, "title": 0.124, "seed": 4.34, "seedDist": [0.053, 0.118, 0.176, 0.205, 0.182, 0.131, 0.08, 0.039, 0.014, 0.002], "draft": 0.859, "stars": ["Cade Cunningham", "Cooper Flagg", "Domantas Sabonis"]}, {"rid": 9, "name": "LucidArtKnows", "me": false, "mean": 204.6, "pmean": 203.8, "wins": 4.03, "playoff": 0.006, "final": 0, "title": 0, "seed": 9.7, "seedDist": [0, 0, 0, 0, 0.002, 0.005, 0.015, 0.042, 0.142, 0.795], "draft": 0.76, "stars": ["Karl-Anthony Towns", "LaMelo Ball", "De'Aaron Fox"]}, {"rid": 10, "name": "vvaughns", "me": false, "mean": 217.3, "pmean": 216.5, "wins": 7.85, "playoff": 0.363, "final": 0.038, "title": 0.011, "seed": 6.91, "seedDist": [0.003, 0.012, 0.027, 0.054, 0.1, 0.168, 0.233, 0.217, 0.153, 0.034], "draft": 0.783, "stars": ["Victor Wembanyama", "Jaylen Brown", "James Harden"]}], "teamsWide": [{"rid": 1, "name": "Nickgarrison", "me": false, "mean": 209.6, "pmean": 208, "wins": 7.55, "playoff": 0.255, "final": 0.027, "title": 0.009, "seed": 7.52, "seedDist": [0.004, 0.011, 0.022, 0.04, 0.067, 0.11, 0.159, 0.223, 0.261, 0.103], "draft": 0.841, "stars": ["Shai Gilgeous-Alexander", "Tyrese Maxey", "Pascal Siakam"]}, {"rid": 2, "name": "Spence24s", "me": false, "mean": 240.2, "pmean": 240.4, "wins": 11.14, "playoff": 0.948, "final": 0.503, "title": 0.304, "seed": 2.92, "seedDist": [0.266, 0.243, 0.177, 0.125, 0.081, 0.056, 0.03, 0.015, 0.005, 0.002], "draft": 0.891, "stars": ["Jayson Tatum", "Bam Adebayo", "Jamal Murray"]}, {"rid": 3, "name": "LawyerMan2", "me": false, "mean": 226, "pmean": 225.5, "wins": 10.99, "playoff": 0.921, "final": 0.298, "title": 0.127, "seed": 3.32, "seedDist": [0.211, 0.204, 0.181, 0.142, 0.11, 0.073, 0.044, 0.022, 0.012, 0.001], "draft": 0.841, "stars": ["Giannis Antetokounmpo", "Jalen Brunson", "Deni Avdija"]}, {"rid": 4, "name": "TrayBanks", "me": true, "mean": 234.6, "pmean": 235.4, "wins": 9, "playoff": 0.707, "final": 0.243, "title": 0.132, "seed": 5.25, "seedDist": [0.034, 0.074, 0.123, 0.152, 0.165, 0.159, 0.13, 0.088, 0.058, 0.018], "draft": 0.845, "stars": ["Alperen Şengün", "Jalen Johnson", "Donovan Clingan"]}, {"rid": 5, "name": "changodinho44", "me": false, "mean": 218.3, "pmean": 220.1, "wins": 9.53, "playoff": 0.699, "final": 0.152, "title": 0.06, "seed": 5.2, "seedDist": [0.047, 0.08, 0.112, 0.147, 0.16, 0.153, 0.136, 0.101, 0.052, 0.012], "draft": 0.843, "stars": ["Luka Dončić", "Donovan Mitchell", "Kevin Durant"]}, {"rid": 6, "name": "SergeantSleaze", "me": false, "mean": 231.6, "pmean": 231.3, "wins": 11.7, "playoff": 0.963, "final": 0.421, "title": 0.214, "seed": 2.58, "seedDist": [0.36, 0.234, 0.155, 0.102, 0.07, 0.041, 0.022, 0.011, 0.003, 0.001], "draft": 0.835, "stars": ["Nikola Jokić", "Anthony Davis", "Dyson Daniels"]}, {"rid": 7, "name": "slimmothy", "me": false, "mean": 215.7, "pmean": 215, "wins": 7.28, "playoff": 0.285, "final": 0.035, "title": 0.012, "seed": 7.4, "seedDist": [0.004, 0.011, 0.027, 0.044, 0.074, 0.125, 0.159, 0.213, 0.248, 0.095], "draft": 0.858, "stars": ["Scottie Barnes", "Cameron Boozer", "Nickeil Alexander-Walker"]}, {"rid": 8, "name": "ii3igt", "me": false, "mean": 230.7, "pmean": 231, "wins": 9.84, "playoff": 0.791, "final": 0.253, "title": 0.118, "seed": 4.61, "seedDist": [0.064, 0.116, 0.158, 0.17, 0.158, 0.126, 0.103, 0.066, 0.032, 0.008], "draft": 0.859, "stars": ["Cade Cunningham", "Cooper Flagg", "Domantas Sabonis"]}, {"rid": 9, "name": "LucidArtKnows", "me": false, "mean": 204.6, "pmean": 203.8, "wins": 4.84, "playoff": 0.022, "final": 0.002, "title": 0.001, "seed": 9.51, "seedDist": [0, 0, 0, 0.003, 0.005, 0.014, 0.025, 0.071, 0.17, 0.712], "draft": 0.76, "stars": ["Karl-Anthony Towns", "LaMelo Ball", "De'Aaron Fox"]}, {"rid": 10, "name": "vvaughns", "me": false, "mean": 217.3, "pmean": 216.5, "wins": 8.11, "playoff": 0.41, "final": 0.066, "title": 0.024, "seed": 6.7, "seedDist": [0.01, 0.027, 0.044, 0.074, 0.111, 0.143, 0.19, 0.19, 0.16, 0.05], "draft": 0.783, "stars": ["Victor Wembanyama", "Jaylen Brown", "James Harden"]}], "cum": [[1, 0, 1, 0, 1, 1, 1, 0, 0, 0], [2, 0, 2, 0, 2, 2, 1, 1, 0, 0], [2, 1, 3, 0, 3, 3, 1, 1, 0, 1], [2.42, 1.87, 3.43, 0.09, 3.35, 3.57, 1.58, 1.65, 0.13, 1.91], [2.66, 2.48, 4.07, 0.8, 3.65, 3.96, 1.94, 2.41, 0.47, 2.56], [2.86, 3.17, 4.38, 1.6, 4.31, 4.65, 2.26, 3.09, 0.81, 2.88], [3.43, 3.95, 5, 2.15, 4.63, 5.32, 2.48, 3.53, 1.24, 3.26], [3.68, 4.73, 5.59, 2.88, 5.04, 6.08, 2.75, 4.33, 1.44, 3.48], [3.97, 5.47, 6.29, 3.72, 5.3, 6.59, 3.22, 4.82, 1.61, 4.01], [4.14, 6.3, 6.73, 4.26, 5.81, 7.04, 3.87, 5.38, 1.96, 4.5], [4.54, 6.92, 7.12, 4.87, 6.34, 7.85, 4.34, 5.77, 2.16, 5.1], [4.94, 7.48, 7.87, 5.31, 6.94, 8.54, 4.65, 6.43, 2.41, 5.44], [5.36, 8.35, 8.3, 6.01, 7.28, 9.11, 5.22, 7.09, 2.54, 5.73], [5.62, 8.95, 8.93, 6.72, 7.57, 9.51, 5.6, 7.84, 2.89, 6.38], [5.83, 9.63, 9.24, 7.51, 8.24, 10.17, 5.91, 8.52, 3.23, 6.71], [6.39, 10.42, 9.87, 8.04, 8.58, 10.83, 6.13, 8.98, 3.66, 7.09], [6.64, 11.19, 10.47, 8.78, 8.98, 11.59, 6.39, 9.78, 3.87, 7.32], [6.94, 11.94, 11.16, 9.62, 9.22, 12.1, 6.87, 10.27, 4.03, 7.85]], "myWeeks": [{"w": 1, "opp": "SergeantSleaze", "odds": 0, "res": "L", "score": "222.5–288"}, {"w": 2, "opp": "LawyerMan2", "odds": 0, "res": "L", "score": "233–272"}, {"w": 3, "opp": "Spence24s", "odds": 0, "res": "L", "score": "218.5–243"}, {"w": 4, "opp": "vvaughns", "odds": 0.092}, {"w": 5, "opp": "changodinho44", "odds": 0.706}, {"w": 6, "opp": "Nickgarrison", "odds": 0.799}, {"w": 7, "opp": "ii3igt", "odds": 0.556}, {"w": 8, "opp": "slimmothy", "odds": 0.73}, {"w": 9, "opp": "LucidArtKnows", "odds": 0.833}, {"w": 10, "opp": "SergeantSleaze", "odds": 0.545}, {"w": 11, "opp": "LawyerMan2", "odds": 0.609}, {"w": 12, "opp": "Spence24s", "odds": 0.435}, {"w": 13, "opp": "vvaughns", "odds": 0.709}, {"w": 14, "opp": "changodinho44", "odds": 0.709}, {"w": 15, "opp": "Nickgarrison", "odds": 0.785}, {"w": 16, "opp": "ii3igt", "odds": 0.536}, {"w": 17, "opp": "slimmothy", "odds": 0.733}, {"w": 18, "opp": "LucidArtKnows", "odds": 0.84}], "week1": {"week": 4, "today": "2026-11-14", "opp": "vvaughns", "me": 244, "oppPts": 267, "projMe": 254, "projOpp": 275, "risk": "chase", "daysLeft": "Sat · Sun left", "oddsNote": "to win this week. You're behind, so the lock lines chase upside: hold for bigger games.", "rows": [{"id": "2313", "n": "Josh Giddey", "slot": "UTIL", "score": 36, "status": "Lock now", "why": "Beats his 24.0 line. 1 game left, worth about 25.5 if you wait.", "exp": 36, "canMark": true, "src": ""}, {"id": "2284", "n": "Jalen Johnson", "slot": "SF", "score": 34.5, "status": "Lock now", "why": "Beats his 28.5 line. 1 game left, worth about 28.9 if you wait.", "exp": 34.5, "canMark": true, "src": ""}, {"id": "2722", "n": "Stephon Castle", "slot": "SG", "score": 30.5, "status": "Lock now", "why": "Beats his 20.9 line. 1 game left, worth about 21.7 if you wait.", "exp": 30.5, "canMark": true, "src": ""}, {"id": "4750", "n": "Jeremiah Fears", "slot": "G", "score": 25, "status": "Lock now", "why": "Beats his 18.1 line. 1 game left, worth about 18.3 if you wait.", "exp": 25, "canMark": true, "src": ""}, {"id": "2835", "n": "Matas Buzelis", "slot": "PF", "score": 21, "status": "Lock now", "why": "Beats his 17.7 line. 1 game left, worth about 17.8 if you wait.", "exp": 21, "canMark": true, "src": ""}, {"id": "1054", "n": "Kyrie Irving", "slot": "PG", "score": 14, "status": "Hold", "why": "Line 24.4. Sat at CLE, Sun at BOS.", "exp": 23.6, "canMark": true, "src": ""}, {"id": "2728", "n": "Donovan Clingan", "slot": "C", "score": 29, "status": "Final", "why": "No games left. 29.0 counts automatically.", "exp": 29, "canMark": false, "src": ""}, {"id": "1444", "n": "Damian Lillard", "slot": "UTIL", "score": 21.5, "status": "Final", "why": "No games left. 21.5 counts automatically.", "exp": 21.5, "canMark": false, "src": ""}, {"id": "2308", "n": "Alperen Şengün", "slot": "F", "score": 32.5, "status": "Locked", "why": "Locked at 32.5 (Sleeper's count shows it).", "exp": 32.5, "canMark": false, "src": "auto"}], "swaps": [{"when": "This week", "what": "No moves: hold everyone", "why": "No starter is above his lock line, and no bench player beats a starter for his slot."}], "plan": [{"day": "2026-11-14", "gain": 0, "rows": [{"slot": "PG", "id": "1054", "n": "Kyrie Irving", "was": "Kyrie Irving", "change": false, "locked": false, "fixed": false, "plays": true, "worth": 24.1}, {"slot": "SG", "id": "2722", "n": "Stephon Castle", "was": "Stephon Castle", "change": false, "locked": false, "fixed": false, "plays": false, "worth": 30.5}, {"slot": "G", "id": "4750", "n": "Jeremiah Fears", "was": "Jeremiah Fears", "change": false, "locked": false, "fixed": false, "plays": true, "worth": 18.3}, {"slot": "SF", "id": "2284", "n": "Jalen Johnson", "was": "Jalen Johnson", "change": false, "locked": false, "fixed": false, "plays": false, "worth": 34.5}, {"slot": "PF", "id": "2835", "n": "Matas Buzelis", "was": "Matas Buzelis", "change": false, "locked": false, "fixed": false, "plays": true, "worth": 17.8}, {"slot": "F", "id": "2308", "n": "Alperen Şengün", "was": "Alperen Şengün", "change": false, "locked": true, "fixed": true, "plays": false, "worth": 32.5}, {"slot": "C", "id": "2728", "n": "Donovan Clingan", "was": "Donovan Clingan", "change": false, "locked": false, "fixed": false, "plays": false, "worth": 29}, {"slot": "UTIL", "id": "1444", "n": "Damian Lillard", "was": "Damian Lillard", "change": false, "locked": false, "fixed": false, "plays": false, "worth": 21.5}, {"slot": "UTIL", "id": "2313", "n": "Josh Giddey", "was": "Josh Giddey", "change": false, "locked": false, "fixed": false, "plays": true, "worth": 25.5}]}, {"day": "2026-11-15", "gain": 0, "rows": [{"slot": "PG", "id": "1054", "n": "Kyrie Irving", "was": "Kyrie Irving", "change": false, "locked": false, "fixed": false, "plays": true, "worth": 22.8}, {"slot": "SG", "id": "2722", "n": "Stephon Castle", "was": "Stephon Castle", "change": false, "locked": false, "fixed": false, "plays": true, "worth": 21.7}, {"slot": "G", "id": "4750", "n": "Jeremiah Fears", "was": "Jeremiah Fears", "change": false, "locked": false, "fixed": false, "plays": false, "worth": 25}, {"slot": "SF", "id": "2284", "n": "Jalen Johnson", "was": "Jalen Johnson", "change": false, "locked": false, "fixed": false, "plays": true, "worth": 28.9}, {"slot": "PF", "id": "2835", "n": "Matas Buzelis", "was": "Matas Buzelis", "change": false, "locked": false, "fixed": false, "plays": false, "worth": 21}, {"slot": "F", "id": "2308", "n": "Alperen Şengün", "was": "Alperen Şengün", "change": false, "locked": true, "fixed": true, "plays": true, "worth": 32.5}, {"slot": "C", "id": "2728", "n": "Donovan Clingan", "was": "Donovan Clingan", "change": false, "locked": false, "fixed": false, "plays": false, "worth": 29}, {"slot": "UTIL", "id": "1444", "n": "Damian Lillard", "was": "Damian Lillard", "change": false, "locked": false, "fixed": false, "plays": false, "worth": 21.5}, {"slot": "UTIL", "id": "2313", "n": "Josh Giddey", "was": "Josh Giddey", "change": false, "locked": false, "fixed": false, "plays": false, "worth": 36}]}], "opp_rows": [{"n": "RJ Barrett", "status": "Lock now", "score": 34.5, "exp": 34.5}, {"n": "Trae Young", "status": "Lock now", "score": 33.5, "exp": 33.5}, {"n": "James Harden", "status": "Lock now", "score": 31, "exp": 31}, {"n": "Jonathan Kuminga", "status": "Lock now", "score": 21.5, "exp": 21.5}, {"n": "Zach LaVine", "status": "Lock now", "score": 19.5, "exp": 19.5}, {"n": "Joel Embiid", "status": "Hold", "score": 19, "exp": 22.4}, {"n": "Jaylen Brown", "status": "Hold", "score": 18, "exp": 23.1}, {"n": "Victor Wembanyama", "status": "Locked", "score": 53, "exp": 53}, {"n": "Dylan Harper", "status": "Locked", "score": 37, "exp": 37}], "live": {"league": "1398532731020828672", "season": "2026", "week": 4, "rid": 4, "oppRid": 10, "oppName": "vvaughns", "slots": ["PG", "SG", "G", "SF", "PF", "F", "C", "UTIL", "UTIL"], "risk": "chase", "z": [-2.997, -2.138, -1.315, -1.188, -1.063, -0.967, -0.873, -0.798, -0.724, -0.66, -0.596, -0.533, -0.47, -0.412, -0.354, -0.299, -0.244, -0.192, -0.141, -0.091, -0.04, 0.014, 0.069, 0.122, 0.176, 0.234, 0.293, 0.354, 0.416, 0.481, 0.547, 0.622, 0.698, 0.778, 0.861, 0.969, 1.08, 1.246, 1.462, 2.626], "pool": 0.348, "manual": {"2308": "2026-11-09"}, "players": {"1054": ["Kyrie Irving", "DAL", "PG/SG", "", 22.6, 0.348, 0.189], "1081": ["Klay Thompson", "MIA", "PF/SF/SG", "", 12.8, 0.423, 0.068], "1240": ["James Harden", "CLE", "PG", "", 22.4, 0.322, 0.094], "1444": ["Damian Lillard", "POR", "PG/SG", "", 21.2, 0.348, 0.22], "1450": ["CJ McCollum", "ATL", "PG/SG", "", 17.5, 0.326, 0.068], "1511": ["Joel Embiid", "PHI", "C", "", 24, 0.294, 0.247], "1526": ["Zach LaVine", "SAC", "SF/SG", "", 17.5, 0.404, 0.181], "1711": ["Jaylen Brown", "PHI", "PF/SF/SG", "", 24, 0.301, 0.062], "1713": ["Dejounte Murray", "NOP", "PG/SG", "Out", 20.3, 0.297, 0.146], "1718": ["Jakob Poeltl", "TOR", "C", "", 16.6, 0.459, 0.152], "1945": ["Trae Young", "WAS", "PG", "", 23.2, 0.36, 0.118], "2001": ["RJ Barrett", "TOR", "PF/SF/SG", "", 21, 0.236, 0.11], "2029": ["P.J. Washington", "DAL", "C/PF/SF", "", 18.8, 0.353, 0.113], "2032": ["Nic Claxton", "CHI", "C/PF", "", 18.5, 0.397, 0.068], "2275": ["Day'Ron Sharpe", "BKN", "C", "", 18.8, 0.459, 0.092], "2284": ["Jalen Johnson", "ATL", "PF/SF", "", 28.7, 0.319, 0.059], "2296": ["Sandro Mamukelashvili", "LAL", "C/PF", "", 15.3, 0.437, 0.034], "2306": ["Jonathan Kuminga", "MIN", "PF", "", 17, 0.404, 0.194], "2308": ["Alperen Şengün", "HOU", "C/PF", "", 30, 0.353, 0.059], "2309": ["Jalen Green", "PHX", "SF/SG", "", 15.3, 0.427, 0.213], "2313": ["Josh Giddey", "CHI", "PG/SG", "", 24, 0.368, 0.121], "2463": ["Ryan Rollins", "MIL", "PG", "", 17.8, 0.324, 0.052], "2577": ["Victor Wembanyama", "SAS", "C", "", 36.9, 0.307, 0.085], "2622": ["Sidy Cissoko", "POR", "C/PF", "", 10.2, 0.348, 0.1], "2720": ["Yves Missi", "NOP", "C", "Out", 15.5, 0.486, 0.078], "2722": ["Stephon Castle", "SAS", "PG/SF/SG", "", 21, 0.356, 0.071], "2728": ["Donovan Clingan", "POR", "C", "", 23.7, 0.348, 0.043], "2835": ["Matas Buzelis", "CHI", "PF/SF", "", 17.7, 0.367, 0.043], "4750": ["Jeremiah Fears", "NOP", "PG/SG", "", 17.9, 0.455, 0.029], "4754": ["Dylan Harper", "SAS", "PG/SG", "", 18.9, 0.366, 0.068]}}, "odds": 0.092}, "room": [{"name": "LawyerMan2", "slot": 6, "s": 0.69, "sd": 0.2, "label": "Mixed", "captured": 0.841, "reaches": 3, "steals": 0, "me": false}, {"name": "TrayBanks", "slot": 10, "s": 0.62, "sd": 0.16, "label": "Mixed", "captured": 0.845, "reaches": 1, "steals": 0, "me": true}, {"name": "SergeantSleaze", "slot": 1, "s": 0.43, "sd": 0.17, "label": "ADP-driven", "captured": 0.835, "reaches": 4, "steals": 0, "me": false}, {"name": "vvaughns", "slot": 2, "s": 0.28, "sd": 0.09, "label": "ADP-driven", "captured": 0.783, "reaches": 5, "steals": 0, "me": false}, {"name": "Spence24s", "slot": 7, "s": 0.25, "sd": 0.11, "label": "ADP-driven", "captured": 0.891, "reaches": 2, "steals": 0, "me": false}, {"name": "slimmothy", "slot": 5, "s": 0.18, "sd": 0.07, "label": "ADP-driven", "captured": 0.858, "reaches": 0, "steals": 0, "me": false}, {"name": "changodinho44", "slot": 3, "s": 0.14, "sd": 0.25, "label": "ADP-driven", "captured": 0.843, "reaches": 5, "steals": 2, "me": false}, {"name": "Nickgarrison", "slot": 4, "s": 0.1, "sd": 0.03, "label": "ADP-driven", "captured": 0.841, "reaches": 2, "steals": 0, "me": false}, {"name": "ii3igt", "slot": 9, "s": 0.08, "sd": 0.15, "label": "ADP-driven", "captured": 0.859, "reaches": 2, "steals": 1, "me": false}, {"name": "LucidArtKnows", "slot": 8, "s": 0.01, "sd": 0.03, "label": "ADP-driven", "captured": 0.76, "reaches": 6, "steals": 0, "me": false}], "myDraft": [{"pick": 10, "round": 1, "name": "Jalen Johnson", "pos": "PF/SF", "team": "ATL", "lv": 33.6, "inj": "", "adp": 14.4, "grade": "solid", "gradeLabel": "Solid", "pct": 0.939, "alts": [{"n": "Alperen Şengün", "s": 32.9}, {"n": "Karl-Anthony Towns", "s": 31.5}], "kept": true}, {"pick": 11, "round": 2, "name": "Alperen Şengün", "pos": "C/PF", "team": "HOU", "lv": 30.6, "inj": "", "adp": 10.1, "grade": "strong", "gradeLabel": "Strong", "pct": 1, "alts": [{"n": "Karl-Anthony Towns", "s": 31.5}, {"n": "Scottie Barnes", "s": 30.5}], "kept": true}, {"pick": 30, "round": 3, "name": "Donovan Clingan", "pos": "C", "team": "POR", "lv": 29.1, "inj": "", "adp": 92.7, "grade": "solid", "gradeLabel": "Solid", "pct": 0.901, "alts": [{"n": "Bam Adebayo", "s": 29.5}, {"n": "Jamal Murray", "s": 28.7}], "kept": true}, {"pick": 31, "round": 4, "name": "Josh Giddey", "pos": "PG", "team": "CHI", "lv": 27, "inj": "", "adp": 38, "grade": "q", "gradeLabel": "Questionable", "pct": 0.811, "alts": [{"n": "Bam Adebayo", "s": 29.5}, {"n": "Jamal Murray", "s": 28.7}], "kept": true}, {"pick": 50, "round": 5, "name": "Matas Buzelis", "pos": "PF/SF", "team": "CHI", "lv": 25.9, "inj": "", "adp": 94, "grade": "q", "gradeLabel": "Questionable", "pct": 0.777, "alts": [{"n": "Jalen Duren", "s": 25.8}, {"n": "Dyson Daniels", "s": 25.7}], "kept": true}, {"pick": 51, "round": 6, "name": "Stephon Castle", "pos": "PG/SG", "team": "SAS", "lv": 24.6, "inj": "", "adp": 64.1, "grade": "solid", "gradeLabel": "Solid", "pct": 0.878, "alts": [{"n": "Jalen Duren", "s": 25.8}, {"n": "Dyson Daniels", "s": 25.7}], "kept": true}, {"pick": 70, "round": 7, "name": "Damian Lillard", "pos": "PG", "team": "POR", "lv": 23.6, "inj": "", "adp": 147.1, "grade": "q", "gradeLabel": "Questionable", "pct": 0.828, "alts": [{"n": "Onyeka Okongwu", "s": 25.1}, {"n": "Darius Acuff", "s": 23.4}], "kept": true}, {"pick": 71, "round": 8, "name": "Kyrie Irving", "pos": "PG/SG", "team": "DAL", "lv": 23.2, "inj": "", "adp": 110.7, "grade": "solid", "gradeLabel": "Solid", "pct": 0.874, "alts": [{"n": "Onyeka Okongwu", "s": 25.1}, {"n": "Darius Acuff", "s": 23.4}], "kept": true}, {"pick": 90, "round": 9, "name": "Dejounte Murray", "pos": "PG/SG", "team": "NOP", "lv": 21.6, "inj": "Out", "adp": 113.3, "grade": "q", "gradeLabel": "Questionable", "pct": 0.806, "alts": [{"n": "Darius Acuff", "s": 23.4}, {"n": "Naz Reid", "s": 22.9}], "kept": true}, {"pick": 91, "round": 10, "name": "Jaime Jaquez", "pos": "PF/SF/SG", "team": "MIL", "lv": 21.2, "inj": "", "adp": 128, "grade": "solid", "gradeLabel": "Solid", "pct": 0.851, "alts": [{"n": "Darius Acuff", "s": 23.4}, {"n": "Naz Reid", "s": 22.9}], "kept": false}, {"pick": 110, "round": 11, "name": "Derik Queen", "pos": "C/PF", "team": "NOP", "lv": 25.5, "inj": "", "adp": 112.2, "grade": "solid", "gradeLabel": "Solid", "pct": 0.897, "alts": [{"n": "Davion Mitchell", "s": 22.5}, {"n": "Jeremiah Fears", "s": 21.6}], "kept": false}, {"pick": 111, "round": 12, "name": "Nic Claxton", "pos": "C/PF", "team": "CHI", "lv": 22.6, "inj": "", "adp": 103.4, "grade": "solid", "gradeLabel": "Solid", "pct": 0.902, "alts": [{"n": "Davion Mitchell", "s": 22.5}, {"n": "Jeremiah Fears", "s": 21.6}], "kept": true}, {"pick": 130, "round": 13, "name": "Cason Wallace", "pos": "PG/SF/SG", "team": "OKC", "lv": 18.9, "inj": "Out", "adp": 164.3, "grade": "q", "gradeLabel": "Questionable", "pct": 0.755, "alts": [{"n": "Davion Mitchell", "s": 22.5}, {"n": "Anthony Black", "s": 21.4}], "kept": false}, {"pick": 131, "round": 14, "name": "Kyle Filipowski", "pos": "C/PF", "team": "UTA", "lv": 20.6, "inj": "", "adp": 194.3, "grade": "reach", "gradeLabel": "Reach", "pct": 0.607, "alts": [{"n": "Davion Mitchell", "s": 22.5}, {"n": "Anthony Black", "s": 21.4}], "kept": false}], "slots": [{"slot": "PG", "name": "Josh Giddey", "pos": "PG", "lv": 23.9, "league": 26.5, "diff": -2.6, "po": [2, 4, 3], "reg": 3.11}, {"slot": "SG", "name": "Stephon Castle", "pos": "PG/SG", "lv": 22.6, "league": 22.4, "diff": 0.2, "po": [2, 3, 3], "reg": 3.17}, {"slot": "G", "name": "Jeremiah Fears", "pos": "PG", "lv": 21.6, "league": 22.8, "diff": -1.2, "po": [2, 4, 4], "reg": 3.17}, {"slot": "SF", "name": "Jalen Johnson", "pos": "PF/SF", "lv": 30.9, "league": 25.2, "diff": 5.6, "po": [3, 3, 4], "reg": 3.11}, {"slot": "PF", "name": "Alperen Şengün", "pos": "C/PF", "lv": 32.9, "league": 26.6, "diff": 6.3, "po": [2, 4, 3], "reg": 3.17}, {"slot": "F", "name": "Nic Claxton", "pos": "C/PF", "lv": 20.3, "league": 20.2, "diff": 0.1, "po": [2, 4, 3], "reg": 3.11}, {"slot": "C", "name": "Donovan Clingan", "pos": "C", "lv": 26.6, "league": 26.5, "diff": 0.1, "po": [2, 4, 3], "reg": 3.17}, {"slot": "UTIL", "name": "Damian Lillard", "pos": "PG", "lv": 20.8, "league": 20.7, "diff": 0.1, "po": [2, 4, 3], "reg": 3.17}, {"slot": "UTIL", "name": "Kyrie Irving", "pos": "PG/SG", "lv": 21.9, "league": 20.7, "diff": 1.2, "po": [3, 2, 4], "reg": 3.06}], "bench": [{"name": "Sandro Mamukelashvili", "pos": "C/PF", "lv": 17.4, "adds": 3.5, "ir": false, "inj": ""}, {"name": "Ryan Rollins", "pos": "PG", "lv": 19.5, "adds": 3.1, "ir": false, "inj": ""}, {"name": "Matas Buzelis", "pos": "PF/SF", "lv": 20, "adds": 3, "ir": false, "inj": ""}, {"name": "Sidy Cissoko", "pos": "C/PF", "lv": 10.6, "adds": 2.1, "ir": false, "inj": ""}, {"name": "Dejounte Murray", "pos": "PG/SG", "lv": 9.4, "adds": 1.9, "ir": true, "inj": "Out"}, {"name": "Day'Ron Sharpe", "pos": "C", "lv": 20.2, "adds": 1.5, "ir": false, "inj": ""}, {"name": "Yves Missi", "pos": "C", "lv": 8.7, "adds": 0.6, "ir": true, "inj": "Out"}], "coverage": {"G": 7, "F": 6, "C": 7, "Conly": 3}, "adds": [{"name": "Jaime Jaquez", "team": "MIL", "pos": "PF/SF/SG", "inj": "", "lv": 19.9, "drop": "Sidy Cissoko", "gain": 1.39, "po": [2, 3, 3]}, {"name": "Kevin Porter", "team": "MIL", "pos": "PG/SG", "inj": "", "lv": 19.4, "drop": "Sidy Cissoko", "gain": 1.32, "po": [2, 3, 3]}, {"name": "Neemias Queta", "team": "BOS", "pos": "C", "inj": "", "lv": 19.4, "drop": "Sidy Cissoko", "gain": 1.31, "po": [2, 3, 4]}, {"name": "Moussa Diabaté", "team": "CHA", "pos": "C", "inj": "", "lv": 19.4, "drop": "Sidy Cissoko", "gain": 1.31, "po": [3, 2, 4]}, {"name": "Collin Gillespie", "team": "PHX", "pos": "PG/SG", "inj": "", "lv": 17.8, "drop": "Sidy Cissoko", "gain": 1.07, "po": [2, 3, 4]}, {"name": "Duncan Robinson", "team": "DET", "pos": "SF/SG", "inj": "", "lv": 17.5, "drop": "Sidy Cissoko", "gain": 1.02, "po": [2, 3, 4]}, {"name": "Kyle Kuzma", "team": "MIL", "pos": "PF/SF", "inj": "", "lv": 17.1, "drop": "Sidy Cissoko", "gain": 0.96, "po": [2, 3, 3]}, {"name": "Reed Sheppard", "team": "HOU", "pos": "PG/SG", "inj": "", "lv": 16.5, "drop": "Sidy Cissoko", "gain": 0.88, "po": [2, 4, 3]}], "buy": [{"name": "Dyson Daniels", "pos": "SF/SG", "owner": "SergeantSleaze", "lockRank": 21, "adpRank": 60, "gap": 39, "ownerSharp": "ADP-driven", "fitAdd": 12.7}, {"name": "Bam Adebayo", "pos": "C/PF", "owner": "Spence24s", "lockRank": 10, "adpRank": 35, "gap": 25, "ownerSharp": "ADP-driven", "fitAdd": 12.2}, {"name": "Ausar Thompson", "pos": "SF/SG", "owner": "Spence24s", "lockRank": 45, "adpRank": 73, "gap": 28, "ownerSharp": "ADP-driven", "fitAdd": 9.5}, {"name": "Anthony Black", "pos": "PG/SF/SG", "owner": "ii3igt", "lockRank": 60, "adpRank": 164, "gap": 104, "ownerSharp": "ADP-driven", "fitAdd": 8.4}, {"name": "Cedric Coward", "pos": "SF/SG", "owner": "ii3igt", "lockRank": 61, "adpRank": 134, "gap": 73, "ownerSharp": "ADP-driven", "fitAdd": 8.2}, {"name": "RJ Barrett", "pos": "PF/SF/SG", "owner": "vvaughns", "lockRank": 74, "adpRank": 100, "gap": 26, "ownerSharp": "ADP-driven", "fitAdd": 7.2}, {"name": "Darius Acuff", "pos": "PG/SG", "owner": "changodinho44", "lockRank": 35, "adpRank": 171, "gap": 136, "ownerSharp": "ADP-driven", "fitAdd": 5.7}, {"name": "Naz Reid", "pos": "C/PF", "owner": "Spence24s", "lockRank": 40, "adpRank": 75, "gap": 35, "ownerSharp": "ADP-driven", "fitAdd": 5.6}], "playoffGames": [{"name": "Kyrie Irving", "team": "DAL", "games": [3, 2, 4]}, {"name": "Damian Lillard", "team": "POR", "games": [2, 4, 3]}, {"name": "Dejounte Murray", "team": "NOP", "games": [2, 4, 4]}, {"name": "Nic Claxton", "team": "CHI", "games": [2, 4, 3]}, {"name": "Day'Ron Sharpe", "team": "BKN", "games": [2, 4, 3]}, {"name": "Jalen Johnson", "team": "ATL", "games": [3, 3, 4]}, {"name": "Sandro Mamukelashvili", "team": "LAL", "games": [2, 4, 3]}, {"name": "Alperen Şengün", "team": "HOU", "games": [2, 4, 3]}, {"name": "Josh Giddey", "team": "CHI", "games": [2, 4, 3]}, {"name": "Ryan Rollins", "team": "MIL", "games": [2, 3, 3]}, {"name": "Sidy Cissoko", "team": "POR", "games": [2, 4, 3]}, {"name": "Yves Missi", "team": "NOP", "games": [2, 4, 4]}, {"name": "Stephon Castle", "team": "SAS", "games": [2, 3, 3]}, {"name": "Donovan Clingan", "team": "POR", "games": [2, 4, 3]}, {"name": "Matas Buzelis", "team": "CHI", "games": [2, 4, 3]}, {"name": "Jeremiah Fears", "team": "NOP", "games": [2, 4, 4]}], "notes": {"room": "Sharpness learned from every pick of the real draft: 0 = drafted straight off Sleeper ADP, 100 = drafted by Lock-In value. You were the only manager drafting by value. 8 of the other nine drafted mostly off ADP and 1 were mixed, so the trade market here prices players by name and ADP. That gap is your edge.", "waivers": "Free agents who would raise your weekly total, each paired with the bench player he replaces. Gains are small (about +1 point a week) because a 5th-bench spot rarely plays. Numbers use preseason projections nudged by recent games. FAAB budget: $100 for the season.", "next": "Next up: live scores between refreshes.", "steps": ["<b>Done: this page refreshes itself<\/b> at 6 AM, 12 PM, 5 PM and 11:30 PM Central, straight from Sleeper. On Android, open it in Chrome and tap Add to Home screen.", "<b>Live scores between refreshes.<\/b> The page pulls your matchup from Sleeper each time you open it, so game nights don't wait for the next refresh.", "<b>Today screen.<\/b> A day-by-day plan for who starts in each slot, built from the lock calls above.", "<b>Two-sided trade check.<\/b> Paste an offer and see rest-of-season value, fit and playoff-week games for both sides.", "<b>Better projections.<\/b> Blend this season's minutes and usage into the preseason values as games pile up."], "assumptions": [["The model grades its own homework", "The same Lock-In values drafted your team and now rank it. If those values are off, your edge is smaller than shown. Real weekly results will test it within a few weeks."], ["Weekly swings", "Each team's total varies about 22 points week to week. With 30-point swings your title odds drop to 13% and your record to 9.0 wins. Use the toggle in Season outlook."], ["Preseason projections", "Roles change in October. Minutes and usage from the first few weeks should replace preseason numbers, especially for your bench adds."], ["Bench counts 15%", "Under Lock-In a bench player helps only when a starter sits or has fewer games that week. If you churn the bench for extra games, that share goes up."], ["Locks you haven't told me about", "Sleeper's API doesn't show locks until a player plays again. Tap \"I locked this\" in This week so the calls skip him."]], "footer": "<span>Updated Sat Nov 14, 1:56 AM CT from Sleeper's public API (league, rosters, matchups, real draft, projections, box scores, trending). Refreshes at 6 AM, 12 PM, 5 PM and 11:30 PM Central. Lock-In values come from 2025-26 game logs and the 2026 schedule; 6,000 simulated seasons on the league's real schedule, 6-team playoffs in weeks 19–21, top two seeds get byes. Built from the war-room repo.<\/span>"}, "values": {"asof": "2026-11-14", "holdLine": 16.5, "replacement": 19.5, "faabLeft": 92, "budget": 100, "cols": ["n", "t", "pos", "inj", "owner", "est", "lv", "rank", "posRank", "grp", "tier", "gp", "fp", "fpRank", "fp5", "min", "min5", "trend", "pre", "last"], "players": {"1000": ["Jimmy Butler III", "GSW", "PF/SF/SG", "Out", 5, 20, 14.38, 197, 71, "F", "Cut", 0, null, null, null, null, null, "", 17.3, 22.8], "1054": ["Kyrie Irving", "DAL", "PG/SG", "", 4, 22.6, 21.92, 64, 28, "G", "Starter", 10, 21.5, 52, 20.3, 30.1, 31.6, "", 23.9, null], "1074": ["Paul George", "BOS", "PF/SF/SG", "DTD", 6, 21.7, 20.52, 81, 25, "F", "Starter", 10, 24.4, 25, 23, 30.1, 29.6, "", 18.2, 21.6], "1081": ["Klay Thompson", "MIA", "PF/SF/SG", "Out", 10, 12.8, 14.32, 198, 72, "F", "Cut", 11, 13.6, 172, 17.9, 24.8, 29.4, "Minutes up", 9.5, 11.5], "1082": ["Draymond Green", "GSW", "C/PF", "", 9, 15.5, 16.48, 142, 44, "C", "Fringe", 11, 14.2, 162, 15.4, 25.8, 25, "", 16.1, 16.4], "1085": ["Stephen Curry", "GSW", "PG", "Out", 7, 23.9, 24.57, 36, 13, "G", "Starter", 10, 24.4, 24, 22.3, 26.3, 24.8, "", 24.4, 24.2], "1131": ["Andre Drummond", "NYK", "C", "", 0, 12.9, 13.4, 215, 62, "C", "Cut", 12, 12.4, 190, 11.6, 13.6, 14, "", 12.2, 15.3], "1141": ["Kentavious Caldwell-Pope", "PHI", "PG/SG", "", 0, 10.3, 10.73, 262, 85, "G", "Cut", 13, 10.2, 240, 10.6, 21.9, 20.4, "", 9.9, 10.8], "1178": ["Brook Lopez", "LAC", "C", "", 0, 16.2, 16.79, 135, 42, "C", "Hold", 11, 16.9, 112, 19.4, 24.1, 26.6, "", 16.5, 12.7], "1240": ["James Harden", "CLE", "PG", "", 10, 22.4, 24.61, 35, 12, "G", "Starter", 13, 20.8, 62, 19.8, 32.8, 31.4, "", 23.2, 26.1], "1254": ["Dennis Schröder", "CHA", "PG/SG", "Out", 0, 12.1, 13.74, 208, 69, "G", "Cut", 9, 12.9, 184, 11, 29.9, 28.2, "", 10.4, 13.7], "1257": ["Al Horford", "GSW", "C/PF", "", 0, 11.7, 12.13, 238, 70, "C", "Cut", 11, 10.3, 237, 11.2, 17.2, 15.4, "", 10.1, 15.2], "1265": ["Jrue Holiday", "POR", "PG/SG", "", 6, 16.3, 16.76, 136, 50, "G", "Hold", 12, 15.9, 124, 11.8, 26.3, 26.6, "Cold, minutes steady", 16.7, 19.9], "1272": ["Anthony Davis", "WAS", "C/PF", "", 6, 29.8, 26.16, 24, 7, "C", "Core", 11, 29.2, 10, 32.7, 34.1, 35.2, "", 29.6, 28.6], "1308": ["Kawhi Leonard", "TOR", "SF/SG", "Out", 5, 26.4, 28.35, 15, 5, "F", "Core", 2, 25.8, null, 25.8, 26, 26, "", 25.2, 27.9], "1321": ["DeMar DeRozan", "DEN", "PF/SF/SG", "", 2, 14.2, 16.32, 149, 49, "F", "Fringe", 9, 11.3, 217, 9.6, 23.6, 21, "", 15.5, 18.1], "1328": ["DeAndre Jordan", "NOP", "C", "", 0, 10.8, 11.21, 255, 74, "C", "Cut", 4, 10.8, 230, 10.8, 15.3, 15.3, "", 10.8, null], "1350": ["Rudy Gobert", "MIN", "C", "", 3, 20.8, 23.09, 48, 17, "C", "Starter", 11, 19, 80, 19.9, 29.3, 28.6, "", 21.6, 22.5], "1362": ["LeBron James", "PHI", "PF/PG/SF", "DTD", 7, 23.4, 23.39, 44, 12, "F", "Starter", 10, 23.7, 29, 20.5, 32.6, 31.6, "", 23, 25.4], "1380": ["Giannis Antetokounmpo", "MIA", "PF", "", 3, 32.3, 31.13, 7, 1, "F", "Core", 12, 33.5, 4, 32.2, 32.5, 33.6, "", 33.4, 29.9], "1432": ["Steven Adams", "HOU", "C", "Out", 0, 9.5, 9.89, 279, 84, "C", "Cut", 1, 5, null, 5, 8, 9, "", 5, 14.8], "1433": ["Kevin Durant", "HOU", "PF/SF", "", 5, 22.8, 25.5, 30, 10, "F", "Core", 13, 21.5, 50, 21.8, 34.2, 35.2, "", 23.4, 24.8], "1444": ["Damian Lillard", "POR", "PG/SG", "", 4, 21.2, 20.77, 79, 35, "G", "Starter", 12, 19, 82, 17.2, 29.4, 29.2, "", 24.1, null], "1450": ["CJ McCollum", "ATL", "PG/SG", "", 10, 17.5, 19.65, 97, 39, "G", "Hold", 13, 16.3, 118, 16.7, 26.1, 25, "", 18.8, 18.7], "1486": ["Nikola Vučević", "ORL", "C", "", 0, 11, 11.66, 250, 72, "C", "Cut", 12, 5.9, 266, 4.3, 10, 10.6, "Cold, minutes steady", 11.9, 21.6], "1487": ["Tobias Harris", "SAS", "PF", "Out", 0, 15.7, 16.45, 143, 46, "F", "Fringe", 0, null, null, null, null, null, "", 14.7, 16.7], "1511": ["Joel Embiid", "PHI", "C", "", 10, 24, 19.2, 107, 31, "C", "Hold", 11, 22.7, 43, 20.3, 31.5, 29.2, "", 25.5, 26.9], "1512": ["Jerami Grant", "MEM", "PF/SF", "", 0, 14.4, 14.62, 184, 65, "F", "Cut", 12, 12.3, 192, 12.4, 23.8, 22.8, "", 16.2, 16.8], "1525": ["Andrew Wiggins", "MIA", "PF/SF/SG", "", 2, 14.6, 15.42, 161, 56, "F", "Fringe", 12, 11, 220, 9.6, 26.2, 25.4, "", 18.6, 19.1], "1526": ["Zach LaVine", "SAC", "SF/SG", "", 10, 17.5, 15.96, 152, 52, "F", "Fringe", 12, 18.5, 93, 17.5, 33, 32.8, "", 17.9, 16.1], "1535": ["Julius Randle", "BKN", "C/PF", "", 5, 21.3, 23.22, 46, 16, "C", "Starter", 11, 20.5, 69, 18.1, 33.1, 32, "", 22.6, 23.2], "1541": ["Clint Capela", "HOU", "C", "Out", 0, 10.4, 10.81, 261, 76, "C", "Cut", 6, 10.6, 235, 12.3, 14.2, 15.4, "", 10.6, 9.3], "1546": ["Marcus Smart", "HOU", "PG/SF/SG", "Out", 0, 10.7, 11.65, 252, 82, "G", "Cut", 9, 10.7, 232, 7.7, 21.4, 18.4, "Cold, minutes steady", 9.8, 13.3], "1583": ["Jusuf Nurkić", "UTA", "C", "Out", 6, 21.6, 15.65, 159, 47, "C", "Fringe", 0, null, null, null, null, null, "", 20.6, 22.7], "1585": ["Aaron Gordon", "DEN", "C/PF", "", 3, 16.2, 14.48, 191, 57, "C", "Cut", 10, 15.3, 132, 11.9, 29.1, 27.8, "Cold, minutes steady", 18.1, 18.3], "1589": ["Bobby Portis Jr.", "MIA", "C/PF", "", 0, 14, 15.34, 163, 49, "C", "Fringe", 12, 13, 179, 8.3, 19.9, 16.8, "Cold, minutes steady", 17.3, 16.6], "1590": ["Kristaps Porziņģis", "GSW", "C", "Out", 0, 19.2, 15.48, 160, 48, "C", "Fringe", 0, null, null, null, null, null, "", 19.2, 19.3], "1595": ["Myles Turner", "MIL", "C", "", 1, 17.3, 19.39, 104, 28, "C", "Hold", 12, 17, 110, 17.1, 27.4, 28.4, "", 17.8, 17.4], "1602": ["T.J. McConnell", "IND", "PG", "", 0, 11.2, 11.67, 248, 81, "G", "Cut", 4, 9.9, 246, 9.9, 12, 12, "", 9.9, 13.5], "1604": ["Kelly Oubre Jr.", "IND", "PF/SF", "", 0, 14.6, 14.45, 194, 69, "F", "Cut", 11, 12.5, 188, 14.1, 24, 24.6, "", 14.7, 17], "1613": ["Karl-Anthony Towns", "NYK", "C/PF", "", 9, 29.1, 31.5, 5, 4, "C", "Core", 12, 30, 7, 33.2, 31.6, 30.8, "", 27.2, 26.8], "1637": ["Norman Powell", "CHI", "SF/SG", "", 7, 17.8, 17.96, 117, 37, "F", "Hold", 9, 17.7, 102, 15.9, 29, 30, "", 18, 19], "1640": ["Trey Lyles", "MIN", "C/PF", "", 0, 9.8, 10.17, 272, 81, "C", "Cut", 12, 9.5, 254, 11.7, 18.2, 21.2, "Hot", 9.2, null], "1648": ["Devin Booker", "PHX", "PG/SG", "", 2, 23.5, 24.02, 40, 15, "G", "Starter", 11, 22.4, 44, 24.2, 34, 33.2, "", 24.6, 23.1], "1658": ["Nikola Jokić", "DEN", "C", "", 6, 39.6, 39.81, 1, 1, "C", "Core", 10, 36.9, 3, 39.4, 36.3, 35.6, "", 40.9, 41], "1660": ["Mario Hezonja", "CLE", "PF/SF", "", 0, 11.3, 11.74, 247, 96, "F", "Cut", 13, 12.2, 197, 8.9, 18.2, 15.8, "Cold, minutes steady", 11.8, null], "1671": ["Georges Niang", "GSW", "PF", "", 0, 9.8, 10.14, 274, 107, "F", "Cut", 13, 9.8, 248, 10.5, 20, 20, "", 9.4, null], "1691": ["Kris Dunn", "LAC", "PG/SG", "", 0, 13.8, 15.88, 156, 56, "G", "Fringe", 11, 16.6, 117, 12.5, 27.7, 25.6, "Cold, minutes steady", 12.2, 13.3], "1697": ["Ivica Zubac", "IND", "C", "", 8, 20.2, 19.13, 108, 32, "C", "Hold", 8, 16.8, 113, 16.7, 23.4, 24.6, "", 24, 21.1], "1698": ["Brandon Ingram", "LAC", "PF/SF/SG", "Out", 10, 21.1, 15.92, 155, 54, "F", "Fringe", 0, null, null, null, null, null, "", 20.8, 21.5], "1711": ["Jaylen Brown", "PHI", "PF/SF/SG", "", 10, 24, 25.56, 29, 9, "F", "Core", 12, 23.3, 31, 22.2, 34.9, 33.6, "", 23.5, 26.9], "1713": ["Dejounte Murray", "NOP", "PG/SG", "Out", 4, 20.3, 18.85, 109, 42, "G", "Hold", 9, 18.5, 91, 13.1, 31.3, 30.8, "Cold, minutes steady", 23.3, null], "1716": ["Pascal Siakam", "IND", "C/PF", "", 1, 23.7, 23.91, 41, 15, "C", "Starter", 12, 23.2, 32, 24.4, 32.1, 32.2, "", 23.1, 24.3], "1717": ["Fred VanVleet", "HOU", "PG", "", 2, 17.9, 17.77, 121, 47, "G", "Hold", 11, 19, 83, 16.5, 30.4, 31, "", 17.8, null], "1718": ["Jakob Poeltl", "TOR", "C", "", 10, 16.6, 16.4, 145, 45, "C", "Fringe", 10, 14.9, 141, 18.2, 23.9, 27.6, "Hot", 17.2, 16.5], "1736": ["Derrick Jones Jr.", "LAC", "PF/SF", "", 0, 14.5, 14.39, 196, 70, "F", "Cut", 10, 16.7, 116, 16.3, 29.1, 29.4, "", 12.3, 13.5], "1739": ["Domantas Sabonis", "SAC", "C/PF", "", 8, 26.8, 25.4, 31, 11, "C", "Starter", 11, 26.3, 19, 19.7, 34.5, 31.2, "Cold, minutes steady", 29.6, null], "1747": ["Jamal Murray", "DEN", "PG", "", 2, 26.7, 28.7, 14, 5, "G", "Core", 10, 27.7, 13, 27.2, 36.4, 34.4, "", 25.6, 26.4], "1752": ["Lauri Markkanen", "UTA", "PF/SF", "Out", 1, 23.4, 21.2, 74, 23, "F", "Starter", 8, 21.2, 56, 20.3, 30.9, 27.8, "", 24.8, 25.5], "1787": ["Jarrett Allen", "CLE", "C", "", 6, 19.5, 19.95, 90, 25, "C", "Starter", 11, 19.8, 77, 15.7, 26, 23.6, "Cold, minutes steady", 20.8, 20.7], "1792": ["Dillon Brooks", "PHX", "PF/SF/SG", "", 1, 15.3, 15.29, 164, 58, "F", "Fringe", 11, 15.3, 131, 13.2, 29.8, 28.8, "", 15, 17.3], "1799": ["Kyle Kuzma", "MIL", "PF/SF", "", 0, 15.2, 17.05, 130, 42, "F", "Hold", 13, 15.4, 129, 15.8, 27.2, 28.8, "", 14.6, 14.8], "1801": ["Alex Caruso", "OKC", "PF/SF", "", 9, 12.3, 12.9, 221, 86, "F", "Cut", 10, 14.1, 167, 11.8, 20.4, 21.6, "", 12.5, 10.7], "1803": ["Josh Hart", "NYK", "SF/SG", "", 1, 18.3, 19.49, 101, 35, "F", "Hold", 9, 17.6, 103, 13.3, 30.1, 28.6, "Cold, minutes steady", 20.3, 20.1], "1809": ["John Collins", "DET", "C/PF", "", 7, 16.1, 17.59, 123, 38, "C", "Hold", 11, 15.1, 137, 14.7, 26.4, 26, "", 18.5, 15.7], "1822": ["Jayson Tatum", "BOS", "PF/SF", "", 2, 28.9, 29.65, 10, 4, "F", "Core", 11, 28.4, 12, 27.5, 34, 32, "", 29.7, null], "1830": ["Derrick White", "BOS", "PG/SG", "", 8, 20.5, 22.69, 52, 20, "G", "Starter", 12, 17.5, 104, 20.5, 29.8, 29.6, "", 22.2, 22.5], "1831": ["OG Anunoby", "NYK", "PF/SF", "", 9, 18.5, 20.3, 83, 26, "F", "Starter", 12, 18, 99, 17, 32.8, 30.8, "", 19.2, 19.8], "1841": ["Royce O'Neale", "CHA", "PF/SF", "", 0, 10.3, 10.71, 264, 103, "F", "Cut", 12, 8.7, 262, 8.8, 19.4, 21.4, "", 8.4, 15.4], "1845": ["Donovan Mitchell", "CLE", "PG/SG", "", 5, 25.4, 26.74, 20, 9, "G", "Core", 13, 24.2, 26, 24.7, 33, 32.4, "", 26.2, 26.6], "1846": ["Bam Adebayo", "MIA", "C/PF", "", 2, 27.1, 29.47, 11, 5, "C", "Core", 12, 26.5, 18, 29.9, 33.6, 36.6, "", 25.8, 26.7], "1872": ["De'Aaron Fox", "SAS", "PG", "", 9, 19.6, 21.11, 76, 33, "G", "Starter", 13, 19, 81, 17.7, 28.5, 25, "", 20.6, 21], "1883": ["Wendell Carter Jr.", "ORL", "C", "", 3, 19, 21.08, 77, 20, "C", "Starter", 12, 20.1, 74, 21.9, 32.7, 33, "", 17, 17.5], "1887": ["Mitchell Robinson", "BOS", "C", "", 0, 14.2, 14.77, 177, 52, "C", "Cut", 11, 11.6, 209, 13.5, 17.9, 16.2, "", 15.5, 16.1], "1892": ["Collin Sexton", "LAL", "PG/SG", "DTD", 0, 13.1, 13.61, 212, 70, "G", "Cut", 12, 10.8, 226, 10.5, 17.8, 18.2, "", 16.5, 14.6], "1899": ["Landry Shamet", "NYK", "SF/SG", "", 0, 9.7, 10.03, 278, 109, "F", "Cut", 12, 9.8, 249, 9.4, 25.5, 26.4, "", 9.4, 9.9], "1913": ["Miles Bridges", "PHX", "PF/SF", "", 1, 20.6, 23.35, 45, 13, "F", "Starter", 11, 22.2, 46, 19.7, 29.6, 26.2, "", 20.8, 19.4], "1924": ["Jaren Jackson Jr.", "UTA", "C/PF", "Out", 5, 20.5, 19.55, 100, 27, "C", "Hold", 4, 17, 109, 16, 26, 26, "", 22.1, 21.2], "1932": ["Moritz Wagner", "BKN", "C", "", 0, 10.1, 10.54, 270, 80, "C", "Cut", 11, 11.4, 215, 9.6, 18.3, 18.2, "", 11.1, 8.2], "1934": ["Isaiah Hartenstein", "OKC", "C", "", 9, 21.1, 20.24, 85, 22, "C", "Starter", 13, 20.7, 66, 23.8, 25.4, 26.4, "", 20.6, 19.7], "1941": ["Kevin Huerter", "DET", "SF/SG", "", 0, 13.6, 14.16, 203, 77, "F", "Cut", 11, 12.9, 183, 16.2, 23.2, 26.4, "Hot", 12.6, 13.6], "1945": ["Trae Young", "WAS", "PG", "", 10, 23.2, 23.14, 47, 18, "G", "Starter", 13, 22.8, 39, 20.4, 36.1, 36.4, "", 24.6, null], "1946": ["Kenrich Williams", "OKC", "C/PF", "", 0, 10.3, 10.7, 265, 77, "C", "Cut", 13, 10.3, 238, 12.2, 20.3, 24.4, "Minutes up", 10, 9], "1950": ["Robert Williams III", "POR", "C", "", 0, 14.6, 15.24, 166, 50, "C", "Fringe", 10, 14.4, 155, 14.4, 16.5, 16.2, "", 14.6, 15], "1957": ["Shai Gilgeous-Alexander", "OKC", "PG", "", 1, 28, 28.76, 13, 4, "G", "Core", 13, 26.9, 17, 25.3, 33.2, 32.6, "", 30.1, 29.6], "1959": ["Grayson Allen", "CHA", "SF/SG", "", 0, 16.4, 15.98, 151, 51, "F", "Fringe", 12, 15.5, 127, 15.8, 27.3, 27.2, "", 16, 18.3], "1961": ["Duncan Robinson", "DET", "SF/SG", "", 0, 16.5, 17.14, 129, 41, "F", "Hold", 11, 17.8, 100, 17.5, 31.7, 34.2, "", 17.5, 13.3], "1964": ["Donte DiVincenzo", "MIN", "SF/SG", "Out", 0, 15.4, 7.57, 286, 111, "F", "Cut", 0, null, null, null, null, null, "", 13.3, 17.5], "1967": ["Jalen Brunson", "NYK", "PG", "", 3, 24.4, 26.32, 22, 10, "G", "Core", 12, 24, 27, 25.9, 33.8, 32.2, "", 23.9, 24.1], "1970": ["Luka Dončić", "LAL", "PG", "DTD", 5, 37.2, 36.87, 3, 1, "G", "Core", 11, 38.4, 2, 40.4, 35.9, 36, "", 34.9, 36], "1972": ["De'Anthony Melton", "GSW", "PG/SG", "", 7, 15.1, 14.59, 187, 66, "G", "Cut", 13, 15.2, 136, 13.8, 22.1, 20.6, "", 16.2, 14.8], "1974": ["Deandre Ayton", "WAS", "C", "", 0, 11.9, 13.65, 210, 61, "C", "Cut", 13, 8.7, 261, 7.8, 14.1, 12.2, "", 14, 17.3], "1975": ["Mikal Bridges", "NYK", "PF/SF/SG", "", 5, 15.2, 17.49, 124, 39, "F", "Hold", 12, 11.6, 208, 13.2, 24.8, 23.2, "", 17.5, 18.8], "1983": ["Anfernee Simons", "PHI", "PG/SG", "", 0, 11.6, 11.89, 243, 80, "G", "Cut", 13, 10.8, 227, 8.5, 21.7, 17.2, "Minutes down", 13.3, 13.5], "1986": ["Marvin Bagley III", "DEN", "C", "", 0, 9.7, 10.05, 276, 82, "C", "Cut", 10, 8.1, 263, 7.8, 12.3, 12.4, "", 7.7, 14.5], "1988": ["Michael Porter Jr.", "BKN", "PF/SF", "", 3, 23.3, 22.47, 58, 16, "F", "Starter", 11, 23.1, 33, 22.3, 32.6, 33.6, "", 23.3, 24.5], "1994": ["Mo Bamba", "UTA", "C", "", 0, 14.1, 14.6, 186, 56, "C", "Cut", 9, 14.4, 157, 13.9, 17.7, 17.4, "", 14, null], "1997": ["Daniel Gafford", "DAL", "C", "", 0, 14.9, 14.61, 185, 55, "C", "Cut", 12, 15.8, 125, 11.8, 21.5, 18.2, "Cold, minutes steady", 15.4, 15.8], "1998": ["Coby White", "CHA", "PG/SG", "", 0, 15.7, 15.28, 165, 58, "G", "Fringe", 5, 8.9, 259, 8.5, 18.2, 18, "", 21.4, 16], "1999": ["Max Strus", "LAC", "PF/SF", "", 0, 14.4, 14.93, 172, 62, "F", "Cut", 5, 14.7, 146, 14.3, 22.2, 22, "", 14.3, null], "2001": ["RJ Barrett", "TOR", "PF/SF/SG", "", 10, 21, 20.13, 88, 28, "F", "Starter", 12, 22.9, 36, 23.3, 33.5, 34.8, "", 18.4, 19.5], "2007": ["Darius Garland", "LAC", "PG", "", 6, 19.5, 18.16, 115, 45, "G", "Hold", 11, 17.5, 105, 18.5, 33, 33.8, "", 22.4, 19.4], "2008": ["Dean Wade", "PHI", "PF/SF", "", 0, 10.4, 10.85, 259, 100, "F", "Cut", 11, 10.9, 224, 8.3, 25.3, 23.6, "Cold, minutes steady", 10.7, 11.3], "2009": ["Kevin Porter Jr.", "", "PG/SG", "", 0, 21.9, 19.43, 103, 41, "G", "Hold", 0, null, null, null, null, null, "", 18.9, 24.8], "2012": ["Jordan Poole", "NOP", "PG/SG", "", 0, 11.6, 11.04, 256, 83, "G", "Cut", 7, 11.5, 212, 10.4, 19.9, 21.2, "", 10.7, 13.2], "2017": ["Matisse Thybulle", "LAL", "SF/SG", "", 0, 12, 12.42, 230, 90, "F", "Cut", 13, 12.5, 189, 12.2, 24.4, 24.2, "", 12.3, 10.7], "2020": ["Rui Hachimura", "LAC", "PF/SF", "", 9, 16.6, 18.28, 113, 36, "F", "Hold", 9, 17.2, 107, 19.4, 29.8, 29.6, "", 19.1, 12], "2029": ["P.J. Washington", "DAL", "C/PF/SF", "", 10, 18.8, 18.04, 116, 35, "C", "Hold", 12, 18.6, 89, 19, 32.3, 29.6, "", 18.6, 19.2], "2032": ["Nic Claxton", "CHI", "C/PF", "", 4, 18.5, 20.32, 82, 21, "C", "Starter", 3, 13.5, 174, 13.5, 18.3, 18.7, "", 20.6, 18.9], "2036": ["Naz Reid", "CHA", "C/PF", "", 2, 20.5, 22.92, 50, 18, "C", "Starter", 12, 21, 58, 22.3, 29.8, 31, "", 20.2, 18.7], "2040": ["Ja Morant", "POR", "PG/SG", "Out", 9, 19.3, 16.49, 141, 53, "G", "Fringe", 4, 18.4, 95, 17.4, 25.8, 26, "", 18, 21.2], "2050": ["De'Andre Hunter", "SAC", "PF/SF", "", 0, 13.4, 12.79, 224, 87, "F", "Cut", 11, 14, 168, 13.3, 32.4, 36.2, "", 12.5, 13.8], "2053": ["Jaxson Hayes", "UTA", "C/PF", "DTD", 0, 13.9, 14.48, 192, 58, "C", "Cut", 12, 15.5, 128, 13.9, 24.2, 23.4, "", 15.2, 10.9], "2054": ["Zion Williamson", "NOP", "PF/SF", "", 2, 22, 22.43, 61, 17, "F", "Starter", 12, 22.8, 40, 21.5, 32.8, 33.6, "", 22.8, 20.6], "2055": ["Nickeil Alexander-Walker", "ATL", "PG/SF/SG", "", 7, 20.5, 22.66, 53, 21, "G", "Starter", 13, 20.7, 63, 20.9, 31.8, 34.2, "", 19.6, 20.8], "2061": ["Grant Williams", "CHA", "PF", "", 0, 11.2, 11.67, 249, 97, "F", "Cut", 1, 11.5, null, 11.5, 16, 16, "", 11.5, 10.9], "2065": ["Keldon Johnson", "SAS", "PF/SF", "", 0, 14.1, 16.4, 146, 47, "F", "Fringe", 13, 13, 178, 14.7, 24.2, 26.6, "", 14.7, 14.6], "2086": ["Tyler Herro", "MIL", "PG/SG", "", 3, 21.3, 19.91, 91, 37, "G", "Hold", 12, 21.4, 55, 19.6, 31.3, 32.8, "", 23.3, 20.7], "2090": ["Ty Jerome", "MEM", "PG/SG", "", 6, 20.2, 14.93, 173, 60, "G", "Cut", 11, 22.3, 45, 18.4, 30.5, 30, "", 19.6, null], "2091": ["Cameron Johnson", "DEN", "PF/SF/SG", "", 1, 14.9, 14.85, 174, 63, "F", "Cut", 7, 14.5, 150, 14.5, 28.3, 30.8, "", 15.4, 14.9], "2095": ["Luguentz Dort", "ATL", "SF/SG", "", 0, 13, 14.48, 193, 68, "F", "Cut", 13, 12.8, 185, 14.8, 24.4, 24.2, "", 13.1, 11.7], "2118": ["Patrick Williams", "CHI", "PF", "", 0, 11.6, 12.09, 239, 93, "F", "Cut", 4, 12.8, 186, 12.8, 24.3, 24.3, "", 12.8, 9.7], "2119": ["Obi Toppin", "IND", "PF/SF", "", 0, 12.7, 13.25, 217, 84, "F", "Cut", 10, 13.6, 173, 10, 20.7, 18.4, "Cold, minutes steady", 13.2, 13.4], "2126": ["Tyrese Maxey", "PHI", "PG", "", 1, 25.8, 27.25, 19, 8, "G", "Core", 13, 25.7, 21, 21.2, 36.2, 34.2, "", 26.3, 29.4], "2128": ["Paul Reed", "DET", "C/PF", "", 1, 15.8, 18.75, 110, 33, "C", "Hold", 11, 18.2, 98, 17.6, 27, 27.4, "", 15, 12.6], "2131": ["Saddiq Bey", "NOP", "PF/SF", "", 7, 17.8, 19.61, 98, 33, "F", "Hold", 13, 16.9, 111, 17.4, 27.5, 29, "", 17.8, 19.3], "2133": ["Anthony Edwards", "MIN", "PG/SG", "Out", 7, 27.2, 27.71, 17, 6, "G", "Core", 4, 30.4, 6, 30.4, 33.8, 33.8, "", 26, 26.3], "2135": ["Jaden McDaniels", "MIN", "PF/SF", "", 7, 19.3, 21.71, 66, 19, "F", "Starter", 12, 20.6, 68, 20, 33.1, 32.8, "", 18.7, 17.6], "2136": ["Onyeka Okongwu", "ATL", "C/PF", "", 2, 23, 25.09, 33, 12, "C", "Starter", 13, 21.6, 48, 25.9, 30, 31.8, "Hot", 23.2, 22.2], "2139": ["Sam Merrill", "CLE", "SF/SG", "Out", 0, 12.6, 12.6, 228, 89, "F", "Cut", 9, 12.3, 193, 12.7, 23.1, 22.4, "", 11.6, 13.7], "2142": ["Payton Pritchard", "BOS", "PG/SG", "", 1, 17.7, 19.88, 93, 38, "G", "Hold", 12, 15.3, 130, 15.6, 27.3, 26.2, "", 20.7, 19.4], "2143": ["Desmond Bane", "ORL", "PG/SF/SG", "", 2, 19.7, 22.25, 63, 27, "G", "Starter", 11, 18.8, 84, 18.8, 34.5, 34.6, "", 20.7, 20.4], "2144": ["Aaron Nesmith", "IND", "SF/SG", "DTD", 0, 13.7, 13.07, 219, 85, "F", "Cut", 11, 12.2, 195, 13, 25.8, 29.2, "", 14.6, 15], "2145": ["Tre Jones", "CHI", "PG/SF/SG", "", 0, 13.8, 14.53, 188, 67, "G", "Cut", 11, 12, 202, 9.3, 18.5, 18.8, "Cold, minutes steady", 15.6, 17.3], "2146": ["Devin Vassell", "SAS", "PF/SF/SG", "", 3, 16, 17, 133, 43, "F", "Hold", 11, 16.2, 120, 14.5, 29.4, 26.4, "", 16.4, 16.3], "2152": ["Precious Achiuwa", "SAC", "C/PF", "Out", 0, 16.1, 16.69, 138, 43, "C", "Hold", 11, 16.8, 114, 14.8, 26.2, 23.2, "", 16.4, 15.8], "2156": ["Jalen Smith", "CHI", "C/PF", "DTD", 9, 17.3, 17.64, 122, 37, "C", "Hold", 11, 20, 76, 19.7, 24.7, 25.4, "", 14.5, 15.5], "2157": ["Immanuel Quickley", "TOR", "PG/SG", "", 8, 20.7, 21.92, 65, 29, "G", "Starter", 10, 21.1, 57, 20.5, 31, 31.8, "", 20.3, 20.9], "2159": ["Isaiah Stewart", "MEM", "C/PF", "", 0, 14, 14.69, 181, 54, "C", "Cut", 9, 11.7, 206, 12, 18.4, 19.4, "", 17, 14.2], "2161": ["Tyrese Haliburton", "IND", "PG/SG", "Out", 2, 26.1, 27.56, 18, 7, "G", "Core", 4, 29.4, 9, 28.4, 33, 33, "", 25, null], "2179": ["LaMelo Ball", "MIN", "PG", "", 9, 23.5, 25.18, 32, 11, "G", "Starter", 12, 20.6, 67, 23.1, 27.5, 30.8, "", 26.4, 24.2], "2181": ["Deni Avdija", "POR", "PF/SF/SG", "", 3, 25.2, 26.23, 23, 7, "F", "Core", 12, 25.5, 22, 25.3, 32.7, 33.4, "", 23.9, 26], "2233": ["Naji Marshall", "DAL", "PF/SF/SG", "", 0, 15.1, 16.27, 150, 50, "F", "Fringe", 9, 15, 138, 12.9, 24.6, 22.8, "", 14.7, 16.9], "2255": ["Ayo Dosunmu", "MIN", "PG/SG", "", 7, 18.8, 20.93, 78, 34, "G", "Starter", 12, 20.3, 70, 21.9, 31, 33.4, "", 16.9, 16.3], "2256": ["Miles McBride", "NYK", "PG/SG", "", 0, 11.9, 11.01, 257, 84, "G", "Cut", 12, 10.1, 244, 10.5, 19.2, 20.2, "", 13.4, 13.8], "2258": ["Quentin Grimes", "LAL", "SF/SG", "DTD", 0, 13, 14.52, 189, 66, "F", "Cut", 11, 10.6, 233, 8, 26.1, 25.2, "Cold, minutes steady", 16.9, 15.2], "2259": ["Evan Mobley", "CLE", "C/PF", "Out", 1, 23.7, 24.79, 34, 13, "C", "Starter", 12, 22.8, 38, 19.2, 32, 31, "", 26.2, 25.7], "2260": ["Isaiah Jackson", "LAC", "C", "", 0, 12.8, 13.29, 216, 63, "C", "Cut", 10, 14.2, 165, 10.8, 20.1, 18.8, "Cold, minutes steady", 13.8, 11.8], "2262": ["Moses Moody", "GSW", "PF/SF/SG", "Out", 0, 13.7, 14.28, 199, 73, "F", "Cut", 0, null, null, null, null, null, "", null, 14.5], "2265": ["Charles Bassey", "GSW", "C", "", 0, 11.7, 12.17, 236, 69, "C", "Cut", 11, 11.8, 204, 12.8, 13.3, 15.2, "", 11.3, null], "2267": ["Cade Cunningham", "DET", "PG", "", 8, 30.1, 31.32, 6, 2, "G", "Core", 11, 28.9, 11, 32.9, 34.5, 36, "", 29.7, 30], "2268": ["Luka Garza", "BOS", "C", "", 0, 9.7, 10.04, 277, 83, "C", "Cut", 12, 9.4, 257, 9.8, 12.3, 13.2, "", 9.1, 10.5], "2275": ["Day'Ron Sharpe", "BKN", "C", "", 4, 18.8, 20.24, 86, 23, "C", "Starter", 11, 18.2, 96, 21.2, 23.3, 24, "", 21.5, 14.9], "2280": ["Ziaire Williams", "LAL", "SF/SG", "", 0, 13.6, 14.14, 204, 78, "F", "Cut", 10, 14.5, 151, 14.2, 24.1, 22.4, "", 14.1, 11.8], "2281": ["Santi Aldama", "DAL", "PF/SF", "", 0, 15.4, 13.58, 213, 82, "F", "Cut", 4, 8.9, 260, 8.9, 14.3, 14.3, "", 15.6, 19.5], "2284": ["Jalen Johnson", "ATL", "PF/SF", "", 4, 28.7, 30.88, 8, 2, "F", "Core", 10, 27.3, 14, 23.3, 34.3, 35.2, "", 31.2, 31.3], "2285": ["Trey Murphy III", "NOP", "SF/SG", "Out", 1, 21.7, 22.38, 62, 18, "F", "Starter", 9, 18.4, 94, 20.7, 32.8, 33, "", 23.2, 23.9], "2286": ["Herbert Jones", "NOP", "SF/SG", "", 0, 11.7, 12.14, 237, 92, "F", "Cut", 13, 9.2, 258, 9.2, 23.5, 23, "", 14.7, 14.2], "2289": ["Scottie Barnes", "TOR", "PF/SF", "DTD", 7, 26.9, 30.5, 9, 3, "F", "Core", 8, 27.3, 15, 29.3, 33.3, 35.2, "", 25.9, 26.5], "2296": ["Sandro Mamukelashvili", "LAL", "C/PF", "", 4, 15.3, 17.43, 126, 39, "C", "Hold", 13, 14.4, 154, 14.8, 23.6, 23, "", 17.1, 15], "2299": ["Aaron Wiggins", "ATL", "PF/SF/SG", "", 2, 14.4, 16.71, 137, 45, "F", "Hold", 13, 16.1, 123, 16.6, 25.8, 26.6, "", 13, 11.7], "2301": ["Davion Mitchell", "MIA", "PG", "", 8, 20.6, 22.53, 55, 23, "G", "Starter", 12, 23, 35, 26.9, 36, 39.6, "", 18, 15.3], "2302": ["Neemias Queta", "BOS", "C", "", 0, 17.1, 19.37, 105, 29, "C", "Hold", 12, 15.5, 126, 17, 22.6, 23.8, "", 17.7, 18.6], "2303": ["Bones Hyland", "MIN", "PG/SG", "", 0, 12.4, 12.84, 223, 73, "G", "Cut", 12, 12.2, 196, 15.8, 13.1, 15.2, "Hot", 11.9, 10.3], "2304": ["Franz Wagner", "ORL", "PF/SF", "", 6, 25.7, 24.15, 39, 11, "F", "Starter", 12, 27.3, 16, 33.5, 36.8, 38.2, "Hot", 22.7, 20.5], "2305": ["Jalen Suggs", "ORL", "PG", "", 1, 18.1, 18.26, 114, 44, "G", "Hold", 4, 13.9, 169, 13.9, 30.3, 30.3, "", 19.2, 19.9], "2306": ["Jonathan Kuminga", "MIN", "PF", "", 10, 17, 15.36, 162, 57, "F", "Fringe", 12, 18.7, 88, 17.9, 30.2, 29.6, "", 16.8, 14.6], "2308": ["Alperen Şengün", "HOU", "C/PF", "", 4, 30, 32.87, 4, 3, "C", "Core", 11, 32.1, 5, 33.2, 35.2, 36, "", 27.9, 27.5], "2309": ["Jalen Green", "PHX", "SF/SG", "", 10, 15.3, 13.42, 214, 83, "F", "Cut", 11, 13, 181, 10.7, 27.1, 24.8, "", 19.4, 17], "2313": ["Josh Giddey", "CHI", "PG/SG", "", 4, 24, 23.91, 42, 16, "G", "Starter", 11, 19.5, 78, 22, 28.6, 31.4, "", 27.1, 27.4], "2316": ["Austin Reaves", "LAL", "PG/SG", "DTD", 9, 23, 21.69, 67, 30, "G", "Starter", 12, 21.4, 54, 23.1, 35.3, 34.2, "", 24.6, 23.2], "2317": ["Jock Landale", "ATL", "C", "", 0, 11.3, 11.78, 246, 71, "C", "Cut", 9, 10.7, 231, 8.7, 15.4, 13, "", 10.3, 14.6], "2324": ["Justin Champagnie", "WAS", "PF", "Out", 0, 13.9, 15.95, 154, 53, "F", "Fringe", 4, 14.9, 142, 14.9, 18.3, 18.5, "", 13.2, 13.9], "2325": ["Trendon Watford", "NOP", "PF", "Out", 0, 9.8, 10.17, 273, 106, "F", "Cut", 6, 10.3, 239, 9.5, 17.7, 18, "", 9.9, 9.5], "2329": ["Sam Hauser", "BOS", "PF/SF", "", 0, 11.4, 11.84, 245, 95, "F", "Cut", 12, 10.8, 228, 12.4, 21, 22.4, "", 10.4, 12.4], "2335": ["Jay Huff", "IND", "C", "", 0, 10.9, 11.34, 254, 73, "C", "Cut", 11, 9.6, 252, 9.8, 16.7, 16.6, "", 9.3, 14.8], "2341": ["Jordan Goodwin", "PHX", "SF/SG", "", 0, 14.7, 15.23, 167, 59, "F", "Fringe", 7, 14.9, 143, 15, 18.7, 18, "", 14.3, 14.7], "2397": ["Brandon Williams", "GSW", "PG", "Out", 0, 11.8, 12.24, 233, 75, "G", "Cut", 10, 11.5, 211, 9.7, 16.1, 16.4, "", 11.1, 14.2], "2422": ["Collin Gillespie", "PHX", "PG/SG", "", 0, 15.6, 17.79, 120, 46, "G", "Hold", 11, 14.2, 161, 12.8, 24.5, 23.4, "", 16.9, 17.9], "2432": ["Keon Ellis", "BKN", "PG/SG", "", 0, 9.8, 11.91, 242, 79, "G", "Cut", 10, 10.9, 223, 8.6, 22.9, 20.6, "Cold, minutes steady", 9.4, 9.9], "2435": ["Bennedict Mathurin", "NOP", "SF/SG", "", 0, 9.5, 9.56, 281, 110, "F", "Cut", 12, 6, 265, 3.4, 15.3, 13, "Cold, minutes steady", 11, 17.3], "2438": ["Jalen Duren", "DET", "C", "Out", 5, 23.9, 25.77, 26, 9, "C", "Core", 2, 19, null, 19, 19, 19, "", 25.2, 24.4], "2440": ["Mark Williams", "PHX", "C", "Out", 0, 18.4, 15.05, 169, 51, "C", "Cut", 0, null, null, null, null, null, "", 19.1, 17.6], "2441": ["Walker Kessler", "LAL", "C", "", 3, 26.6, 25.66, 28, 10, "C", "Core", 13, 26, 20, 26.6, 30.8, 30.8, "", 26.9, null], "2444": ["Jake LaRavia", "LAL", "SF/SG", "", 0, 12.4, 14.83, 175, 64, "F", "Cut", 12, 12.1, 199, 11.1, 24.5, 25.6, "", 13.5, 12.8], "2445": ["Jabari Smith Jr.", "HOU", "C/PF", "", 2, 19.7, 21.44, 70, 19, "C", "Starter", 13, 20.9, 61, 18.4, 34.5, 34.2, "", 18.9, 19.9], "2447": ["Tari Eason", "HOU", "SF/SG", "", 0, 15.7, 16.34, 148, 48, "F", "Fringe", 13, 16.2, 122, 14.8, 24.4, 24.2, "", 15.7, 15.9], "2449": ["Dyson Daniels", "ATL", "SF/SG", "", 6, 23.3, 25.7, 27, 8, "F", "Core", 13, 23.4, 30, 27.3, 30.8, 33.4, "", 21.1, 22.1], "2453": ["Jalen Williams", "OKC", "PF/SF/SG", "Out", 8, 21, 20.27, 84, 27, "F", "Starter", 3, 18.7, 85, 17.3, 31.7, 31.7, "", 23, 20.1], "2454": ["Peyton Watson", "CLE", "PF/SF", "", 8, 16.5, 16.98, 134, 44, "F", "Hold", 11, 16.2, 121, 15.1, 28.2, 27.6, "", 16.8, 17.5], "2455": ["Chet Holmgren", "OKC", "C/PF", "Out", 1, 24.2, 25.87, 25, 8, "C", "Core", 3, 23, 34, 23, 30, 30, "", 25.3, 23.7], "2456": ["Keegan Murray", "SAC", "PF/SF", "", 0, 17.7, 14.23, 201, 75, "F", "Cut", 5, 14.9, 144, 14.1, 28.2, 28.2, "", 18.8, 19.4], "2457": ["Christian Braun", "DEN", "SF/SG", "", 1, 16, 15.08, 168, 60, "F", "Cut", 10, 17.1, 108, 14.9, 34.4, 32.6, "", 16.7, 15], "2458": ["Paolo Banchero", "ORL", "PF", "Out", 9, 25.9, 27.77, 16, 6, "F", "Core", 2, 26.5, null, 25.5, 34, 33.5, "", 26.4, 25.2], "2461": ["Andrew Nembhard", "IND", "PG/SG", "", 9, 18.3, 18.44, 112, 43, "G", "Hold", 11, 18.7, 87, 17.6, 33.4, 34.2, "", 16.9, 19.9], "2463": ["Ryan Rollins", "MIL", "PG", "", 4, 17.8, 19.47, 102, 40, "G", "Hold", 13, 15.2, 135, 13.6, 23.8, 22.2, "", 21.5, 21.3], "2474": ["Moussa Diabaté", "CHA", "C", "", 0, 17.3, 19.35, 106, 30, "C", "Hold", 10, 19.1, 79, 17.9, 29, 28.8, "", 15.1, 17.4], "2476": ["Shaedon Sharpe", "POR", "PG/SG", "Out", 0, 17.1, 13.96, 206, 68, "G", "Cut", 0, null, null, null, null, null, "", 15.7, 18.6], "2488": ["Gui Santos", "GSW", "PF/SF", "", 0, 9.8, 10.13, 275, 108, "F", "Cut", 10, 9.5, 255, 7.2, 18.6, 15, "Cold, minutes steady", 9.1, 12.5], "2490": ["Karlo Matković", "NOP", "C/PF", "", 0, 10.2, 10.63, 267, 79, "C", "Cut", 12, 11.4, 214, 8.1, 18.7, 19, "Cold, minutes steady", 11.1, 9.7], "2494": ["Julian Champagnie", "SAS", "PF/SF/SG", "", 9, 14.7, 17.38, 128, 40, "F", "Hold", 13, 14.7, 145, 14.3, 26.3, 25.6, "", 13.7, 15.8], "2521": ["Quenton Jackson", "IND", "PG/SG", "", 0, 12.5, 13, 220, 71, "G", "Cut", 13, 13.5, 175, 12.5, 21.5, 21, "", 13.2, 10.5], "2563": ["Jarace Walker", "IND", "PF/SF", "", 0, 12.3, 12.75, 225, 88, "F", "Cut", 12, 11.9, 203, 10.4, 20.9, 19.8, "", 11.6, 15], "2564": ["Brandin Podziemski", "GSW", "PG/SG", "", 8, 19.5, 22.44, 60, 26, "G", "Starter", 11, 21, 60, 20.4, 32.4, 31.2, "", 19.1, 17.7], "2565": ["Bilal Coulibaly", "WAS", "PF/SF", "", 0, 13.9, 14.11, 205, 79, "F", "Cut", 12, 12.7, 187, 10.7, 26.1, 24.2, "", 15.3, 16.6], "2566": ["Ausar Thompson", "DET", "SF/SG", "", 2, 20.6, 22.53, 56, 15, "F", "Starter", 10, 21.4, 53, 23.7, 28.8, 31, "", 19.9, 18.3], "2568": ["Brandon Miller", "CHA", "PF/SF/SG", "DTD", 8, 20.5, 21.24, 73, 22, "F", "Starter", 10, 20.7, 64, 16.2, 31, 28.2, "Cold, minutes steady", 22.9, 20.9], "2571": ["Noah Clowney", "BKN", "C/PF", "", 0, 10.6, 10.96, 258, 75, "C", "Cut", 11, 9.7, 250, 8.4, 19.5, 17, "", 9.3, 14.3], "2574": ["Amen Thompson", "HOU", "PG/SF/SG", "", 6, 22.3, 24.19, 38, 14, "G", "Starter", 13, 20.1, 72, 19.7, 33.7, 35.2, "", 25.1, 24.5], "2577": ["Victor Wembanyama", "SAS", "C", "", 10, 36.9, 37.99, 2, 2, "C", "Core", 13, 39.9, 1, 37, 29.3, 25.6, "", 35.3, 34.6], "2580": ["Keyonte George", "UTA", "PG/SG", "", 3, 22.6, 22.46, 59, 25, "G", "Starter", 12, 21.5, 51, 25.5, 32.6, 35.4, "", 21.4, 22.6], "2581": ["Brice Sensabaugh", "UTA", "PF/SF/SG", "", 0, 10.2, 10.63, 268, 104, "F", "Cut", 13, 9.4, 256, 9, 15.8, 17.4, "", 9, 13.7], "2583": ["Jaime Jaquez Jr.", "MIL", "PF/SF/SG", "", 0, 17.8, 19.91, 92, 30, "F", "Hold", 13, 17.7, 101, 16.8, 27.8, 26.8, "", 19, 17.8], "2586": ["Cason Wallace", "OKC", "PG/SF/SG", "Out", 0, 14.4, 17.01, 131, 49, "G", "Hold", 3, 11.3, 216, 11, 16.3, 16.3, "", 16.1, 14.4], "2590": ["Anthony Black", "ORL", "PG/SF/SG", "", 8, 20, 21.41, 71, 32, "G", "Starter", 9, 22.7, 42, 23.8, 32.1, 35.6, "", 17.2, 18.1], "2613": ["Toumani Camara", "POR", "PF/SF/SG", "", 7, 15.7, 17.94, 118, 38, "F", "Hold", 12, 14.4, 152, 14.4, 29.1, 31, "", 16.8, 17.1], "2620": ["Scoot Henderson", "POR", "PG", "", 0, 11.3, 9.61, 280, 87, "G", "Cut", 12, 7.5, 264, 6.8, 22.1, 22.4, "", 16.3, 14.6], "2622": ["Sidy Cissoko", "POR", "C/PF", "", 4, 10.2, 10.64, 266, 78, "C", "Cut", 12, 11.2, 218, 11.2, 23.3, 25.2, "", 10.8, 7.8], "2644": ["Leaky Black", "SAC", "PF/SF", "", 0, 10.3, 10.72, 263, 102, "F", "Cut", 8, 10.2, 241, 10.9, 18.1, 22.4, "Minutes up", 10.2, null], "2710": ["Ryan Dunn", "PHX", "PF/SF", "", 0, 11.2, 11.66, 251, 98, "F", "Cut", 11, 11.1, 219, 12.7, 16.9, 21.2, "Minutes up", 10.7, 10.8], "2711": ["Tristan da Silva", "ORL", "PF/SF", "", 0, 14.4, 14.99, 170, 61, "F", "Cut", 10, 15, 139, 16.2, 30.6, 33.4, "", 14.5, 12.6], "2712": ["Jaylon Tyson", "CLE", "PF/SF/SG", "", 0, 13.2, 14.51, 190, 67, "F", "Cut", 7, 11.7, 207, 10.1, 22.4, 22.4, "", 12.8, 16.1], "2713": ["Jared McCain", "OKC", "PG/SG", "", 9, 13.5, 16.42, 144, 54, "G", "Fringe", 13, 14.2, 163, 19.6, 26.5, 29, "Hot", 12.1, 8.7], "2714": ["Kyshawn George", "WAS", "SF/SG", "", 6, 19.7, 19.58, 99, 34, "F", "Hold", 13, 20.1, 75, 21.7, 33.1, 33.8, "", 18, 19.3], "2716": ["Terrence Shannon Jr.", "MIN", "PF/SF/SG", "", 0, 10.1, 10.46, 271, 105, "F", "Cut", 9, 12.4, 191, 11, 21.4, 20.8, "", 12, 5.4], "2718": ["Zach Edey", "MEM", "C", "Out", 8, 19.9, 17.8, 119, 36, "C", "Hold", 10, 14.4, 153, 14.1, 20.7, 21.4, "", 24.5, null], "2719": ["Reed Sheppard", "HOU", "PG/SG", "", 0, 13.9, 16.52, 139, 51, "G", "Hold", 10, 12.1, 198, 9.7, 20, 18, "", 15.1, 17.3], "2720": ["Yves Missi", "NOP", "C", "Out", 4, 15.5, 17.43, 127, 40, "C", "Hold", 2, 20.8, null, 20.8, 19.5, 19.5, "", 16.2, 13], "2721": ["Baylor Scheierman", "BOS", "PF/SF", "", 0, 10.8, 14.26, 200, 74, "F", "Cut", 12, 10.4, 236, 12.6, 20.8, 22, "Hot", 11.4, 9.2], "2722": ["Stephon Castle", "SAS", "PG/SF/SG", "", 4, 21, 22.62, 54, 22, "G", "Starter", 13, 20.1, 73, 19.5, 28.8, 27.2, "", 22.9, 21.8], "2723": ["Ja'Kobe Walter", "TOR", "SF/SG", "", 9, 13.3, 13.78, 207, 80, "F", "Cut", 12, 15.3, 134, 11.8, 30.3, 31.4, "Cold, minutes steady", 15, 10.2], "2724": ["Isaiah Collier", "UTA", "PG", "", 0, 11.8, 12.69, 226, 74, "G", "Cut", 13, 10.1, 242, 9.5, 16, 16.2, "", 11.4, 16.4], "2726": ["Kel'el Ware", "MIL", "C/PF", "", 7, 16.3, 18.68, 111, 34, "C", "Hold", 13, 14.2, 160, 10.4, 17.7, 15.8, "Cold, minutes steady", 21.4, 19.1], "2728": ["Donovan Clingan", "POR", "C", "", 4, 23.7, 26.55, 21, 6, "C", "Core", 12, 22.8, 37, 21.8, 25.3, 26.6, "", 26, 24.1], "2733": ["Alex Sarr", "WAS", "C/PF", "", 8, 20.6, 19.84, 94, 26, "C", "Hold", 12, 18.2, 97, 20.4, 27.3, 30.4, "", 21.3, 23], "2734": ["Nikola Topić", "OKC", "PG", "", 0, 9, 9.35, 282, 88, "G", "Cut", 1, 9, null, 9, 16, 16, "", 9, null], "2737": ["Zaccharie Risacher", "DAL", "SF", "", 0, 13.3, 14.17, 202, 76, "F", "Cut", 12, 15.3, 133, 11.6, 24.3, 19, "Minutes down", 13, 12.5], "2742": ["Tyler Kolek", "NYK", "PG/SG", "", 0, 8.9, 9.26, 284, 89, "G", "Cut", 10, 9.6, 253, 9.8, 13.4, 14.4, "", 9.6, 6.9], "2752": ["Cam Spencer", "MEM", "PG/SF/SG", "", 0, 14.2, 14.79, 176, 61, "G", "Cut", 12, 14.4, 156, 13.1, 19.8, 20.8, "", 13.9, 15.3], "2753": ["Jaylen Wells", "MEM", "SF/SG", "", 0, 12.5, 13.65, 211, 81, "F", "Cut", 12, 13, 180, 10.6, 27.3, 26, "", 13.1, 13], "2764": ["Jamal Shead", "TOR", "PG/SG", "", 8, 14.2, 14.74, 179, 62, "G", "Cut", 12, 14.3, 159, 17.2, 23.9, 26.8, "Hot", 13.9, 11.9], "2766": ["Kyle Filipowski", "UTA", "C/PF", "", 0, 11.5, 13.68, 209, 60, "C", "Cut", 9, 3.3, 267, 4.2, 8, 8.2, "Hot", 17.4, 17.4], "2768": ["Pelle Larsson", "MIA", "SF/SG", "Out", 0, 13.7, 15.71, 158, 55, "F", "Fringe", 11, 14.6, 148, 12.5, 29.5, 29.4, "", 13.8, 13.5], "2771": ["Oso Ighodaro", "PHX", "C", "", 0, 11.8, 12.26, 232, 68, "C", "Cut", 9, 12.1, 200, 10.1, 22.2, 23.4, "", 11.7, 12.6], "2772": ["Ajay Mitchell", "OKC", "PG/SG", "Out", 6, 17.5, 17.47, 125, 48, "G", "Hold", 11, 18.5, 92, 17.7, 27.3, 29.4, "", 17.6, 16.1], "2776": ["Daniss Jenkins", "DET", "PG/SG", "", 5, 15.9, 16.51, 140, 52, "G", "Hold", 11, 16.8, 115, 18.9, 27.5, 30.8, "", 16.5, 12], "2835": ["Matas Buzelis", "CHI", "PF/SF", "", 4, 17.7, 20.03, 89, 29, "F", "Starter", 11, 14.1, 166, 13.5, 26.5, 28, "", 23, 19.6], "2836": ["Ronald Holland II", "DET", "PF/SF", "", 0, 10.6, 12.23, 234, 91, "F", "Cut", 11, 10.1, 243, 7.3, 15.4, 15, "Cold, minutes steady", 12.4, 11.6], "4737": ["VJ Edgecombe", "PHI", "PG/SG", "", 6, 20.7, 22.77, 51, 19, "G", "Starter", 12, 21, 59, 21.8, 33.7, 34, "", 19, 21], "4738": ["Tre Johnson", "WAS", "PG/SG", "", 0, 11.5, 11.95, 241, 78, "G", "Cut", 12, 9.6, 251, 11.9, 23.5, 28.6, "Minutes up", 13, 12.2], "4740": ["Kon Knueppel", "CHA", "SF/SG", "Out", 3, 18.8, 21.33, 72, 21, "F", "Starter", 1, -0.5, null, -0.5, 6, 6, "", 21.3, 19.7], "4742": ["Nolan Traore", "BKN", "PG", "DTD", 0, 14.1, 14.65, 183, 65, "G", "Cut", 10, 14.6, 149, 18.3, 22.1, 25, "Hot", 14.2, 10.8], "4743": ["Danny Wolf", "BKN", "C/PF/SF", "", 0, 14.2, 14.76, 178, 53, "C", "Cut", 6, 15, 140, 16, 23.7, 25.4, "", 14, 13.2], "4744": ["Egor Dëmin", "BKN", "PG/SG", "", 0, 14.5, 14.7, 180, 63, "G", "Cut", 5, 11.7, 205, 10.9, 22, 22, "", 18.2, 13.6], "4747": ["Joan Beringer", "MIN", "C", "", 0, 10.2, 9.27, 283, 85, "C", "Cut", 12, 12.3, 194, 11.5, 16.9, 14.4, "", 11, 6.1], "4748": ["Cedric Coward", "MEM", "SF/SG", "", 8, 20.2, 21.18, 75, 24, "F", "Starter", 11, 21.6, 49, 21.9, 28.5, 28.2, "", 20.9, 16.8], "4750": ["Jeremiah Fears", "NOP", "PG/SG", "", 4, 17.9, 21.61, 68, 31, "G", "Starter", 13, 18.5, 90, 20.4, 29.2, 31.2, "", 17.1, 15.8], "4751": ["Derik Queen", "NOP", "C/PF", "", 5, 16.9, 20.21, 87, 24, "C", "Starter", 13, 16.2, 119, 11, 21.7, 17.8, "Cold, minutes steady", 21.4, 18.6], "4754": ["Dylan Harper", "SAS", "PG/SG", "", 10, 18.9, 20.53, 80, 36, "G", "Starter", 13, 20.7, 65, 20.3, 31.2, 28.6, "", 19.8, 14.5], "4755": ["Collin Murray-Boyles", "TOR", "C/PF", "", 6, 15.6, 17.01, 132, 41, "C", "Hold", 11, 14.6, 147, 17.3, 22.8, 27.4, "Minutes up", 16.9, 14], "4757": ["Walter Clayton Jr.", "DAL", "PG", "", 0, 10.6, 12.18, 235, 76, "G", "Cut", 11, 10.9, 222, 12.3, 16.9, 21.4, "Minutes up", 9, 10.7], "4758": ["Ace Bailey", "UTA", "PF/SF", "", 5, 17.2, 19.83, 95, 31, "F", "Hold", 13, 18.7, 86, 18.3, 31.3, 32.4, "", 16.1, 15.5], "4760": ["Cooper Flagg", "DAL", "PG/SF/SG", "", 8, 27.9, 29.07, 12, 3, "G", "Core", 11, 29.9, 8, 30.6, 33.5, 33.4, "", 27.3, 24.4], "4761": ["Khaman Maluach", "PHX", "C", "", 0, 13.1, 12.28, 231, 67, "C", "Cut", 11, 13.4, 176, 13.9, 19.5, 19.6, "", 19.5, 5.8], "4764": ["Nique Clifford", "OKC", "SF/SG", "", 0, 5.7, 5.89, 287, 112, "F", "Cut", 11, 3.1, 268, 4, 8.8, 11.2, "Hot", 3.5, 11.9], "4765": ["Jase Richardson", "ORL", "PG/SG", "", 0, 8.8, 9.15, 285, 90, "G", "Cut", 11, 10, 245, 11, 21.7, 24, "", 9.7, 5.1], "4768": ["Tyrese Proctor", "CLE", "PG/SG", "", 0, 10.2, 10.59, 269, 86, "G", "Cut", 12, 10.9, 225, 13.5, 17.9, 23, "Minutes up", 10.6, 6.2], "4777": ["Ryan Kalkbrenner", "CHA", "C", "", 0, 12, 12.48, 229, 66, "C", "Cut", 12, 11.5, 210, 12.4, 18.6, 21.4, "", 11.2, 13.1], "4778": ["Sion James", "CHA", "SF/SG", "", 0, 11, 11.38, 253, 99, "F", "Cut", 12, 10.8, 229, 13.3, 26.1, 27.6, "Hot", 10.5, 9.7], "4780": ["Javon Small", "MEM", "PG/SG", "", 0, 11.5, 11.97, 240, 77, "G", "Cut", 5, 10.6, 234, 10.6, 19, 19, "", 10.6, 13.2], "4787": ["Kobe Sanders", "LAC", "PF/SF/SG", "", 0, 10.4, 10.83, 260, 101, "F", "Cut", 11, 11.4, 213, 10.5, 23.4, 23.8, "", 11, 8.7], "4793": ["Maxime Raynaud", "SAC", "C", "Out", 0, 13.9, 15.96, 153, 46, "C", "Fringe", 0, null, null, null, null, null, "", 11.4, 16.4], "4807": ["Dylan Cardwell", "SAC", "C/PF", "", 0, 14, 13.11, 218, 64, "C", "Cut", 5, 13, 182, 13, 17.6, 17.6, "", 13.5, 15.4], "4862": ["Caleb Wilson", "CHI", "PF/SF", "Out", 5, 21.1, 23.01, 49, 14, "F", "Starter", 10, 21.9, 47, 19.2, 30.8, 26.8, "", 21.3, null], "4864": ["Yaxel Lendeborg", "GSW", "PF/SF", "", 3, 19.9, 21.6, 69, 20, "F", "Starter", 13, 22.8, 41, 22.4, 31.5, 30.8, "", 16.9, null], "4866": ["AJ Dybantsa", "WAS", "PF/SF", "", 7, 18, 19.67, 96, 32, "F", "Hold", 9, 17.4, 106, 17.5, 33.9, 36.4, "", 18.3, null], "4871": ["Mikel Brown Jr.", "BKN", "PG/SG", "DTD", 0, 15.1, 16.38, 147, 55, "G", "Fringe", 7, 13.6, 171, 13.7, 23.1, 24.6, "", 15.9, null], "4873": ["Cameron Boozer", "MEM", "C/PF", "", 7, 22.4, 24.44, 37, 14, "C", "Starter", 12, 23.8, 28, 20.4, 31.7, 31, "", 22.3, null], "4876": ["Kingston Flemings", "ATL", "PG/SG", "DTD", 0, 11.8, 12.9, 222, 72, "G", "Cut", 12, 11, 221, 9.5, 21.5, 23.2, "", 13.2, null], "4881": ["Keaton Wagler", "LAC", "PG/SG", "", 0, 13.7, 14.95, 171, 59, "G", "Cut", 11, 13.9, 170, 11.8, 22.7, 19.8, "", 14.3, null], "4882": ["Darryn Peterson", "UTA", "PG/SG", "", 7, 20.6, 22.51, 57, 24, "G", "Starter", 13, 20.2, 71, 24.7, 31.2, 32.6, "Hot", 19, null], "4883": ["Brayden Burries", "MIL", "PG/SG", "", 5, 14.5, 15.85, 157, 57, "G", "Fringe", 13, 13.2, 177, 15.9, 21.4, 27, "Minutes up", 14.7, null], "4885": ["Morez Johnson Jr.", "DAL", "C/PF", "DTD", 0, 12.1, 12.66, 227, 65, "C", "Cut", 11, 9.8, 247, 12.4, 16.7, 18.2, "Hot", 13.3, null], "4888": ["Aday Mara", "OKC", "C", "", 5, 13.2, 14.45, 195, 59, "C", "Cut", 13, 14.4, 158, 16.7, 21.3, 24.8, "", 10.9, null], "4891": ["Darius Acuff Jr.", "SAC", "PG/SG", "", 5, 21.6, 23.4, 43, 17, "G", "Starter", 12, 24.5, 23, 26.2, 37.2, 37.8, "", 18, null], "4895": ["Meleek Thomas", "CLE", "PG/SF/SG", "", 0, 14.1, 14.68, 182, 64, "G", "Cut", 10, 14.2, 164, 15, 22.5, 23.6, "", 13.8, null], "4922": ["Trevon Brazile", "DEN", "PF/SF", "", 0, 11.4, 11.85, 244, 94, "F", "Cut", 10, 12.1, 201, 9.7, 19.5, 16.4, "", 11.7, null]}, "logs": {"1054": [["11-12", 14, 27], ["11-09", 23, 38], ["11-08", 17.5, 29], ["11-06", 17, 28], ["11-04", 30, 36], ["10-30", 31, 35], ["10-28", 22, 27], ["10-26", 24, 33], ["10-23", 20.5, 25], ["10-21", 12, 24]], "1444": [["11-13", 21.5, 33], ["11-11", 16, 32], ["11-10", 22.5, 24], ["11-07", 11, 20], ["11-06", 15, 37], ["11-04", 20.5, 33], ["11-02", 22.5, 30], ["10-31", 22.5, 27], ["10-29", 8, 30], ["10-27", 19.5, 31]], "1713": [["11-11", 9, 28], ["11-09", 10, 18], ["11-08", 8, 28], ["11-06", 12, 35], ["11-04", 26.5, 45], ["10-28", 18, 30], ["10-24", 27.5, 35], ["10-23", 23, 30], ["10-21", 28.5, 34]], "2032": [["11-13", 10, 22], ["11-11", 17.5, 16], ["11-08", 13, 18]], "2275": [["11-11", 25.5, 19], ["11-08", 20, 20], ["11-07", 30, 32], ["11-04", 20.5, 27], ["11-02", 10, 22], ["11-01", 24, 26], ["10-30", 13.5, 24], ["10-27", 11, 17], ["10-25", 9, 16], ["10-24", 12, 23]], "2284": [["11-13", 34.5, 40], ["11-09", 18.5, 38], ["11-07", 27, 36], ["10-31", 16, 28], ["10-29", 20.5, 34], ["10-28", 27, 36], ["10-26", 25, 36], ["10-24", 42, 38], ["10-23", 29.5, 29], ["10-21", 29, 28]], "2296": [["11-11", 19, 26], ["11-09", 29, 32], ["11-08", 5, 18], ["11-06", 12, 20], ["11-04", 9, 19], ["11-02", 16.5, 28], ["11-01", 8.5, 24], ["10-30", 12, 20], ["10-28", 21.5, 30], ["10-27", 17, 24]], "2308": [["11-13", 45, 37], ["11-11", 35, 37], ["11-09", 32.5, 35], ["11-07", 19, 32], ["11-04", 34.5, 39], ["11-02", 38.5, 38], ["10-31", 26, 33], ["10-26", 41, 37], ["10-24", 26, 33], ["10-23", 28.5, 36]], "2313": [["11-13", 38, 39], ["11-11", 7, 25], ["11-08", 30, 34], ["11-04", 9.5, 27], ["11-02", 25.5, 32], ["10-30", 12.5, 25], ["10-28", 25.5, 31], ["10-26", 13, 24], ["10-24", 25, 30], ["10-23", 15, 25]], "2463": [["11-13", 15, 29], ["11-11", 14, 24], ["11-10", 18, 24], ["11-08", 14.5, 20], ["11-06", 6.5, 14], ["11-04", 21.5, 24], ["11-02", 9.5, 17], ["10-31", 15, 26], ["10-28", 12, 17], ["10-26", 16, 32]], "2622": [["11-13", 7, 26], ["11-11", 11.5, 29], ["11-10", 18, 33], ["11-07", 8, 16], ["11-06", 11.5, 22], ["11-04", 16, 21], ["11-02", 6, 22], ["10-31", 5.5, 19], ["10-29", 11, 19], ["10-27", 8, 20]], "2720": [["10-23", 6, 9], ["10-21", 35.5, 30]], "2722": [["11-13", 30.5, 25], ["11-11", 12, 29], ["11-09", 16, 30], ["11-07", 20, 24], ["11-06", 19, 28], ["11-04", 21.5, 35], ["11-02", 20, 26], ["10-31", 8, 22], ["10-28", 24.5, 38], ["10-27", 18, 27]], "2728": [["11-13", 29, 27], ["11-11", 23, 30], ["11-10", 23, 26], ["11-07", 8, 22], ["11-06", 26, 28], ["11-04", 29.5, 29], ["11-02", 37, 32], ["10-31", 13, 15], ["10-29", 25, 29], ["10-27", 17.5, 26]], "2835": [["11-13", 21, 29], ["11-11", 7, 31], ["11-08", 20, 31], ["11-04", 15.5, 26], ["11-02", 4, 23], ["10-30", 12, 20], ["10-28", 18, 33], ["10-26", 9.5, 22], ["10-24", 17.5, 35], ["10-23", 11.5, 17]], "4750": [["11-13", 25, 34], ["11-11", 13, 28], ["11-09", 13, 29], ["11-08", 27, 29], ["11-06", 24, 36], ["11-04", 20, 34], ["11-02", 13, 38], ["10-31", 21.5, 31], ["10-29", 43.5, 29], ["10-28", 12, 24]]}, "teams": [{"rid": 2, "name": "Spence24s", "me": false, "lineup": 227.1, "value": 240.2, "groups": {"G": {"n": 8, "holdable": 6, "top": 97.5, "rank": 4}, "F": {"n": 11, "holdable": 9, "top": 107.1, "rank": 1}, "C": {"n": 4, "holdable": 4, "top": 54.6, "rank": 4}}, "record": [2, 1, 0], "rank": 1}, {"rid": 4, "name": "TrayBanks", "me": true, "lineup": 221.4, "value": 234.6, "groups": {"G": {"n": 6, "holdable": 6, "top": 90.1, "rank": 9}, "F": {"n": 7, "holdable": 6, "top": 106.7, "rank": 2}, "C": {"n": 6, "holdable": 5, "top": 59.4, "rank": 2}}, "record": [0, 3, 0], "rank": 2}, {"rid": 6, "name": "SergeantSleaze", "me": false, "lineup": 221, "value": 232.6, "groups": {"G": {"n": 9, "holdable": 8, "top": 93.2, "rank": 7}, "F": {"n": 7, "holdable": 7, "top": 100.2, "rank": 4}, "C": {"n": 4, "holdable": 4, "top": 66, "rank": 1}}, "record": [3, 0, 0], "rank": 3}, {"rid": 8, "name": "ii3igt", "me": false, "lineup": 216.6, "value": 228.8, "groups": {"G": {"n": 9, "holdable": 8, "top": 105.6, "rank": 2}, "F": {"n": 6, "holdable": 6, "top": 97.1, "rank": 6}, "C": {"n": 4, "holdable": 4, "top": 45.2, "rank": 8}}, "record": [1, 2, 0], "rank": 4}, {"rid": 3, "name": "LawyerMan2", "me": false, "lineup": 216.6, "value": 224.4, "groups": {"G": {"n": 5, "holdable": 5, "top": 94.9, "rank": 5}, "F": {"n": 6, "holdable": 5, "top": 101.4, "rank": 3}, "C": {"n": 4, "holdable": 3, "top": 48.8, "rank": 6}}, "record": [3, 0, 0], "rank": 5}, {"rid": 5, "name": "changodinho44", "me": false, "lineup": 209.8, "value": 219.6, "groups": {"G": {"n": 7, "holdable": 6, "top": 115.4, "rank": 1}, "F": {"n": 8, "holdable": 8, "top": 100.1, "rank": 5}, "C": {"n": 4, "holdable": 3, "top": 43.4, "rank": 9}}, "record": [2, 1, 0], "rank": 6}, {"rid": 10, "name": "vvaughns", "me": false, "lineup": 206.9, "value": 217.2, "groups": {"G": {"n": 9, "holdable": 6, "top": 93.8, "rank": 6}, "F": {"n": 7, "holdable": 3, "top": 79.7, "rank": 10}, "C": {"n": 4, "holdable": 3, "top": 57.2, "rank": 3}}, "record": [0, 3, 0], "rank": 7}, {"rid": 9, "name": "LucidArtKnows", "me": false, "lineup": 194.4, "value": 205.9, "groups": {"G": {"n": 7, "holdable": 5, "top": 86.4, "rank": 10}, "F": {"n": 8, "holdable": 5, "top": 87.7, "rank": 9}, "C": {"n": 4, "holdable": 3, "top": 51.7, "rank": 5}}, "record": [0, 3, 0], "rank": 8}, {"rid": 1, "name": "Nickgarrison", "me": false, "lineup": 196.1, "value": 205.7, "groups": {"G": {"n": 8, "holdable": 5, "top": 98.3, "rank": 3}, "F": {"n": 10, "holdable": 7, "top": 94.4, "rank": 7}, "C": {"n": 4, "holdable": 4, "top": 48.7, "rank": 7}}, "record": [2, 1, 0], "rank": 9}, {"rid": 7, "name": "slimmothy", "me": false, "lineup": 193.6, "value": 205.7, "groups": {"G": {"n": 8, "holdable": 7, "top": 93.1, "rank": 8}, "F": {"n": 10, "holdable": 10, "top": 92.2, "rank": 8}, "C": {"n": 3, "holdable": 3, "top": 43.1, "rank": 10}}, "record": [2, 1, 0], "rank": 10}], "mine": [{"id": "1054", "adds": 4.89, "swap": {"gain": -1.91, "add": "2583"}, "verdict": "Keep", "why": "Adds about 4.9 a week to your lineup.", "ir": false, "horizon": "Long term", "hwhy": "Steady role and value."}, {"id": "1444", "adds": 3.74, "swap": {"gain": -0.76, "add": "2583"}, "verdict": "Keep", "why": "Adds about 3.7 a week to your lineup.", "ir": false, "horizon": "Long term", "hwhy": "Steady role and value."}, {"id": "1713", "adds": 0, "swap": null, "verdict": "Hold", "why": "On IR: costs no roster spot.", "ir": true, "horizon": "Watch", "hwhy": "Cold, but minutes are steady: usually bad luck."}, {"id": "2032", "adds": 3.29, "swap": {"gain": -0.31, "add": "2583"}, "verdict": "Keep", "why": "Adds about 3.3 a week to your lineup.", "ir": false, "horizon": "Watch", "hwhy": "Only 18.3 minutes a game: his value needs a bigger role."}, {"id": "2275", "adds": 3.04, "swap": {"gain": -0.05, "add": "2583"}, "verdict": "Keep", "why": "Adds about 3.0 a week to your lineup.", "ir": false, "horizon": "Long term", "hwhy": "Steady role and value."}, {"id": "2284", "adds": 13.85, "swap": {"gain": -10.87, "add": "2583"}, "verdict": "Keep", "why": "Adds about 13.8 a week to your lineup.", "ir": false, "horizon": "Long term", "hwhy": "Steady role and value."}, {"id": "2296", "adds": 2.61, "swap": {"gain": 0.37, "add": "2583"}, "verdict": "Hold", "why": "Above the hold line for a 10-team league.", "ir": false, "horizon": "Short term", "hwhy": "Useful now, first to go when you need a spot."}, {"id": "2308", "adds": 15.84, "swap": {"gain": -12.86, "add": "2583"}, "verdict": "Keep", "why": "Adds about 15.8 a week to your lineup.", "ir": false, "horizon": "Long term", "hwhy": "Steady role and value."}, {"id": "2313", "adds": 6.88, "swap": {"gain": -3.9, "add": "2583"}, "verdict": "Keep", "why": "Adds about 6.9 a week to your lineup.", "ir": false, "horizon": "Long term", "hwhy": "Steady role and value."}, {"id": "2463", "adds": 2.92, "swap": {"gain": 0.07, "add": "2583"}, "verdict": "Hold", "why": "Above the hold line for a 10-team league.", "ir": false, "horizon": "Short term", "hwhy": "Useful now, first to go when you need a spot."}, {"id": "2622", "adds": 1.6, "swap": {"gain": 1.39, "add": "2583"}, "verdict": "Cut", "why": "Jaime Jaquez Jr. would add about +1.4 a week in his place.", "ir": false, "horizon": "Cut first", "hwhy": "Below free-agent level."}, {"id": "2720", "adds": 0, "swap": null, "verdict": "Hold", "why": "On IR: costs no roster spot.", "ir": true, "horizon": "Short term", "hwhy": "Useful now, first to go when you need a spot."}, {"id": "2722", "adds": 5.59, "swap": {"gain": -2.61, "add": "2583"}, "verdict": "Keep", "why": "Adds about 5.6 a week to your lineup.", "ir": false, "horizon": "Long term", "hwhy": "Steady role and value."}, {"id": "2728", "adds": 9.35, "swap": {"gain": -6.36, "add": "2583"}, "verdict": "Keep", "why": "Adds about 9.3 a week to your lineup.", "ir": false, "horizon": "Long term", "hwhy": "Steady role and value."}, {"id": "2835", "adds": 3, "swap": {"gain": -0.02, "add": "2583"}, "verdict": "Keep", "why": "Adds about 3.0 a week to your lineup.", "ir": false, "horizon": "Watch", "hwhy": "Scoring 14.1 a game, under his 17.7 value."}, {"id": "4750", "adds": 4.58, "swap": {"gain": -1.6, "add": "2583"}, "verdict": "Keep", "why": "Adds about 4.6 a week to your lineup.", "ir": false, "horizon": "Long term", "hwhy": "Steady role and value."}], "claims": {"2583": {"gain": 1.39, "drop": "2622", "bid": 7}, "2302": {"gain": 1.31, "drop": "2622", "bid": 6}, "2474": {"gain": 1.31, "drop": "2622", "bid": 6}, "2422": {"gain": 1.07, "drop": "2622", "bid": 6}, "1961": {"gain": 0.97, "drop": "2622", "bid": 2}, "1799": {"gain": 0.96, "drop": "2622", "bid": 2}, "1178": {"gain": 0.92, "drop": "2622", "bid": 2}, "2719": {"gain": 0.88, "drop": "2622", "bid": 2}, "2065": {"gain": 0.86, "drop": "2622", "bid": 2}, "4871": {"gain": 0.86, "drop": "2622", "bid": 2}, "2447": {"gain": 0.85, "drop": "2622", "bid": 2}, "2233": {"gain": 0.84, "drop": "2622", "bid": 2}, "1959": {"gain": 0.8, "drop": "2622", "bid": 2}, "1691": {"gain": 0.79, "drop": "2622", "bid": 2}, "1589": {"gain": 0.7, "drop": "2622", "bid": 2}, "1998": {"gain": 0.7, "drop": "2622", "bid": 2}, "1950": {"gain": 0.69, "drop": "2622", "bid": 2}, "2341": {"gain": 0.69, "drop": "2622", "bid": 2}, "2711": {"gain": 0.65, "drop": "2622", "bid": 2}, "4881": {"gain": 0.65, "drop": "2622", "bid": 2}, "1999": {"gain": 0.64, "drop": "2622", "bid": 2}, "2444": {"gain": 0.63, "drop": "2622", "bid": 2}, "1887": {"gain": 0.62, "drop": "2622", "bid": 2}, "2752": {"gain": 0.62, "drop": "2622", "bid": 2}, "4743": {"gain": 0.62, "drop": "2622", "bid": 2}, "2159": {"gain": 0.61, "drop": "2622", "bid": 2}, "4744": {"gain": 0.61, "drop": "2622", "bid": 2}, "4895": {"gain": 0.61, "drop": "2622", "bid": 2}, "1512": {"gain": 0.6, "drop": "2622", "bid": 2}, "1997": {"gain": 0.6, "drop": "2622", "bid": 2}, "4742": {"gain": 0.6, "drop": "2622", "bid": 2}, "1994": {"gain": 0.59, "drop": "2622", "bid": 2}, "2053": {"gain": 0.58, "drop": "2622", "bid": 2}, "2095": {"gain": 0.58, "drop": "2622", "bid": 2}, "2145": {"gain": 0.58, "drop": "2622", "bid": 2}, "2258": {"gain": 0.58, "drop": "2622", "bid": 2}, "2712": {"gain": 0.58, "drop": "2622", "bid": 2}, "1604": {"gain": 0.57, "drop": "2622", "bid": 2}, "1736": {"gain": 0.56, "drop": "2622", "bid": 2}, "2456": {"gain": 0.54, "drop": "2622", "bid": 2}}, "moves": [{"t": 1794610735149, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": ["2296"], "drops": []}, {"t": 1794610642364, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": ["2622"], "drops": []}, {"t": 1794575970069, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": ["2720"], "drops": ["2474"]}, {"t": 1794575398687, "type": "free_agent", "team": "SergeantSleaze", "me": false, "bid": null, "adds": [], "drops": ["1999"]}, {"t": 1794449374871, "type": "free_agent", "team": "SergeantSleaze", "me": false, "bid": null, "adds": ["1265"], "drops": []}, {"t": 1794441305271, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": [], "drops": ["4885"]}, {"t": 1794416623870, "type": "waiver", "team": "TrayBanks", "me": true, "bid": 2, "adds": ["2474"], "drops": ["1998"]}, {"t": 1794415683841, "type": "free_agent", "team": "ii3igt", "me": false, "bid": null, "adds": ["2764"], "drops": ["2474"]}, {"t": 1794414947076, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": ["2463"], "drops": ["2764"]}, {"t": 1794409919630, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": ["2764"], "drops": ["2583"]}, {"t": 1794352472563, "type": "free_agent", "team": "slimmothy", "me": false, "bid": null, "adds": ["2131"], "drops": []}, {"t": 1794328025499, "type": "waiver", "team": "TrayBanks", "me": true, "bid": 2, "adds": ["1998"], "drops": ["2764"]}, {"t": 1794327119211, "type": "free_agent", "team": "vvaughns", "me": false, "bid": null, "adds": ["1081"], "drops": []}, {"t": 1794316674719, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": ["2764"], "drops": ["4764"]}, {"t": 1794289198101, "type": "waiver", "team": "changodinho44", "me": false, "bid": 1, "adds": ["2776"], "drops": ["1998"]}, {"t": 1794274250634, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": ["4764"], "drops": []}, {"t": 1794259403773, "type": "free_agent", "team": "ii3igt", "me": false, "bid": null, "adds": ["2454"], "drops": ["1178"]}, {"t": 1794242023694, "type": "free_agent", "team": "LawyerMan2", "me": false, "bid": null, "adds": [], "drops": ["2737"]}, {"t": 1794241991022, "type": "free_agent", "team": "SergeantSleaze", "me": false, "bid": null, "adds": ["4755"], "drops": []}, {"t": 1794241981013, "type": "free_agent", "team": "SergeantSleaze", "me": false, "bid": null, "adds": [], "drops": ["1265"]}, {"t": 1794241971109, "type": "free_agent", "team": "SergeantSleaze", "me": false, "bid": null, "adds": [], "drops": ["1602"]}, {"t": 1794182645587, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": ["2275"], "drops": ["4876"]}, {"t": 1794160444977, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": [], "drops": ["1691"]}, {"t": 1794154861763, "type": "free_agent", "team": "ii3igt", "me": false, "bid": null, "adds": ["1178"], "drops": ["2454"]}, {"t": 1794114733395, "type": "free_agent", "team": "TrayBanks", "me": true, "bid": null, "adds": ["4885"], "drops": ["1961"]}], "owners": {"1": "Nickgarrison", "2": "Spence24s", "3": "LawyerMan2", "4": "TrayBanks", "5": "changodinho44", "6": "SergeantSleaze", "7": "slimmothy", "8": "ii3igt", "9": "LucidArtKnows", "10": "vvaughns"}}, "liveLink": true};
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = (x) => (x >= 0.995 ? ">99%" : x < 0.005 ? "<1%" : Math.round(x * 100) + "%");
+const last = (n) => n.replace(/ (Jr\.|III|II)$/, "").split(" ").pop();
+let SW = "n";
+const teams = () => (SW === "n" ? D.teams : D.teamsWide);
+const me = () => teams().find((t) => t.me);
+
+/* tooltip */
+const tip = $("#tip");
+document.addEventListener("pointermove", (e) => {
+  const t = e.target.closest("[data-tip]");
+  if (!t) { tip.classList.remove("on"); return; }
+  tip.textContent = t.dataset.tip; tip.classList.add("on");
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = e.clientY + 16 + "px";
+});
+
+/* scoreboard band */
+function renderBand() {
+  const m = D.teams.find((t) => t.me), mw = D.teamsWide.find((t) => t.me), w = D.week1;
+  $("#tsub").textContent = D.eyebrow;
+  const st = [
+    ["This week", pct(w.odds), "alert"],
+    ["Record", `${D.record[0]}–${D.record[1]}${D.record[2] ? "–" + D.record[2] : ""}<small>proj <b>${m.wins.toFixed(1)}–${(18 - m.wins).toFixed(1)}</b></small>`, ""],
+    ["Playoffs", pct(m.playoff), ""],
+    ["Title", `${Math.round(mw.title * 100)}–${Math.round(m.title * 100)}%`, "you"],
+  ];
+  $("#stats").innerHTML = st.map(([k, v, c]) => `<div class="stat ${c}"><span class="k">${k}</span><span class="v num">${v}</span></div>`).join("");
+}
+
+/* this week */
+function renderWeek() {
+  const w = D.week1;
+  $("#week-meta").textContent = `Week ${w.week} · vs ${w.opp} · ${w.daysLeft}`;
+  $("#vs").innerHTML = `<div class="t me"><span class="nm">You</span><span class="pts num">${w.me}</span><span class="pj">Projected ${w.projMe}</span></div>
+    <div class="mid">vs<small>${pct(w.odds)} to win</small></div>
+    <div class="t r"><span class="nm">${esc(w.opp)}</span><span class="pts num">${w.oppPts}</span><span class="pj">Projected ${w.projOpp}</span></div>`;
+  $("#moves").innerHTML = w.swaps.map((s) => `<div class="mv"><span class="when">${esc(s.when)}</span><span class="what">${esc(s.what)}</span><span class="why">${esc(s.why)}</span></div>`).join("");
+  $("#opp-rows").innerHTML = (w.opp_rows || []).map((r) => `<div class="lk"><span><b>${esc(r.n)}</b></span><span class="sc num">${r.score == null ? "–" : r.score.toFixed(1)}</span><span class="pill mute">${esc(r.status)}</span><span class="w">Expected to count about ${r.exp.toFixed(1)}</span></div>`).join("");
+  $("#week-note").textContent = w.oddsNote.split(". ").slice(1).join(". ");
+}
+
+/* ---------- season values (tools/values.js): ranks, tiers, claims, team composition ---------- */
+const V = D.values || null;
+const vc = (row, k) => row[V.cols.indexOf(k)];
+const vp = (id) => (V && V.players[id] ? V.players[id] : null);
+function valRow(id) { const r = vp(id); return r ? [vc(r, "n"), vc(r, "t"), vc(r, "pos"), vc(r, "inj"), vc(r, "est"), 0.35, 0.1] : null; }
+const TIERC = { Core: "good", Starter: "blue", Hold: "mute", Fringe: "warn", Cut: "bad" };
+const VERDC = { Keep: "good", Hold: "blue", Shop: "warn", Cut: "bad" };
+const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`; };
+
+function renderTeam() {
+  if (!V) { $("#lineup").hidden = true; return; }
+  const me = V.teams.find((t) => t.me), G = { G: "guards", F: "forwards", C: "centers" };
+  const gs = ["G", "F", "C"].map((g) => ({ g, ...me.groups[g] })).sort((a, b) => a.rank - b.rank);
+  const best = gs[0], worst = gs[gs.length - 1];
+  $("#team-meta").textContent = `Roster #${me.rank} of 10 · ${me.record[0]}–${me.record[1]}`;
+  $("#team-answer").innerHTML = `Strongest at ${G[best.g]} (#${best.rank} of 10). Weakest at <em>${G[worst.g]}</em> (#${worst.rank})${worst.n >= 6 ? `, even with ${worst.n} of them` : ""}.`;
+  const HZ = ["Long term", "Watch", "Short term", "Cut first"], hzc = (h) => V.mine.filter((m) => m.horizon === h).length;
+  $("#horizons").innerHTML = HZ.map((h) => `<span class="fact"><span class="hz ${h.replace(" ", "-").toLowerCase()}">${h}</span> <b>${hzc(h)}</b></span>`).join("");
+  $("#groups").innerHTML = ["G", "F", "C"].map((g) => `<span class="fact">${G[g][0].toUpperCase() + G[g].slice(1)} <b>#${me.groups[g].rank}</b> of 10 · ${me.groups[g].n} players, ${me.groups[g].holdable} above the hold line</span>`).join("");
+  const mine = V.mine.map((m) => ({ ...m, r: vp(m.id) })).filter((m) => m.r);
+  const order = { Cut: 0, Shop: 1, Hold: 2, Keep: 3 };
+  $("#roster").innerHTML = ["G", "F", "C"].map((g) => {
+    const rows = mine.filter((m) => vc(m.r, "grp") === g).sort((a, b) => vc(a.r, "rank") - vc(b.r, "rank"));
+    if (!rows.length) return "";
+    return `<div class="lab glab">${G[g][0].toUpperCase() + G[g].slice(1)} · #${me.groups[g].rank} of 10</div>` + rows.map((m) => {
+      const r = m.r, tr = vc(r, "trend"), fpR = vc(r, "fpRank");
+      return `<div class="prow ${m.verdict === "Keep" ? "quiet" : ""}"><span class="pill vd ${VERDC[m.verdict]}">${m.verdict}</span>
+        <span class="nm">${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "pos"))} · ${vc(r, "tier")} · #${vc(r, "rank")} overall, #${vc(r, "posRank")} at ${g}${m.ir ? " · IR" : ""}</span>${tr ? `<span class="tag ${/up|Hot/.test(tr) ? "up" : ""}">${esc(tr)}</span>` : ""}${m.horizon ? `<span class="hz ${m.horizon.replace(" ", "-").toLowerCase()}">${m.horizon}</span>` : ""}</span>
+        <span class="nums"><b>${vc(r, "fp") == null ? "–" : vc(r, "fp").toFixed(1)}</b><br>FP/g${fpR ? ` · #${fpR}` : ""} · L5 ${vc(r, "fp5") == null ? "–" : vc(r, "fp5").toFixed(1)}</span>
+        <span class="rs">${m.hwhy ? `<b>${esc(m.horizon)}:</b> ${esc(m.hwhy)} ` : ""}${esc(m.why)}</span></div>`; }).join("");
+  }).join("");
+  $("#team-ranks").innerHTML = `<tr><th>Team</th><th class="r">Record</th><th class="r">Roster</th><th class="r">G</th><th class="r">F</th><th class="r">C</th></tr>` +
+    V.teams.slice().sort((a, b) => a.rank - b.rank).map((t) => `<tr${t.me ? ' style="font-weight:700"' : ""}><td>${esc(t.me ? "You" : t.name)}</td><td class="r">${t.record[0]}–${t.record[1]}</td><td class="r">#${t.rank}</td><td class="r">#${t.groups.G.rank}</td><td class="r">#${t.groups.F.rank}</td><td class="r">#${t.groups.C.rank}</td></tr>`).join("");
+  const lead = Object.entries(V.players).filter(([, r]) => vc(r, "fpRank")).sort((a, b) => vc(a[1], "fpRank") - vc(b[1], "fpRank"));
+  const mineIds = new Set(V.mine.map((m) => m.id));
+  const top = lead.slice(0, 25).concat(lead.filter(([id], i) => i >= 25 && mineIds.has(id)));
+  $("#leaders").innerHTML = `<tr><th class="r">#</th><th>Player</th><th>Owner</th><th class="r">FP/g</th><th class="r">L5</th><th class="r">Min</th><th class="r">GP</th></tr>` + top.map(([id, r]) => {
+    const o = vc(r, "owner"), own = o ? (o === D.week1.live.rid ? "You" : V.owners[o]) : "Free agent";
+    return `<tr${mineIds.has(id) ? ' style="font-weight:700"' : ""}><td class="r">${vc(r, "fpRank")}</td><td>${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "t"))}</span></td><td class="sm">${esc(own)}</td><td class="r">${vc(r, "fp").toFixed(1)}</td><td class="r">${vc(r, "fp5") == null ? "–" : vc(r, "fp5").toFixed(1)}</td><td class="r">${vc(r, "min") == null ? "–" : vc(r, "min").toFixed(0)}</td><td class="r">${vc(r, "gp")}</td></tr>`; }).join("");
+  $("#glogs").innerHTML = `<tr><th>Player</th><th>Last 10 (newest first): FP, minutes</th></tr>` + mine.map((m) => `<tr><td>${esc(vc(m.r, "n"))}</td><td class="sm">${(V.logs[m.id] || []).map((g) => `${g[1]}<span style="opacity:.6">/${g[2]}m</span>`).join(" · ") || "No games yet"}</td></tr>`).join("");
+}
+
+function renderWaivers() {
+  if (!V) return;
+  const claims = Object.entries(V.claims).filter(([id]) => { const r = vp(id); return r && !vc(r, "owner") && vc(r, "t") && !/^(Out|IR)$/.test(vc(r, "inj")); }).sort((a, b) => b[1].gain - a[1].gain);
+  const c0 = claims[0];
+  $("#wv-answer").innerHTML = c0 && c0[1].gain >= 0.5 ? `Claim <b>${esc(last(vc(vp(c0[0]), "n")))}</b> for $${c0[1].bid}, drop ${esc(last(vc(vp(c0[1].drop), "n")))}.` : "No claim is worth it today. Keep your FAAB.";
+  $("#claims").innerHTML = claims.slice(0, 5).map(([id, c]) => { const r = vp(id), d = vp(c.drop);
+    return `<div class="prow ${c.gain < 0.5 ? "quiet" : ""}"><span class="pill vd ${c.gain >= 0.5 ? "good" : "mute"}">${c.gain >= 0.5 ? "Claim" : "Watch"}</span>
+      <span class="nm">${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "pos"))} · ${esc(vc(r, "t"))} · ${vc(r, "tier")} · #${vc(r, "rank")}</span>${vc(r, "trend") ? `<span class="tag ${/up|Hot/.test(vc(r, "trend")) ? "up" : ""}">${esc(vc(r, "trend"))}</span>` : ""}</span>
+      <span class="nums"><b>+${c.gain.toFixed(1)}</b><br>a week · bid $${c.bid}</span>
+      <span class="rs">${vc(r, "fp") != null ? `${vc(r, "fp").toFixed(1)} FP/g this season, ${vc(r, "fp5") != null ? vc(r, "fp5").toFixed(1) : "–"} last 5.` : "No games this season."}${d ? ` Drop ${esc(vc(d, "n"))}.` : ""}</span></div>`; }).join("") || '<p class="note">No free agents beat anyone on your roster.</p>';
+  $("#hold-note").textContent = `Hold line for a 10-team league (the 140th best player): ${V.holdLine.toFixed(1)} lock value. The best free agents sit around ${V.replacement.toFixed(1)}. FAAB left: $${V.faabLeft} of $${V.budget}.`;
+  renderMoves(V.moves.map((m) => ({ ...m })), false);
+}
+function renderMoves(moves, live, at) {
+  const name = (id) => { const r = vp(id); return r ? vc(r, "n") : "a player"; };
+  const rows = moves.filter((m) => m.adds.length || m.drops.length).slice(0, 12);
+  $("#mv-rows").innerHTML = rows.map((m) => {
+    const drop = m.drops.find((id) => vp(id)), dr = drop ? vp(drop) : null, c = drop ? V.claims[drop] : null;
+    const stillFree = drop && !(live && live.owned && live.owned.has(drop));
+    let pill = ["Info", "mute"];
+    if (dr && stillFree && !m.me) pill = c && c.gain >= 0.5 ? [`Claim $${c.bid}`, "good"] : ["Core", "Starter", "Hold"].includes(vc(dr, "tier")) ? ["Worth a look", "warn"] : ["Let go", "mute"];
+    const what = [m.adds.length ? `added ${m.adds.map((id) => esc(name(id))).join(", ")}` : "", m.drops.length ? `dropped ${m.drops.map((id) => esc(name(id))).join(", ")}` : ""].filter(Boolean).join(", ");
+    const detail = dr ? `${esc(vc(dr, "n"))}: ${vc(dr, "tier")}, #${vc(dr, "rank")} overall, ${vc(dr, "fp") != null ? vc(dr, "fp").toFixed(1) + " FP/g" : "no games"}${c ? `; +${c.gain.toFixed(1)} a week for you` : ""}.` : "";
+    return `<div class="prow ${pill[1] === "mute" ? "quiet" : ""}"><span class="pill vd ${pill[1]}">${pill[0]}</span><span class="nm">${esc(m.me ? "You" : m.team)} <span class="sm">${what}${m.bid ? ` · $${m.bid}` : ""}</span></span>
+      <span class="nums">${ago(m.t)}</span><span class="rs">${detail}</span></div>`; }).join("") || '<p class="note">No adds or drops in the last week.</p>';
+  $("#mv-dot").classList.toggle("off", !live);
+  $("#mv-meta").textContent = live ? `Live from Sleeper · checked ${at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "As of the last refresh";
+}
+function liveMoves(P) {
+  if (!V || !P.tx) return;
+  const owners = Object.fromEntries((P.rosters || []).map((r) => [r.roster_id, V.owners[r.roster_id]]));
+  const owned = new Set((P.rosters || []).flatMap((r) => (r.players || []).map(String)));
+  const since = Date.now() - 7 * 864e5;
+  const moves = P.tx.filter((t) => t.status === "complete" && t.created >= since).sort((a, b) => b.created - a.created).map((t) => ({ t: t.created, type: t.type, team: owners[(t.roster_ids || [])[0]] || "",
+    me: (t.roster_ids || []).includes(LV.rid), bid: (t.settings && t.settings.waiver_bid) || null, adds: Object.keys(t.adds || {}), drops: Object.keys(t.drops || {}) }));
+  renderMoves(moves, { owned }, P.at);
+}
+
+/* ---------- Lock or wait: the lock calls redone live from Sleeper (the last refresh is the fallback) ---------- */
+const LV = D.week1.live || null;
+const etToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+const dayLong = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+const f1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
+const markKey = (wk) => `wr-locks-w${wk}`;
+// marks are kept on this phone as {player id: date of the game he locked}
+function marks(wk) { try { const v = JSON.parse(localStorage.getItem(markKey(wk)) || "{}"); return new Map(Array.isArray(v) ? v.map((id) => [id, ""]) : Object.entries(v)); } catch (e) { return new Map(); } }
+function toggleMark(wk, id, date) { const m = marks(wk); m.has(id) ? m.delete(id) : m.set(id, date || ""); try { localStorage.setItem(markKey(wk), JSON.stringify(Object.fromEntries(m))); } catch (e) {} if (lockLive) renderLock(computeLock(lockLive)); }
+async function getJSON(u) { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error(`${r.status}`); return r.json(); }
+async function pullLive() {
+  const sch = await getJSON(`https://api.sleeper.com/schedule/nba/regular/${LV.season}`);
+  const today = etToday();
+  const next = sch.filter((g) => g.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const week = Math.max(1, Math.min(18, (next && next.week) || LV.week));
+  const games = sch.filter((g) => g.week === week).map((g) => ({ date: g.date, home: g.home.team, away: g.away.team, status: g.status }));
+  const reads = (await Promise.all([0, 1, 2].map((i) => getJSON(`https://api.sleeper.app/v1/league/${LV.league}/matchups/${week}?r=${Date.now()}${i}`).catch(() => null)))).filter(Boolean);
+  const me = WR_WEEK.consensus(reads, LV.rid);
+  if (!me) throw new Error("no matchup");
+  const oppRid = (reads[0].find((m) => m.matchup_id === me.matchup_id && m.roster_id !== LV.rid) || {}).roster_id;
+  const op = oppRid ? WR_WEEK.consensus(reads, oppRid) : null;
+  const ids = [...new Set([...(me.starters || []), ...((op && op.starters) || [])].map(String))].filter((id) => id && id !== "0");
+  const per = await Promise.all(ids.map((id) => getJSON(`https://api.sleeper.com/stats/nba/player/${id}?season_type=regular&season=${LV.season}&grouping=week`)
+    .then((g) => (g[String(week)] || []).map((x) => ({ player_id: id, date: x.date, team: x.team, pts_std: +((x.stats || {}).pts_std || 0), sp: +((x.stats || {}).sp || 0) })))
+    .catch(() => [])));
+  const [ro, tx] = await Promise.all([getJSON(`https://api.sleeper.app/v1/league/${LV.league}/rosters`).catch(() => null),
+    Promise.all([week, week - 1].filter((w) => w >= 1).map((w) => getJSON(`https://api.sleeper.app/v1/league/${LV.league}/transactions/${w}`).catch(() => []))).then((a) => a.flat())]);
+  const mineR = ro && ro.find((r) => r.roster_id === LV.rid);
+  const roster = mineR ? (mineR.players || []).map(String).filter((id) => !(mineR.reserve || []).map(String).includes(id)) : null;
+  return { today, week, games, me, op, stats: per.flat(), roster, rosters: ro, tx, at: new Date() };
+}
+function computeLock(P) {
+  const teamHint = {};
+  for (const s of P.stats) teamHint[s.player_id] = s.team;
+  const pl = (id) => { const r = LV.players[id] || valRow(id); return r ? { id, n: r[0], team: r[1] || teamHint[id] || "", pos: (r[2] || "").split("/").filter(Boolean), inj: r[3] || "", mu: r[4], cv: r[5], rest: r[6] }
+    : { id, n: id === "0" ? "Empty slot" : "Unknown player", team: teamHint[id] || "", pos: [], inj: "", mu: 15, cv: LV.pool, rest: 0.1 }; };
+  const told = P.week === LV.week ? (Array.isArray(LV.manual) ? Object.fromEntries(LV.manual.map((id) => [id, ""])) : LV.manual || {}) : {};
+  const manual = new Map([...Object.entries(told), ...marks(P.week)]);
+  const side = (m, risk, man) => WR_WEEK.analyzeSide({ L: WR_LOCK, starters: (m.starters || []).map(String), points: m.starters_points || [], slots: LV.slots, player: pl,
+    schedule: P.games, stats: P.stats, today: P.today, manual: man, unsure: m.unsure || [], risk, z: LV.z });
+  let mine = side(P.me, "even", manual);
+  const opp = P.op ? side(P.op, "even", new Set()) : null;
+  const risk = opp ? WR_WEEK.riskOf(mine.exp - opp.exp) : LV.risk;
+  if (risk !== "even") mine = side(P.me, risk, manual);
+  // start these 9: today, then the next game day (tentative: depends on today's games)
+  const counted = {}, locked = new Set();
+  for (const r of mine.res.rows) { if (["lock", "hold", "final", "locked", "live", "pending"].includes(r.verdict) && r.latest != null) counted[r.id] = r.latest; if (r.verdict === "locked") locked.add(r.id); }
+  const roster = (P.roster || (D.week1.live && Object.keys(LV.players)) || []).filter((id) => id && id !== "0");
+  const days = [...new Set(P.games.filter((g) => g.date >= P.today).map((g) => g.date))].sort();
+  const plan = [];
+  let lu = (P.me.starters || []).map(String);
+  for (const day of days.slice(0, 2)) {
+    const pp = WR_WEEK.planLineup({ L: WR_LOCK, z: LV.z, risk, slots: LV.slots, starters: lu, counted, locks: locked, roster: [...new Set([...roster, ...lu.filter((x) => x !== "0")])], player: pl, schedule: P.games, day, today: P.today });
+    plan.push(pp); lu = pp.rows.map((r) => r.id || "0");
+    for (const r of pp.rows) if (r.id && r.plays && !r.fixed) counted[r.id] = Math.max(counted[r.id] || 0, r.worth);   // tonight banks about what he's worth
+  }
+  return { P, mine, opp, risk, marked: marks(P.week), plan, pl };
+}
+const VD = { lock: ["Lock now", "solid"], hold: ["Wait", "blue"], wait: ["Not played", "mute"], live: ["Playing", "warn"], pending: ["Final pending", "warn"],
+  final: ["Done", "mute"], none: ["No games", "mute"], locked: ["Locked", "good"] };
+const VORDER = { lock: 0, live: 1, pending: 2, hold: 3, wait: 4, locked: 5, final: 6, none: 7 };
+function nextGame(P, team) { return P.games.filter((g) => (g.home === team || g.away === team) && g.status === "pre_game" && g.date >= P.today).sort((a, b) => a.date.localeCompare(b.date))[0]; }
+function reasonOf(r, P, marked) {
+  const c = r.latest, T = r.threshold, g = nextGame(P, r.pl.team), nd = g ? (g.date === P.today ? "tonight" : dayLong(g.date)) : "";
+  let t;
+  if (r.verdict === "lock") t = `${f1(c)} beats his ${f1(T)} line. Lock it before ${nd === "tonight" ? "tonight's" : nd + "'s"} game.`;
+  else if (r.verdict === "hold") t = r.k === 1 ? `Under his ${f1(T)} line. ${nd === "tonight" ? "Tonight's" : nd + "'s"} game counts unless you lock.` : `Under his ${f1(T)} line with ${r.k} games left. Next: ${nd}.`;
+  else if (r.verdict === "locked") t = marked ? `You marked ${f1(c || 0)} locked.` : r.inferred ? `Locked at ${f1(c || 0)}. Sleeper's count confirms it.` : `Locked at ${f1(c || 0)}.`;
+  else if (r.verdict === "live") t = "Game on now. Decide after it ends.";
+  else if (r.verdict === "final") t = `No games left. ${f1(c)} counts.`;
+  else if (r.verdict === "none") t = r.pl.id === "0" ? "Empty slot. Start someone who plays." : "No games left this week. Start someone who plays.";
+  else t = r.text;
+  if (r.feed != null) t = `${t} Sleeper's feed shows ${f1(r.feed)} right now; it flips between servers, so check the app if unsure.`;
+  if (r.pl.inj && !["locked", "final"].includes(r.verdict)) t = `Listed ${r.pl.inj}. ${t}`;
+  return t;
+}
+function renderLock(S) {
+  const { P, mine } = S, rows = mine.res.rows.slice().sort((a, b) => VORDER[a.verdict] - VORDER[b.verdict]);
+  const names = (rs) => rs.map((r) => esc(last(r.n))).join(rs.length > 2 ? ", " : " and ");
+  const lockNow = rows.filter((r) => r.verdict === "lock"), live = rows.filter((r) => r.verdict === "live"), open = rows.filter((r) => ["hold", "wait", "pending"].includes(r.verdict));
+  let ans;
+  if (lockNow.length) ans = `Lock <em>${names(lockNow)}</em> now.`;
+  else if (live.length) ans = `Nothing to lock yet. ${names(live)} ${live.length > 1 ? "are" : "is"} playing.`;
+  else if (open.length) {
+    const nx = open.map((r) => nextGame(P, r.pl.team)).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date))[0];
+    ans = `Nothing to lock. Wait${nx ? ` for ${nx.date === P.today ? "tonight's" : dayLong(nx.date) + "'s"} games` : ""}.`;
+  } else ans = "All set: every starter is locked or done.";
+  const today = S.plan && S.plan[0], ins = today ? today.rows.filter((r) => r.change && r.id) : [];
+  if (ins.length) ans += ins.length === 1 ? ` Start <b>${esc(last(S.pl(ins[0].id).n))}</b> at ${ins[0].slot}${ins[0].was && ins[0].was !== "0" ? ` for ${esc(last(S.pl(ins[0].was).n))}` : ""}.` : ` Make <b>${ins.length}</b> lineup changes today.`;
+  $("#lock-answer").innerHTML = ans;
+  renderPlan(S.plan, S.pl, P);
+  $("#lock-warn").hidden = true;
+  $("#lock-rows").innerHTML = rows.map((r) => {
+    const [lab, cls] = VD[r.verdict] || [r.verdict, "mute"], marked = S.marked.has(r.id);
+    const sub = ["lock", "hold"].includes(r.verdict) ? `line ${f1(r.threshold)}` : r.verdict === "wait" && r.threshold ? `needs ${f1(r.threshold)}` : "";
+    const played = P.stats.filter((x) => x.player_id === r.id && x.sp > 0).map((x) => x.date).sort().pop() || "";
+    const btn = ["lock", "hold"].includes(r.verdict) || (r.verdict === "locked" && marked) ? `<button class="mk lbtn ${marked ? "undo" : ""}" type="button" data-id="${esc(r.id)}" data-date="${played}">${marked ? "Undo lock" : "I locked this"}</button>` : "";
+    return `<div class="lkr ${r.verdict === "lock" ? "act" : ["final", "none", "locked"].includes(r.verdict) ? "quiet" : r.verdict === "hold" && !r.pl.inj ? "hold" : ""}"><span class="pill vd ${cls}">${lab}</span>
+      <span class="nm">${esc(r.n)} <span class="sm">${esc(r.slot)}</span></span>
+      <span class="sc num">${r.latest == null ? "–" : f1(r.latest)}${sub ? `<small>${sub}</small>` : ""}</span>
+      <span class="rs"><span class="rt">${esc(reasonOf(r, P, marked))}</span>${btn}</span></div>`;
+  }).join("");
+  const RISK = { chase: "You're behind, so lines lean toward waiting for a bigger game.", protect: "You're ahead, so lines lean toward locking good games.", even: "It's close, so the lines are neutral." };
+  const vp = document.querySelectorAll("#vs .pts");
+  if (vp.length === 2 && P.op) { vp[0].textContent = f1(P.me.points || 0); vp[1].textContent = f1(P.op.points || 0); }
+  $("#lock-risk").textContent = `Right now in Sleeper: you ${f1(P.me.points || 0)}, ${LV.oppName || "them"} ${P.op ? f1(P.op.points || 0) : "–"}. ${RISK[S.risk]}`;
+}
+function renderPlan(plan, pl, P) {
+  if (!plan || !plan.length) { $("#plan").innerHTML = '<p class="note">No games left this week.</p>'; $("#plan-next").textContent = ""; return; }
+  const t = plan[0], dname = (d) => (d === etToday() ? "today" : dayLong(d));
+  const opp = (team, d) => { const g = (P ? P.games : []).find((x) => x.date === d && (x.home === team || x.away === team)); return g ? (g.home === team ? `vs ${g.away}` : `at ${g.home}`) : ""; };
+  $("#plan").innerHTML = `<div class="plan">${t.rows.map((r) => {
+    const p = r.id ? pl(r.id) : null, wasN = r.was && r.was !== "0" && r.change ? last(pl(r.was).n) : "";
+    const tag = r.locked ? "Locked" : r.change ? (wasN ? `In for ${esc(wasN)}` : "Fill this slot") : r.plays ? `Plays ${esc(opp(p.team, t.day))}` : "Off today";
+    return `<div class="prow ${r.change ? "in" : ""}"><span class="vd">${esc(r.slot)}</span><span class="nm">${p ? esc(p.n) : "Empty"}</span>
+      <span class="nums"><b>${r.worth.toFixed(1)}</b></span><span class="rs">${tag}</span></div>`; }).join("")}</div>`;
+  const nx = plan[1], ch = nx ? nx.rows.filter((r) => r.change && r.id) : [];
+  $("#plan-next").textContent = !nx ? "" : ch.length ? `Next game day (${dname(nx.day)}), if tonight goes as expected: ${ch.map((r) => `${last(pl(r.id).n)} in at ${r.slot}${r.was && r.was !== "0" ? " for " + last(pl(r.was).n) : ""}`).join("; ")}. Recheck after tonight's games.`
+    : `Next game day (${dname(nx.day)}): no changes expected. Recheck after tonight's games.`;
+  $("#plan").previousElementSibling.textContent = t.day === etToday() ? "Start these 9 today" : `Start these 9 on ${dayLong(t.day)}`;
+}
+function renderLockFallback(msg) {
+  const w = D.week1, M = { "Lock now": "lock", "Hold": "hold", "Wait": "wait", "Live": "live", "Pending": "pending", "Final": "final", "No games": "none", "Locked": "locked" };
+  const rows = w.rows.slice().sort((a, b) => VORDER[M[a.status] || "none"] - VORDER[M[b.status] || "none"]);
+  const lockNow = rows.filter((r) => r.status === "Lock now");
+  $("#lock-answer").innerHTML = lockNow.length ? `Lock <em>${lockNow.map((r) => esc(last(r.n))).join(" and ")}</em> now.` : "Nothing to lock as of the last refresh.";
+  $("#lock-rows").innerHTML = rows.map((r) => { const [lab, cls] = VD[M[r.status]] || [r.status, "mute"];
+    return `<div class="lkr ${M[r.status] === "lock" ? "act" : ""}"><span class="pill vd ${cls}">${lab}</span><span class="nm">${esc(r.n)} <span class="sm">${esc(r.slot || "")}</span></span>
+      <span class="sc num">${r.score == null ? "–" : r.score.toFixed(1)}</span><span class="rs">${esc(r.why)}</span></div>`; }).join("");
+  const fp = (D.week1.plan || []).map((d) => ({ day: d.day, rows: d.rows.map((r) => ({ ...r, was: r.was })) }));
+  if (fp.length) {   // refresh plan carries names, not ids
+    const byN = (n) => ({ n, team: "" });
+    $("#plan").innerHTML = `<div class="plan">${fp[0].rows.map((r) => `<div class="prow ${r.change ? "in" : ""}"><span class="vd">${esc(r.slot)}</span><span class="nm">${esc(r.n)}</span><span class="nums"><b>${r.worth.toFixed(1)}</b></span><span class="rs">${r.locked ? "Locked" : r.change ? `In for ${esc(last(r.was))}` : r.plays ? "Plays" : "Off"}</span></div>`).join("")}</div>`;
+    $("#plan-next").textContent = `As of the last refresh (${fp[0].day}).`;
+  }
+  $("#lock-dot").classList.add("off");
+  $("#lock-meta").textContent = msg;
+}
+let lockLive = null, lockBusy = false, lockAt = 0;
+async function checkLock() {
+  if (!LV || lockBusy) return;
+  lockBusy = true; $("#lock-meta").textContent = "Checking Sleeper…";
+  try {
+    lockLive = await pullLive(); lockAt = Date.now();
+    renderLock(computeLock(lockLive));
+    liveMoves(lockLive);
+    $("#lock-dot").classList.remove("off");
+    $("#lock-meta").textContent = `Live from Sleeper · checked ${lockLive.at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}${lockLive.me.agree ? "" : " · Sleeper's numbers are still settling"}`;
+  } catch (e) {
+    if (lockLive) { $("#lock-dot").classList.add("off"); $("#lock-meta").textContent = `Couldn't reach Sleeper. Last checked ${lockLive.at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`; }
+    else renderLockFallback(`Couldn't reach Sleeper here. Showing the refresh from ${D.eyebrow.split("updated ").pop()}.`);
+  } finally { lockBusy = false; }
+}
+function initLock() {
+  if (!LV) { $("#lock-rows").previousElementSibling.hidden = true; return; }
+  renderLockFallback("Checking Sleeper…");
+  checkLock();
+  setInterval(() => { if (document.visibilityState === "visible") checkLock(); }, 120000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - lockAt > 60000) checkLock(); });
+  $("#lock-check").addEventListener("click", checkLock);
+  $("#lock-rows").addEventListener("click", (e) => { const b = e.target.closest(".mk"); if (b && lockLive) toggleMark(lockLive.week, b.dataset.id, b.dataset.date); });
+}
+
+/* trending + waivers */
+const VCH = { "Add": "good", "Buy-low add": "good", "Speculative add": "warn", "Watch": "blue", "Pass": "mute", "Owned": "mute", "Yours: keep": "you", "Yours: drop candidate": "bad" };
+const VLAB = { "Speculative add": "Maybe", "Yours: keep": "Keep", "Yours: drop candidate": "Drop", "Buy-low add": "Buy low" };
+function renderTrend() {
+  const T = D.trending; if (!T) { $("#trend").hidden = true; return; }
+  const m = T.move;
+  $("#trend-sub") && ($("#trend-sub").textContent = T.meta);
+  $("#trend-answer").innerHTML = m ? `Drop ${esc(last(m.drop))}, add <b>${esc(last(m.add))}</b>.` : "No move needed this week.";
+  $("#swap").innerHTML = m ? `<div class="line"><span class="out">${esc(m.drop)}</span><span>${esc(m.add)}</span><span class="pill good">+${m.gain.toFixed(1)}/wk</span></div>
+    <div class="why">${esc(last(m.drop))}: ${esc(m.dropWhy)}. ${esc(m.addLast)}: ${esc(m.addWhy)}. Small gain, so bid low on FAAB.</div>` : "";
+  const item = (r, chip) => `<div class="li"><span class="n">${esc(r.name)}</span><span class="pill ${VCH[r.verdict] || "mute"}">${chip}</span><span class="w">${esc(r.why)}</span></div>`;
+  const group = (title, list, chipOf) => (list.length ? `<div><div class="lab">${title}</div><div class="list">${list.map((r) => item(r, chipOf(r))).join("")}</div></div>` : "");
+  const others = T.free.filter((r) => !m || r.name !== m.add).slice(0, 3);
+  const drops = T.yours.filter((r) => r.verdict === "Yours: drop candidate"), keeps = T.yours.filter((r) => r.verdict === "Yours: keep");
+  $("#tgroups").innerHTML = group("Other free options", others, (r) => `+${r.gain.toFixed(1)}`) + group("Watch one more game", T.watch, () => "Watch") +
+    `<div><div class="lab">On your team</div><div class="list">${drops.map((r) => item(r, "Drop")).join("")}${keeps.length ? `<div class="li"><span class="n">Keep</span><span class="pill you">Keep</span><span class="w">${keeps.map((r) => esc(last(r.name))).join(", ")}: trending up</span></div>` : ""}</div></div>`;
+  $("#trend-note").textContent = T.sub;
+  const k = (n) => (Math.abs(n) >= 1000 ? Math.round(Math.abs(n) / 1000) + "k" : Math.abs(n));
+  const row = (r) => `<tr><td>${esc(r.name)} <span class="sm">${esc(r.team)}</span></td><td class="r">${k(r.net)}</td><td class="sm">${esc(r.why)}</td><td><span class="pill ${VCH[r.verdict] || "mute"}">${esc(VLAB[r.verdict] || r.verdict)}</span></td></tr>`;
+  const head = (l) => `<tr><th>Player</th><th class="r">${l}</th><th>Why</th><th>For you</th></tr>`;
+  $("#t-add").innerHTML = head("Net adds") + T.add.map(row).join("");
+  $("#t-drop").innerHTML = head("Net drops") + T.drop.map(row).join("");
+  $("#adds").innerHTML = `<tr><th>Add</th><th>Pos</th><th class="r">Value</th><th>Drop</th><th class="r">+/wk</th></tr>` +
+    D.adds.map((a) => `<tr><td>${esc(a.name)} <span class="sm">${esc(a.team)}</span></td><td>${esc(a.pos)}</td><td class="r">${a.lv.toFixed(1)}</td><td>${esc(a.drop)}</td><td class="r">+${a.gain.toFixed(1)}</td></tr>`).join("");
+  $("#wv-note").innerHTML = D.notes.waivers;
+}
+
+/* season */
+function renderSeason() {
+  const T = teams(), m = me(), mw = D.teamsWide.find((t) => t.me), mn = D.teams.find((t) => t.me);
+  const rank = T.slice().sort((a, b) => b.wins - a.wins).indexOf(m) + 1;
+  $("#season-answer").innerHTML = `Projected <b>#${rank}</b>: ${m.wins.toFixed(1)}–${(18 - m.wins).toFixed(1)}, ${pct(m.playoff)} to make the playoffs.`;
+  const avg = T.reduce((a, t) => a + t.mean, 0) / T.length;
+  $("#season-facts").innerHTML = [["Title", `${Math.round(mw.title * 100)}–${Math.round(mn.title * 100)}%`], ["Avg seed", m.seed.toFixed(1)], ["Points/week", `${Math.round(m.mean)} (avg ${Math.round(avg)})`], ["Reach final", pct(m.final)]]
+    .map(([k, v]) => `<span class="fact">${k} <b>${v}</b></span>`).join("");
+  $("#strip").innerHTML = D.myWeeks.map((x) => x.res
+    ? `<div class="b" data-tip="Week ${x.w} vs ${esc(x.opp)}: ${x.res === "W" ? "won" : "lost"} ${esc(x.score)}"><i class="${x.res === "W" ? "won" : "lost"}" style="height:100%"></i></div>`
+    : `<div class="b ${x.w === D.week1.week ? "now" : ""}" data-tip="Week ${x.w} vs ${esc(x.opp)}: ${pct(x.odds)} to win"><i class="${x.odds < 0.5 ? "lo" : ""}" style="height:${Math.max(3, x.odds * 100)}%"></i></div>`).join("");
+  $("#strip-x").innerHTML = D.myWeeks.map((x) => `<span>${x.w}</span>`).join("");
+  $("#swing-note").textContent = SW === "n" ? "Each team's weekly total varies about 22 points around its average." : "Each team's weekly total varies about 30 points. More upsets, so your edge shrinks.";
+  const R = T.slice().sort((a, b) => b.wins - a.wins), mx = 18;
+  $("#race").innerHTML = R.map((t) => `<div class="ln"><span class="${t.me ? "pill you" : ""}" style="${t.me ? "justify-self:start" : ""}">${esc(t.me ? "You" : t.name)}</span><div class="tr" data-tip="${esc(t.name)}: ${t.wins.toFixed(1)} wins, ${pct(t.playoff)} playoffs, ${pct(t.title)} title"><i class="${t.me ? "me" : ""}" style="width:${(t.wins / mx) * 100}%"></i><span>${t.wins.toFixed(1)}</span></div></div>`).join("");
+  renderPower();
+}
+function setSwing(s) { SW = s; $("#sw-n").setAttribute("aria-pressed", s === "n"); $("#sw-w").setAttribute("aria-pressed", s === "w"); renderSeason(); }
+$("#sw-n").addEventListener("click", () => setSwing("n"));
+$("#sw-w").addEventListener("click", () => setSwing("w"));
+
+function renderPower() {
+  const T = teams().slice().sort((a, b) => b.mean - a.mean), lo = Math.min(...T.map((t) => t.mean)) - 12, hi = Math.max(...T.map((t) => t.mean));
+  const style = Object.fromEntries(D.room.map((r) => [r.name, r.label]));
+  const lead = T[0].me ? T[0].mean - T[1].mean : 0;
+  $("#power-answer").innerHTML = T[0].me ? `You're <b>#1</b>, ${lead.toFixed(0)} points a week ahead of ${esc(T[1].name)}.` : `You're #${T.findIndex((t) => t.me) + 1}.`;
+  const head = `<span class="h"></span><span class="h">Team</span><span class="h">Per week</span><span class="h r">Playoffs</span><span class="h r">Title</span>`;
+  const row = (t, i) => `<span class="rk num">${i + 1}</span><span class="nm ${t.me ? "me" : ""}" data-tip="${esc(t.stars.join(", "))} · draft ${Math.round((t.draft || 0) * 100)}% · ${esc(style[t.name] || "")}">${esc(t.me ? "You" : t.name)}</span>
+    <span class="tr"><i class="${t.me ? "me" : ""}" style="width:${((t.mean - lo) / (hi - lo)) * 100}%"></i><span>${t.mean.toFixed(0)}</span></span><span class="r">${pct(t.playoff)}</span><span class="r">${pct(t.title)}</span>`;
+  $("#power-top").innerHTML = head + T.slice(0, 4).map(row).join("");
+  $("#power-all").innerHTML = head + T.map(row).join("");
+}
+
+/* lineup */
+function renderLineup() {
+  const S = D.slots, weak = S.filter((s) => s.diff < 0).sort((a, b) => a.diff - b.diff), strong = S.slice().sort((a, b) => b.diff - a.diff)[0];
+  void (weak.length ? `Weak spot: <em>guards</em>. Strength: <b>${esc(strong.slot)} ${esc(last(strong.name))} +${strong.diff.toFixed(1)}</b>.` : `Every slot beats the league average.`);
+  const mx = Math.max(...S.map((s) => Math.abs(s.diff)));
+  $("#slots").innerHTML = `<tr><th>Slot</th><th>Player</th><th class="r">Value</th><th>vs league avg</th></tr>` + S.map((s) => {
+    const w = (Math.abs(s.diff) / mx) * 50;
+    return `<tr><td><b>${s.slot}</b></td><td>${esc(s.name)}</td><td class="r">${s.lv.toFixed(1)}</td><td><div class="diff" data-tip="${s.diff >= 0 ? "+" : ""}${s.diff.toFixed(1)} vs the average ${s.slot}"><i style="left:${s.diff >= 0 ? 50 : 50 - w}%;width:${w}%;background:${s.diff >= 0 ? "var(--blue)" : "var(--red)"}"></i></div></td></tr>`;
+  }).join("");
+  $("#bench").innerHTML = `<tr><th>Bench</th><th>Pos</th><th class="r">Value</th><th class="r">Adds</th></tr>` + D.bench.map((b) => `<tr><td>${esc(b.name)} ${b.ir ? '<span class="pill bad">IR</span>' : ""}</td><td>${esc(b.pos)}</td><td class="r">${b.lv.toFixed(1)}</td><td class="r">${b.adds.toFixed(1)}</td></tr>`).join("");
+  const c = D.coverage;
+  $("#cover").innerHTML = [["Guards", c.G], ["Forwards", c.F], ["Centers", c.C], ["Center-only", c.Conly]].map(([k, v]) => `<span class="fact">${k} <b>${v}</b></span>`).join("");
+}
+
+/* trades + room */
+function renderTrades() {
+  const B = D.buy, t = B[0];
+  $("#trades-answer").innerHTML = t ? `Ask ${esc(t.owner)} about <b>${esc(t.name)}</b>: +${t.fitAdd.toFixed(1)}/wk for you.` : "No clear targets right now.";
+  $("#buy-top").innerHTML = B.slice(0, 3).map((b) => `<div class="li"><span class="n">${esc(b.name)} <span class="sm">from ${esc(b.owner)}</span></span><span class="pill good">+${b.fitAdd.toFixed(1)}</span><span class="w">Value rank #${b.lockRank}, market rank #${b.adpRank}</span></div>`).join("");
+  $("#buy").innerHTML = `<tr><th>Player</th><th>Owner</th><th class="r">Value rank</th><th class="r">Market rank</th><th class="r">Adds</th></tr>` +
+    B.map((b) => `<tr><td>${esc(b.name)} <span class="sm">${esc(b.pos)}</span></td><td>${esc(b.owner)} <span class="sm">${esc(b.ownerSharp)}</span></td><td class="r">#${b.lockRank}</td><td class="r">#${b.adpRank}</td><td class="r">+${b.fitAdd.toFixed(1)}</td></tr>`).join("");
+  $("#room-note").innerHTML = D.notes.room;
+  $("#room").innerHTML = D.room.map((r) => `<span class="${r.me ? "pill you" : ""}" style="justify-self:start">${esc(r.me ? "You" : r.name)}</span><span class="tr" data-tip="${esc(r.label)}"><i class="${r.me ? "me" : ""}" style="width:${Math.max(2, r.s * 100)}%"></i></span><span class="r num">${Math.round(r.s * 100)}</span>`).join("");
+}
+
+/* draft */
+function renderDraft() {
+  const P = D.myDraft, avg = P.reduce((a, p) => a + p.pct, 0) / P.length;
+  const rank = D.teams.slice().sort((a, b) => (b.draft || 0) - (a.draft || 0)).findIndex((t) => t.me) + 1;
+  $("#draft-answer").innerHTML = `<b>${Math.round(avg * 100)}%</b> of the best value at each pick. ${rank === 1 ? "Best draft in the league." : `#${rank} in the league.`}`;
+  const cnt = (g) => P.filter((p) => p.grade === g).length;
+  $("#draft-facts").innerHTML = [["Strong", cnt("strong"), "good"], ["Solid", cnt("solid"), "blue"], ["Questionable", cnt("q"), "warn"], ["Reach", cnt("reach"), "bad"]]
+    .map(([k, v]) => `<span class="fact">${k} <b>${v}</b></span>`).join("") + `<span class="fact">Dropped <b>${P.filter((p) => !p.kept).length}</b></span>`;
+  const GL = { strong: "good", solid: "blue", q: "warn", reach: "bad" };
+  $("#picks").innerHTML = P.map((p) => `<div class="pk"><div class="t"><span class="nm">${esc(p.name)}</span><span class="rd num">${p.round}.${p.round % 2 ? 10 : 1}</span></div>
+    <div class="t"><span class="sm">${esc(p.pos)} · pick ${p.pick} · ADP ${Math.round(p.adp)}</span><span class="pill ${GL[p.grade]}">${esc(p.gradeLabel)}</span></div>
+    <div class="meter"><i style="width:${Math.min(100, p.pct * 100)}%"></i></div>
+    <span class="sm">${p.pct >= 0.995 ? "Best value on the board." : "Could've had " + p.alts.map((a) => esc(a.n)).join(" or ")}${p.kept ? "" : " · dropped"}</span></div>`).join("");
+}
+
+/* playoffs, next, assumptions */
+function renderRest() {
+  const G = D.playoffGames.map((p) => ({ ...p, tot: p.games.reduce((a, b) => a + b, 0) })).sort((a, b) => b.tot - a.tot);
+  const top = G.filter((p) => p.tot === G[0].tot);
+  const m = D.teams.find((t) => t.me), prank = D.teams.slice().sort((a, b) => b.pmean - a.pmean).indexOf(m) + 1;
+  $("#po-answer").innerHTML = `<b>#${prank}</b> in playoff-week strength. Most games: ${top.map((p) => esc(last(p.name))).join(", ")} (${G[0].tot}).`;
+  const cell = (n) => `<span class="gm" style="background:${n >= 4 ? "var(--blue)" : n === 3 ? "var(--surface-2)" : "var(--track)"};color:${n >= 4 ? "#fff" : "var(--ink)"}">${n}</span>`;
+  $("#po").innerHTML = `<tr><th>Player</th><th>Wk 19</th><th>Wk 20</th><th>Wk 21</th><th class="r">Total</th></tr>` + G.map((p) => `<tr><td>${esc(p.name)} <span class="sm">${esc(p.team)}</span></td>${p.games.map((n) => `<td>${cell(n)}</td>`).join("")}<td class="r"><b>${p.tot}</b></td></tr>`).join("");
+  $("#next-answer").innerHTML = D.notes.next;
+  $("#steps").innerHTML = D.notes.steps.map((s) => `<li>${s}</li>`).join("");
+  $("#assumptions").innerHTML = D.notes.assumptions.map(([t, b]) => `<div class="li"><span class="n">${esc(t)}</span><span></span><span class="w">${esc(b)}</span></div>`).join("");
+  $("#foot").innerHTML = D.notes.footer;
+}
+
+/* tools */
+const deeps = () => [...document.querySelectorAll("details.deep")];
+function syncOpen() { $("#t-open").textContent = deeps().every((d) => d.open) ? "Close all deep dives" : "Open all deep dives"; }
+$("#t-open").addEventListener("click", () => { const open = !deeps().every((d) => d.open); deeps().forEach((d) => (d.open = open)); syncOpen(); });
+deeps().forEach((d) => d.addEventListener("toggle", syncOpen));
+const fsb = $("#t-fs");
+if (document.fullscreenEnabled) {
+  fsb.hidden = false;
+  fsb.addEventListener("click", () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (e) {} });
+  document.addEventListener("fullscreenchange", () => (fsb.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"));
+}
+/* on a phone the scoreboard scrolls away and only the section nav stays pinned */
+function pinBand() {
+  const b = $(".band"), n = $(".navrow");
+  b.style.top = innerWidth <= 720 ? `calc(env(safe-area-inset-top, 0px) - ${n.offsetTop - 8}px)` : "";
+  document.documentElement.style.setProperty("--bandh", (innerWidth <= 720 ? b.offsetHeight - n.offsetTop + 8 : b.offsetHeight) + "px");
+}
+/* nav tabs open one section full screen; the same tab again, "All", or Esc goes back to every section */
+const board = $(".board"), tabs = [...document.querySelectorAll(".nav a")];
+let autoOpened = [];
+function focusSection(id) {
+  autoOpened.forEach((d) => (d.open = false)); autoOpened = [];
+  document.querySelectorAll(".c.focus").forEach((c) => c.classList.remove("focus"));
+  const c = id && document.getElementById(id);
+  if (c) {
+    c.classList.add("focus"); board.dataset.focus = id;
+    c.querySelectorAll("details.deep").forEach((d) => { if (!d.open) { d.open = true; autoOpened.push(d); } });
+  } else delete board.dataset.focus;
+  tabs.forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === "#" + (c ? id : "all") ? "true" : "false"));
+  syncOpen();
+  scrollTo({ top: 0, behavior: "instant" });
+}
+tabs.forEach((a) => a.addEventListener("click", (e) => {
+  e.preventDefault();
+  const id = a.getAttribute("href").slice(1);
+  focusSection(id === "all" || id === board.dataset.focus ? "" : id);
+  a.scrollIntoView({ block: "nearest", inline: "nearest" });
+}));
+addEventListener("keydown", (e) => { if (e.key === "Escape" && board.dataset.focus) focusSection(""); });
+addEventListener("resize", pinBand);
+
+if (D.liveLink) $("#t-live").hidden = false;
+renderBand(); pinBand(); renderWeek(); initLock(); renderTrend(); renderWaivers(); renderSeason(); renderLineup(); renderTeam(); renderTrades(); renderDraft(); renderRest();
+</script>

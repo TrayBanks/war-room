@@ -111,16 +111,16 @@ const myTeams = new Set([...W.me.starters, ...W.me.bench].map((id) => player(id)
 const left = [...new Set(schedule.filter((g) => g.status === "pre_game" && g.date >= today && (myTeams.has(g.home) || myTeams.has(g.away))).map((g) => g.date))].sort();
 const RISK = { chase: "You're behind, so the lock lines chase upside: hold for bigger games.", protect: "You're ahead, so the lock lines protect the lead: lock good games sooner.", even: "It's close, so the lock lines are neutral." };
 // ---------- start these 9: today and each game day left ----------
-const counted = {}, lockedIds = new Set();
-for (const r of me.res.rows) { if (["lock", "hold", "final", "locked", "live", "pending"].includes(r.verdict) && r.latest != null) counted[r.id] = r.latest; if (r.verdict === "locked") lockedIds.add(r.id); }
+const counted = {}, lockedIds = new Set(), toLock = new Set();
+for (const r of me.res.rows) { if (["lock", "hold", "final", "locked", "live", "pending"].includes(r.verdict) && r.latest != null) counted[r.id] = r.latest; if (r.verdict === "locked") lockedIds.add(r.id); if (r.verdict === "lock") toLock.add(r.id); }
 const myRoster = [...W.me.starters, ...W.me.bench].filter((id) => id && id !== "0");
 let lineupNow = W.me.starters.slice();   // later days build on the day before (tentative: those games haven't happened)
 const plan = [...new Set(schedule.filter((g) => g.date >= today).map((g) => g.date))].sort().map((day) => {
-  const pl = WKL.planLineup({ L, z: Z, risk, slots: W.slots, starters: lineupNow, counted, locks: lockedIds, roster: myRoster, player, schedule, day, today });
+  const pl = WKL.planLineup({ L, z: Z, risk, slots: W.slots, starters: lineupNow, counted, locks: lockedIds, toLock, roster: myRoster, player, schedule, day, today });
   lineupNow = pl.rows.map((r) => r.id || "0");
   for (const r of pl.rows) if (r.id && r.plays && !r.fixed) counted[r.id] = Math.max(counted[r.id] || 0, r.worth);
   return { day, gain: pl.gain, rows: pl.rows.map((r) => ({ slot: r.slot, id: r.id, n: r.id ? player(r.id).n : "Empty", was: r.was && r.was !== "0" ? player(r.was).n : "Empty",
-    change: r.change, locked: r.locked, fixed: r.fixed, plays: r.plays, worth: r.worth })) };
+    change: r.change, locked: r.locked, toLock: r.toLock, fixed: r.fixed, plays: r.plays, worth: r.worth })) };
 });
 const out = {
   week: W.week, today, opp: W.opp ? W.opp.name : "", me: +W.me.points.toFixed(1), oppPts: W.opp ? +W.opp.points.toFixed(1) : 0,

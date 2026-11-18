@@ -621,14 +621,14 @@ function computeLock(P) {
   const risk = opp ? WR_WEEK.riskOf(mine.exp - opp.exp) : LV.risk;
   if (risk !== "even") mine = side(P.me, risk, manual);
   // start these 9: today, then the next game day (tentative: depends on today's games)
-  const counted = {}, locked = new Set();
-  for (const r of mine.res.rows) { if (["lock", "hold", "final", "locked", "live", "pending"].includes(r.verdict) && r.latest != null) counted[r.id] = r.latest; if (r.verdict === "locked") locked.add(r.id); }
+  const counted = {}, locked = new Set(), toLock = new Set();   // a "Lock now" starter stays in his slot
+  for (const r of mine.res.rows) { if (["lock", "hold", "final", "locked", "live", "pending"].includes(r.verdict) && r.latest != null) counted[r.id] = r.latest; if (r.verdict === "locked") locked.add(r.id); if (r.verdict === "lock") toLock.add(r.id); }
   const roster = (P.roster || (D.week1.live && Object.keys(LV.players)) || []).filter((id) => id && id !== "0");
   const days = [...new Set(P.games.filter((g) => g.date >= P.today).map((g) => g.date))].sort();
   const plan = [];
   let lu = (P.me.starters || []).map(String);
   for (const day of days.slice(0, 2)) {
-    const pp = WR_WEEK.planLineup({ L: WR_LOCK, z: LV.z, risk, slots: LV.slots, starters: lu, counted, locks: locked, roster: [...new Set([...roster, ...lu.filter((x) => x !== "0")])], player: pl, schedule: P.games, day, today: P.today });
+    const pp = WR_WEEK.planLineup({ L: WR_LOCK, z: LV.z, risk, slots: LV.slots, starters: lu, counted, locks: locked, toLock, roster: [...new Set([...roster, ...lu.filter((x) => x !== "0")])], player: pl, schedule: P.games, day, today: P.today });
     plan.push(pp); lu = pp.rows.map((r) => r.id || "0");
     for (const r of pp.rows) if (r.id && r.plays && !r.fixed) counted[r.id] = Math.max(counted[r.id] || 0, r.worth);   // tonight banks about what he's worth
   }
@@ -689,7 +689,7 @@ function renderPlan(plan, pl, P) {
   const opp = (team, d) => { const g = (P ? P.games : []).find((x) => x.date === d && (x.home === team || x.away === team)); return g ? (g.home === team ? `vs ${g.away}` : `at ${g.home}`) : ""; };
   $("#plan").innerHTML = `<div class="plan">${t.rows.map((r) => {
     const p = r.id ? pl(r.id) : null, wasN = r.was && r.was !== "0" && r.change ? last(pl(r.was).n) : "";
-    const tag = r.locked ? "Locked" : r.change ? (wasN ? `In for ${esc(wasN)}` : "Fill this slot") : r.plays ? `Plays ${esc(opp(p.team, t.day))}` : "Off today";
+    const tag = r.locked ? "Locked" : r.toLock ? "Lock now, keep him here" : r.change ? (wasN ? `In for ${esc(wasN)}` : "Fill this slot") : r.plays ? `Plays ${esc(opp(p.team, t.day))}` : "Off today";
     return `<div class="prow ${r.change ? "in" : ""}"><span class="vd">${esc(r.slot)}</span><span class="nm">${p ? esc(p.n) : "Empty"}</span>
       <span class="nums"><b>${r.worth.toFixed(1)}</b></span><span class="rs">${tag}</span></div>`; }).join("")}</div>`;
   const nx = plan[1], ch = nx ? nx.rows.filter((r) => r.change && r.id) : [];
@@ -708,7 +708,7 @@ function renderLockFallback(msg) {
   const fp = (D.week1.plan || []).map((d) => ({ day: d.day, rows: d.rows.map((r) => ({ ...r, was: r.was })) }));
   if (fp.length) {   // refresh plan carries names, not ids
     const byN = (n) => ({ n, team: "" });
-    $("#plan").innerHTML = `<div class="plan">${fp[0].rows.map((r) => `<div class="prow ${r.change ? "in" : ""}"><span class="vd">${esc(r.slot)}</span><span class="nm">${esc(r.n)}</span><span class="nums"><b>${r.worth.toFixed(1)}</b></span><span class="rs">${r.locked ? "Locked" : r.change ? `In for ${esc(last(r.was))}` : r.plays ? "Plays" : "Off"}</span></div>`).join("")}</div>`;
+    $("#plan").innerHTML = `<div class="plan">${fp[0].rows.map((r) => `<div class="prow ${r.change ? "in" : ""}"><span class="vd">${esc(r.slot)}</span><span class="nm">${esc(r.n)}</span><span class="nums"><b>${r.worth.toFixed(1)}</b></span><span class="rs">${r.locked ? "Locked" : r.toLock ? "Lock now, keep him here" : r.change ? `In for ${esc(last(r.was))}` : r.plays ? "Plays" : "Off"}</span></div>`).join("")}</div>`;
     $("#plan-next").textContent = `As of the last refresh (${fp[0].day}).`;
   }
   $("#lock-dot").classList.add("off");

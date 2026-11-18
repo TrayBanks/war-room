@@ -4,7 +4,7 @@
   "private": true,
   "description": "Sleeper NBA draft overlay and Lock-In coach for NBA League Revamped (slot 10).",
   "scripts": {
-    "test": "node tests/test_engine.js && node tests/test_fit.js && node tests/test_lock.js && node tests/test_bridge.js && node tests/test_ui.js && node tests/test_season.js",
+    "test": "node tests/test_engine.js && node tests/test_fit.js && node tests/test_lock.js && node tests/test_bridge.js && node tests/test_ui.js && node tests/test_season.js && node tests/test_plan.js",
     "build": "python3 model/build_ext.py",
     "report": "python3 model/model.py && python3 model/build_page.py",
     "render": "python3 tests/render_ext.py 29 drafting clock && python3 tests/render_ext.py 40 drafting wait && python3 tests/render_season.py",

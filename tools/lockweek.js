@@ -81,7 +81,8 @@
      cont); if not, just the score he has banked (a bench player who sits that day can be swapped in later at no cost).
      Fixed in place: locked starters, and anyone whose game that day has already tipped (Sleeper locks them). A bench player
      whose game already tipped can't start that day. Bitmask DP over the 9 slots.
-     o: { L, z, risk, slots, starters: [ids by slot], counted: {id: score}, locks: Set, roster: [ids], player(id), schedule, day, today } */
+     A starter the lock call says to lock now (o.toLock) is fixed too: you can't lock him and swap him out the same day.
+     o: { L, z, risk, slots, starters: [ids by slot], counted: {id: score}, locks: Set, toLock: Set, roster: [ids], player(id), schedule, day, today } */
   const SLOT_OK = { PG: ["PG"], SG: ["SG"], G: ["PG", "SG"], SF: ["SF"], PF: ["PF"], F: ["SF", "PF"], C: ["C"], UTIL: null };
   const fits = (slot, pos) => !SLOT_OK[slot] || (pos || []).some((x) => SLOT_OK[slot].includes(x));
   function planLineup(o) {
@@ -95,8 +96,8 @@
       // so off days are worth just the score he has banked
       return k && q && playsDay(p.team) ? o.L.solve(p.mu, p.cv, q, 6, { risk: o.risk || "even", z: o.z }).cont(c, k) : c;
     };
-    const fixed = {}, used = new Set();
-    o.slots.forEach((s, i) => { const id = o.starters[i]; if (id && id !== "0" && (o.locks.has(id) || (day === o.today && tipped(o.player(id).team)))) { fixed[i] = id; used.add(id); } });
+    const fixed = {}, used = new Set(), toLock = o.toLock || new Set();
+    o.slots.forEach((s, i) => { const id = o.starters[i]; if (id && id !== "0" && (o.locks.has(id) || toLock.has(id) || (day === o.today && tipped(o.player(id).team)))) { fixed[i] = id; used.add(id); } });
     const free = o.slots.map((s, i) => i).filter((i) => fixed[i] == null);
     const cands = o.roster.filter((id) => !used.has(id) && !(day === o.today && tipped(o.player(id).team) && !o.starters.includes(id)));
     const val = Object.fromEntries(cands.map((id) => [id, worth(id)]));
@@ -117,7 +118,7 @@
     for (const [i, id] of top.pick) lineup[i] = id;
     const rows = o.slots.map((s, i) => {
       const id = lineup[i], was = o.starters[i];
-      return { slot: s, id, was, change: !!id && id !== was, fixed: fixed[i] != null, locked: !!(id && o.locks.has(id)), plays: id ? playsDay(o.player(id).team) : false, worth: id ? +(fixed[i] != null ? (o.counted[id] || 0) : val[id]).toFixed(1) : 0 };
+      return { slot: s, id, was, change: !!id && id !== was, fixed: fixed[i] != null, locked: !!(id && o.locks.has(id)), toLock: !!(id && toLock.has(id) && !o.locks.has(id)), plays: id ? playsDay(o.player(id).team) : false, worth: id ? +(fixed[i] != null ? (o.counted[id] || 0) : val[id]).toFixed(1) : 0 };
     });
     const nowVal = o.slots.reduce((a, s, i) => { const id = o.starters[i]; return a + (!id || id === "0" ? 0 : fixed[i] != null ? o.counted[id] || 0 : cands.includes(id) ? val[id] : 0); }, 0);
     return { day, rows, total: +rows.reduce((a, r) => a + r.worth, 0).toFixed(1), gain: +(rows.reduce((a, r) => a + r.worth, 0) - nowVal).toFixed(1) };

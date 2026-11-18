@@ -259,20 +259,30 @@ details.deep > .dd { display: grid; gap: 14px; margin-top: 12px; }
 .tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--other); }
 .tr i.me { background: var(--gold-fill); }
 .tr span { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 11.5px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
-.top140 .xs { display: none; }
-#leaders .own { display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-@container (max-width: 460px) {
-  #leaders td, #leaders th { padding-left: 4px; padding-right: 4px; font-size: 13px; }
-  #leaders .own { max-width: 64px; }
-  .top140 .lg { display: none; } .top140 .xs { display: inline; }
-}
 .top140 { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
 .bd-tools { display: flex; flex-wrap: wrap; gap: 8px; }
-.bd-tbl { max-height: 70vh; overflow: auto; }
-.bd-tbl th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
-#leaders tr.me td { font-weight: 700; }
-#leaders tr.fa td:first-child { box-shadow: inset 3px 0 0 var(--good); }
-#leaders .pill { font-size: 12px; padding: 1px 8px; }
+.top140 .xs { display: none; }
+.bd-list { max-height: 75vh; overflow-y: auto; overflow-x: hidden; }
+.r140 { display: grid; grid-template-columns: 2.6em 2.6em minmax(0,1fr) minmax(0,9em) 4em 5.2em; grid-template-areas: "ros r2 nm st f f2"; gap: 2px 8px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.r140 > span { min-width: 0; }
+.r140 .c-ros { grid-area: ros; text-align: right; } .r140 .c-r2 { grid-area: r2; text-align: right; color: var(--muted); }
+.r140 .c-nm { grid-area: nm; overflow-wrap: break-word; } .r140 .c-st { grid-area: st; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: .92em; }
+.r140 .c-f { grid-area: f; text-align: right; } .r140 .c-f2 { grid-area: f2; text-align: right; }
+.r140 .c-r2 i, .r140 .c-f2 i { font-style: normal; display: none; }
+.r140.hd { position: sticky; top: 0; z-index: 1; background: var(--surface); font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.r140.me { font-weight: 700; } .r140.me .c-st { color: var(--gold); }
+.r140.fa { box-shadow: inset 3px 0 0 var(--good); }
+.r140 .pill { font-size: 12px; padding: 1px 8px; }
+@container (max-width: 520px) {
+  .r140 { grid-template-columns: auto minmax(0,1fr) auto; grid-template-areas: "ros nm f" "r2 st f2"; gap: 0 8px; padding: 8px 2px 8px 6px; }
+  .r140 .c-r2, .r140 .c-f2 { white-space: nowrap; } .r140 .c-f2 .sm { display: none; }
+  .r140 .c-ros { font-weight: 700; font-size: 1.05em; } .r140 .c-r2, .r140 .c-f2 { font-size: .82em; color: var(--muted); }
+  .r140 .c-r2 i, .r140 .c-f2 i { display: inline; }
+  .r140 .c-st { font-size: .85em; }
+  .r140.hd .c-r2, .r140.hd .c-f2, .r140.hd .c-st { display: none; }
+  .r140.hd { grid-template-areas: "ros nm f"; }
+  .top140 .lg { display: none; } .top140 .xs { display: inline; }
+}
 .toggle { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
 .toggle button { border: 0; background: transparent; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
 .toggle button[aria-pressed="true"] { background: var(--band); color: #fff; }
@@ -419,7 +429,7 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
         <div class="toggle" role="group" aria-label="Rank by"><button data-s="ros" aria-pressed="true">Rest of season</button><button data-s="r2" aria-pressed="false">Last 2 weeks</button></div>
       </div>
       <p class="note" id="bd-note"></p>
-      <div class="tbl bd-tbl"><table id="leaders"></table></div>
+      <div class="bd-list" id="leaders"></div>
     </div>
     <details class="deep"><summary>Deep dive: team rankings and game logs</summary><div class="dd">
       <p class="note">Values blend last season, the preseason projection and this season (this season counts about half after 12 games, weighted toward the last 5). Rank = rest-of-season lock value among every player worth a look. Hold line = the 140th best player: a 10-team league rosters 140.</p>
@@ -571,14 +581,15 @@ function renderBoard() {
   $("#bd-note").textContent = `${nFree} of the top 140 ${BD.s === "ros" ? "rest of season" : "over the last 2 weeks"} ${nFree === 1 ? "is" : "are"} free or on waivers. ` +
     (BD.s === "ros" ? "Rest of season blends last season, the preseason projection and this season." : "Last 2 weeks = FP/g in games over the past 14 days (2+ games).") + (BD.own ? " Ownership is live from Sleeper." : "");
   const day = (t) => new Date(t).toLocaleDateString("en-US", { weekday: "short", timeZone: "America/Chicago" });
-  $("#leaders").innerHTML = `<tr><th class="r">ROS</th><th class="r">2 wk</th><th>Player</th><th>Status</th><th class="r">ROS<br>FP/g</th><th class="r">2 wk<br>FP/g</th></tr>` + (rows.length ? rows.map(([id, r]) => {
+  const hd = `<div class="r140 hd"><span class="c-ros">ROS</span><span class="c-r2">2 wk</span><span class="c-nm">Player</span><span class="c-st">Status</span><span class="c-f">FP/g</span><span class="c-f2">2 wk FP/g</span></div>`;
+  $("#leaders").innerHTML = hd + (rows.length ? rows.map(([id, r]) => {
     const o = ownerOf(id, r), w = wvOf(id, r), free = isFree(id, r), inj = vc(r, "inj");
-    const st = o ? (o === rid ? "You" : `<span class="own">${esc(V.owners[o] || "")}</span>`) : !vc(r, "t") ? "No team" : w && w > Date.now() ? `<span class="pill warn"><span class="lg">Waivers to </span><span class="xs">W </span>${day(w)}</span>` : `<span class="pill good"><span class="lg">Free agent</span><span class="xs">FA</span></span>`;
+    const st = o ? (o === rid ? "You" : esc(V.owners[o] || "")) : !vc(r, "t") ? "No team" : w && w > Date.now() ? `<span class="pill warn"><span class="lg">Waivers to </span><span class="xs">Waivers </span>${day(w)}</span>` : `<span class="pill good">Free agent</span>`;
     const r2 = vc(r, "rank2"), f2 = vc(r, "fp2"), g2 = vc(r, "gp2");
-    return `<tr class="${o === rid ? "me" : free ? "fa" : ""}"><td class="r">${vc(r, "rank")}</td><td class="r">${r2 || "–"}</td>
-      <td>${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "t") || "")} ${esc(vc(r, "pos"))}${inj ? ` · ${esc(inj)}` : ""}</span></td><td class="sm">${st}</td>
-      <td class="r">${vc(r, "est").toFixed(1)}</td><td class="r">${f2 == null ? "–" : `${f2.toFixed(1)} <span class="sm">(${g2})</span>`}</td></tr>`; }).join("")
-    : `<tr><td colspan="6" class="sm">${BD.f === "free" ? "Nobody in the top 140 is free right now." : "None of your players are in this top 140."}</td></tr>`);
+    return `<div class="r140 ${o === rid ? "me" : free ? "fa" : ""}"><span class="c-ros">${vc(r, "rank")}</span><span class="c-r2"><i>2w </i>${r2 ? "#" + r2 : "–"}</span>
+      <span class="c-nm">${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "t") || "")} ${esc(vc(r, "pos"))}${inj ? ` · ${esc(inj)}` : ""}</span></span><span class="c-st">${st}</span>
+      <span class="c-f">${vc(r, "est").toFixed(1)}</span><span class="c-f2"><i>2 wk </i>${f2 == null ? "–" : `${f2.toFixed(1)} <span class="sm">(${g2})</span>`}</span></div>`; }).join("")
+    : `<p class="note">${BD.f === "free" ? "Nobody in the top 140 is free right now." : "None of your players are in this top 140."}</p>`);
 }
 function liveBoard(P) {
   if (!V || !P.rosters) return;

@@ -259,6 +259,20 @@ details.deep > .dd { display: grid; gap: 14px; margin-top: 12px; }
 .tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--other); }
 .tr i.me { background: var(--gold-fill); }
 .tr span { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 11.5px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.top140 .xs { display: none; }
+#leaders .own { display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+@container (max-width: 460px) {
+  #leaders td, #leaders th { padding-left: 4px; padding-right: 4px; font-size: 13px; }
+  #leaders .own { max-width: 64px; }
+  .top140 .lg { display: none; } .top140 .xs { display: inline; }
+}
+.top140 { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.bd-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.bd-tbl { max-height: 70vh; overflow: auto; }
+.bd-tbl th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+#leaders tr.me td { font-weight: 700; }
+#leaders tr.fa td:first-child { box-shadow: inset 3px 0 0 var(--good); }
+#leaders .pill { font-size: 12px; padding: 1px 8px; }
 .toggle { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; gap: 2px; }
 .toggle button { border: 0; background: transparent; padding: 5px 12px; border-radius: 999px; cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
 .toggle button[aria-pressed="true"] { background: var(--band); color: #fff; }
@@ -398,10 +412,18 @@ footer { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
     <div class="facts" id="horizons"></div>
     <div class="facts" id="groups"></div>
     <div id="roster"></div>
-    <details class="deep"><summary>Deep dive: league leaderboards, team rankings and game logs</summary><div class="dd">
+    <div class="top140">
+      <div class="lab">Top 140: who's worth a roster spot</div>
+      <div class="bd-tools">
+        <div class="toggle" role="group" aria-label="Show"><button data-f="all" aria-pressed="true">All</button><button data-f="free" aria-pressed="false">Free and waivers</button><button data-f="mine" aria-pressed="false">Yours</button></div>
+        <div class="toggle" role="group" aria-label="Rank by"><button data-s="ros" aria-pressed="true">Rest of season</button><button data-s="r2" aria-pressed="false">Last 2 weeks</button></div>
+      </div>
+      <p class="note" id="bd-note"></p>
+      <div class="tbl bd-tbl"><table id="leaders"></table></div>
+    </div>
+    <details class="deep"><summary>Deep dive: team rankings and game logs</summary><div class="dd">
       <p class="note">Values blend last season, the preseason projection and this season (this season counts about half after 12 games, weighted toward the last 5). Rank = rest-of-season lock value among every player worth a look. Hold line = the 140th best player: a 10-team league rosters 140.</p>
       <div class="lab">Team rankings</div><div class="tbl"><table id="team-ranks"></table></div>
-      <div class="lab">Fantasy points per game leaders this season</div><div class="tbl"><table id="leaders"></table></div>
       <div class="lab">Your players' last 10 games</div><div class="tbl"><table id="glogs"></table></div>
       <div class="lab">Your best lineup and bench (preseason values)</div>
       <div class="tbl"><table id="slots"></table></div><div class="tbl"><table id="bench"></table></div><div class="facts" id="cover"></div>
@@ -529,14 +551,49 @@ function renderTeam() {
   }).join("");
   $("#team-ranks").innerHTML = `<tr><th>Team</th><th class="r">Record</th><th class="r">Roster</th><th class="r">G</th><th class="r">F</th><th class="r">C</th></tr>` +
     V.teams.slice().sort((a, b) => a.rank - b.rank).map((t) => `<tr${t.me ? ' style="font-weight:700"' : ""}><td>${esc(t.me ? "You" : t.name)}</td><td class="r">${t.record[0]}–${t.record[1]}</td><td class="r">#${t.rank}</td><td class="r">#${t.groups.G.rank}</td><td class="r">#${t.groups.F.rank}</td><td class="r">#${t.groups.C.rank}</td></tr>`).join("");
-  const lead = Object.entries(V.players).filter(([, r]) => vc(r, "fpRank")).sort((a, b) => vc(a[1], "fpRank") - vc(b[1], "fpRank"));
-  const mineIds = new Set(V.mine.map((m) => m.id));
-  const top = lead.slice(0, 25).concat(lead.filter(([id], i) => i >= 25 && mineIds.has(id)));
-  $("#leaders").innerHTML = `<tr><th class="r">#</th><th>Player</th><th>Owner</th><th class="r">FP/g</th><th class="r">L5</th><th class="r">Min</th><th class="r">GP</th></tr>` + top.map(([id, r]) => {
-    const o = vc(r, "owner"), own = o ? (o === D.week1.live.rid ? "You" : V.owners[o]) : "Free agent";
-    return `<tr${mineIds.has(id) ? ' style="font-weight:700"' : ""}><td class="r">${vc(r, "fpRank")}</td><td>${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "t"))}</span></td><td class="sm">${esc(own)}</td><td class="r">${vc(r, "fp").toFixed(1)}</td><td class="r">${vc(r, "fp5") == null ? "–" : vc(r, "fp5").toFixed(1)}</td><td class="r">${vc(r, "min") == null ? "–" : vc(r, "min").toFixed(0)}</td><td class="r">${vc(r, "gp")}</td></tr>`; }).join("");
+  renderBoard();
   $("#glogs").innerHTML = `<tr><th>Player</th><th>Last 10 (newest first): FP, minutes</th></tr>` + mine.map((m) => `<tr><td>${esc(vc(m.r, "n"))}</td><td class="sm">${(V.logs[m.id] || []).map((g) => `${g[1]}<span style="opacity:.6">/${g[2]}m</span>`).join(" · ") || "No games yet"}</td></tr>`).join("");
 }
+
+/* Top 140 board: rest-of-season rank (lock value) next to a running 2-week rank (FP/g over the last 14 days).
+   Ownership comes from the refresh and is replaced live from Sleeper's rosters when the page can reach it. */
+const BD = { f: "all", s: "ros", own: null, wv: null };
+function renderBoard() {
+  if (!V) return;
+  const rid = D.week1.live ? D.week1.live.rid : null;
+  const ownerOf = (id, r) => (BD.own ? BD.own.get(id) || 0 : vc(r, "owner"));
+  const wvOf = (id, r) => (BD.wv ? BD.wv.get(id) || null : vc(r, "wv"));
+  const key = BD.s === "ros" ? "rank" : "rank2";
+  const ranked = Object.entries(V.players).filter(([, r]) => vc(r, key)).sort((a, b) => vc(a[1], key) - vc(b[1], key)).slice(0, 140);
+  const isFree = (id, r) => !ownerOf(id, r) && vc(r, "t");
+  const rows = ranked.filter(([id, r]) => BD.f === "all" || (BD.f === "free" ? isFree(id, r) : ownerOf(id, r) === rid));
+  const nFree = ranked.filter(([id, r]) => isFree(id, r)).length;
+  $("#bd-note").textContent = `${nFree} of the top 140 ${BD.s === "ros" ? "rest of season" : "over the last 2 weeks"} ${nFree === 1 ? "is" : "are"} free or on waivers. ` +
+    (BD.s === "ros" ? "Rest of season blends last season, the preseason projection and this season." : "Last 2 weeks = FP/g in games over the past 14 days (2+ games).") + (BD.own ? " Ownership is live from Sleeper." : "");
+  const day = (t) => new Date(t).toLocaleDateString("en-US", { weekday: "short", timeZone: "America/Chicago" });
+  $("#leaders").innerHTML = `<tr><th class="r">ROS</th><th class="r">2 wk</th><th>Player</th><th>Status</th><th class="r">ROS<br>FP/g</th><th class="r">2 wk<br>FP/g</th></tr>` + (rows.length ? rows.map(([id, r]) => {
+    const o = ownerOf(id, r), w = wvOf(id, r), free = isFree(id, r), inj = vc(r, "inj");
+    const st = o ? (o === rid ? "You" : `<span class="own">${esc(V.owners[o] || "")}</span>`) : !vc(r, "t") ? "No team" : w && w > Date.now() ? `<span class="pill warn"><span class="lg">Waivers to </span><span class="xs">W </span>${day(w)}</span>` : `<span class="pill good"><span class="lg">Free agent</span><span class="xs">FA</span></span>`;
+    const r2 = vc(r, "rank2"), f2 = vc(r, "fp2"), g2 = vc(r, "gp2");
+    return `<tr class="${o === rid ? "me" : free ? "fa" : ""}"><td class="r">${vc(r, "rank")}</td><td class="r">${r2 || "–"}</td>
+      <td>${esc(vc(r, "n"))} <span class="sm">${esc(vc(r, "t") || "")} ${esc(vc(r, "pos"))}${inj ? ` · ${esc(inj)}` : ""}</span></td><td class="sm">${st}</td>
+      <td class="r">${vc(r, "est").toFixed(1)}</td><td class="r">${f2 == null ? "–" : `${f2.toFixed(1)} <span class="sm">(${g2})</span>`}</td></tr>`; }).join("")
+    : `<tr><td colspan="6" class="sm">${BD.f === "free" ? "Nobody in the top 140 is free right now." : "None of your players are in this top 140."}</td></tr>`);
+}
+function liveBoard(P) {
+  if (!V || !P.rosters) return;
+  BD.own = new Map(P.rosters.flatMap((r) => (r.players || []).map((id) => [String(id), r.roster_id])));
+  const clear = (V.clearDays ?? 2) * 864e5;
+  BD.wv = new Map();
+  for (const t of (P.tx || []).filter((t) => t.status === "complete")) for (const id of Object.keys(t.drops || {})) if (!BD.own.has(id) && t.created + clear > Date.now()) BD.wv.set(id, Math.max(BD.wv.get(id) || 0, t.created + clear));
+  renderBoard();
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".top140 .toggle button"); if (!b) return;
+  if (b.dataset.f) BD.f = b.dataset.f; if (b.dataset.s) BD.s = b.dataset.s;
+  b.parentElement.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  renderBoard();
+});
 
 function renderWaivers() {
   if (!V) return;
@@ -721,7 +778,7 @@ async function checkLock() {
   try {
     lockLive = await pullLive(); lockAt = Date.now();
     renderLock(computeLock(lockLive));
-    liveMoves(lockLive);
+    liveMoves(lockLive); liveBoard(lockLive);
     $("#lock-dot").classList.remove("off");
     $("#lock-meta").textContent = `Live from Sleeper · checked ${lockLive.at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}${lockLive.me.agree ? "" : " · Sleeper's numbers are still settling"}`;
   } catch (e) {

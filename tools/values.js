@@ -59,6 +59,15 @@ const inGroup = (p, g) => (g === "G" ? p.p.some((x) => x === "PG" || x === "SG")
 for (const g of ["G", "F", "C"]) all.filter((p) => grp(p) === g).forEach((p, i) => { p.posRank = i + 1; p.grp = g; });
 const byFp = all.filter((p) => p.gp >= 3).sort((a, b) => b.fp - a.fp);
 byFp.forEach((p, i) => { p.fpRank = i + 1; });
+// last 2 weeks: FP/g over games in the 14 days up to the refresh (logs hold [MM-DD, fp, min], newest first)
+const seasonYr = +PL.asof.slice(0, 4) - (+PL.asof.slice(5, 7) < 8 ? 1 : 0);
+const fullDate = (md) => `${+md.slice(0, 2) >= 8 ? seasonYr : seasonYr + 1}-${md}`;
+const cut2 = new Date(Date.parse(PL.asof + "T12:00:00Z") - 14 * 864e5).toISOString().slice(0, 10);
+for (const p of all) { const g = p.logs.filter((x) => fullDate(x[0]) > cut2); p.gp2 = g.length; p.fp2 = g.length ? r1(avg(g.map((x) => x[1]))) : null; }
+all.filter((p) => p.gp2 >= 2).sort((a, b) => b.fp2 - a.fp2).forEach((p, i) => { p.rank2 = i + 1; });
+// dropped players sit on waivers for the league's clear days before they're free agents
+const clearMs = ((LG.settings && LG.settings.waiver_clear_days) ?? 2) * 864e5;
+for (const t of PL.tx) for (const id of Object.keys(t.drops || {})) { const p = P[id]; if (p && !p.owner && t.t + clearMs > Date.now() && !(p.wv > t.t + clearMs)) p.wv = t.t + clearMs; }
 const holdLine = all[Math.min(ROSTERED, all.length) - 1].lv;
 const freeAll = all.filter((p) => !p.owner && p.t && p.inj !== "Out" && p.inj !== "IR");
 const replacement = avg(freeAll.slice(0, 3).map((p) => p.lv));
@@ -146,10 +155,10 @@ const since = Date.now() - 7 * 864e5;
 const moves = PL.tx.filter((t) => t.t >= since).map((t) => ({ t: t.t, type: t.type, team: owners[t.rids[0]] || "", me: t.rids.includes(MYRID), bid: t.bid,
   adds: Object.keys(t.adds || {}), drops: Object.keys(t.drops || {}) }));
 
-const slim = (p) => [p.n, p.t, p.p.join("/"), p.inj, p.owner, p.est, p.lv, p.rank, p.posRank, p.grp, p.tier, p.gp, p.fp, p.fpRank || null, p.fp5, p.min, p.min5, p.trend, p.pre, p.last];
+const slim = (p) => [p.n, p.t, p.p.join("/"), p.inj, p.owner, p.est, p.lv, p.rank, p.posRank, p.grp, p.tier, p.gp, p.fp, p.fpRank || null, p.fp5, p.min, p.min5, p.trend, p.pre, p.last, p.fp2, p.gp2, p.rank2 || null, p.wv || null];
 const out = {
-  asof: PL.asof, holdLine: +holdLine.toFixed(1), replacement: r1(replacement), faabLeft: left, budget: PL.budget || 100,
-  cols: ["n", "t", "pos", "inj", "owner", "est", "lv", "rank", "posRank", "grp", "tier", "gp", "fp", "fpRank", "fp5", "min", "min5", "trend", "pre", "last"],
+  asof: PL.asof, holdLine: +holdLine.toFixed(1), replacement: r1(replacement), faabLeft: left, budget: PL.budget || 100, clearDays: clearMs / 864e5,
+  cols: ["n", "t", "pos", "inj", "owner", "est", "lv", "rank", "posRank", "grp", "tier", "gp", "fp", "fpRank", "fp5", "min", "min5", "trend", "pre", "last", "fp2", "gp2", "rank2", "wv"],
   players: Object.fromEntries(all.map((p) => [p.id, slim(p)])),
   logs: Object.fromEntries(mine.map((x) => [x.id, P[x.id].logs])),
   teams, mine: myPlayers, claims, moves, owners,

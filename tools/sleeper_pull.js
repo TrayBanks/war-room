@@ -84,7 +84,7 @@
       users: Object.fromEntries(users.map((u) => [u.user_id, [u.display_name, (u.metadata && u.metadata.team_name) || ""]])),
       settings: { playoff_teams: league.settings.playoff_teams, playoff_week_start: league.settings.playoff_week_start,
         waiver_type: league.settings.waiver_type === 2 ? "FAAB" : String(league.settings.waiver_type), waiver_budget: league.settings.waiver_budget,
-        trade_deadline: league.settings.trade_deadline, reserve_slots: league.settings.reserve_slots },
+        trade_deadline: league.settings.trade_deadline, reserve_slots: league.settings.reserve_slots, waiver_clear_days: league.settings.waiver_clear_days == null ? 2 : league.settings.waiver_clear_days },
       slots: (league.roster_positions || []).filter((s) => s !== "BN"),
       draft_order: draft.draft_order,
       rosters: rosters.map((r) => [r.roster_id, r.owner_id, r.players || [], r.starters || [], r.reserve || []]),

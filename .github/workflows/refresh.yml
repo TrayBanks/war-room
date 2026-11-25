@@ -43,12 +43,12 @@ jobs:
 
   refresh:
     needs: gate
-    timeout-minutes: 12
+    timeout-minutes: 16
     if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy1.outputs.page_url || steps.deploy2.outputs.page_url || steps.deploy3.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -69,11 +69,29 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+      # GitHub Pages' deploy API often fails for a moment (HTTP 500, or "artifact not found" right after upload).
+      # Try three times, a minute apart, before failing the run.
       - name: Deploy
-        id: deploy
+        id: deploy1
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Wait before retrying the deploy
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 60
+      - name: Deploy (retry 1)
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Wait before the last deploy try
+        if: steps.deploy1.outcome == 'failure' && steps.deploy2.outcome == 'failure'
+        run: sleep 90
+      - name: Deploy (retry 2)
+        id: deploy3
+        if: steps.deploy1.outcome == 'failure' && steps.deploy2.outcome == 'failure'
         uses: actions/deploy-pages@v4
       - name: Monday snapshot (also keeps the schedule alive; GitHub pauses it after 60 days without commits)
-        if: github.event_name == 'schedule'
+        if: ${{ !cancelled() && github.event_name == 'schedule' }}
         run: |
           d=$(TZ=America/Chicago date +%F)
           if [ "$(TZ=America/Chicago date +%u)" = 1 ] && [ ! -f "data/history/$d.json" ]; then

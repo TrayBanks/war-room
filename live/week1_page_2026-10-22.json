@@ -1,0 +1,18 @@
+{"week":1,"me":176,"oppPts":227,"opp":"SergeantSleaze","projMe":247,"projOpp":283,"daysLeft":"Fri · Sat · Sun left",
+"sub":"Thursday morning. You locked Murray and Lillard. Everyone else holds for Friday.",
+"oddsNote":"to win this week. He can lock Jerome (41), George (37.5) and Davis (37.5), and Jokić plays tonight and Saturday. Holding is still right: your starters need big Friday or Saturday games.",
+"rows":[
+ {"n":"Dejounte Murray","score":28.5,"status":"Locked","why":"Beat his 24.9 line with 2 games left."},
+ {"n":"Damian Lillard","score":25.5,"status":"Locked","why":"Beat his 24.0 line with 1 game left (rest risk on Friday)."},
+ {"n":"Jalen Johnson","score":29,"status":"Hold","why":"Line 34.1. Fri at CHA, Sat vs HOU."},
+ {"n":"Alperen Şengün","score":24.5,"status":"Hold","why":"Line 30.9. Fri at SAS, Sat at ATL."},
+ {"n":"Stephon Castle","score":19.5,"status":"Hold","why":"Line 25.2. Fri vs HOU, Sat at DAL."},
+ {"n":"Matas Buzelis","score":15.5,"status":"Hold","why":"Line 25.6. Fri at MIL, Sat vs WAS."},
+ {"n":"Donovan Clingan","score":14.5,"status":"Hold","why":"Friday at SAC is his last game, so it counts automatically."},
+ {"n":"Kyrie Irving","score":12,"status":"Hold","why":"Line 25.7. Fri at IND, Sat vs SAS (back-to-back)."},
+ {"n":"Josh Giddey","score":7,"status":"Hold","why":"Line 29.7. Fri at MIL, Sat vs WAS."}],
+"swaps":[
+ {"when":"Friday afternoon","what":"Check the injury report","why":"DAL, CHI, SAS, ATL, HOU and NOP all play Friday and Saturday. A starter who rests one night still has the other, so no swap unless he's out both."},
+ {"when":"Friday night","what":"Clingan under 21: start Derik Queen at C on Saturday","why":"Clingan has no game after Friday. Queen plays Saturday at Denver and is worth about 20–21 in one game."},
+ {"when":"Saturday night","what":"A guard slot under 13: start Keaton Wagler there Sunday","why":"LAC is your only team playing Sunday. Wagler fits PG, SG and G."},
+ {"when":"Saturday night","what":"C slot under 12: start Isaiah Jackson Sunday","why":"Small gain, but it costs nothing."}]}
